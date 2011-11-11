@@ -2,17 +2,17 @@ PROGRAM dtanl_cmip
 !--------------------------------------------------------------
 implicit none
 !
-character*1000                       cTsfc1, cqsfc1, cPsea1, cPlcl1, czg1, cwap1, czsfc1, cPrec1
-character*1000                       cTsfc2, cqsfc2, cPsea2, cPlcl2, czg2, cwap2, czsfc2, cPrec2
+character*1000                       cPRC1, cTsfc1, cqsfc1, cPsea1, cPlcl1, czg1, cwap1, czsfc1, cPrec1
+character*1000                       cPRC2, cTsfc2, cqsfc2, cPsea2, cPlcl2, czg2, cwap2, czsfc2, cPrec2
 character*1000                       clev
 character*1000                       cofile1, cofile2
-character*1000                       codPrec, coDdynam, coDlapse, coDhumid, coDfull, colcl_full
+character*1000                       codPrec, coDdynam, coDlapse, coDhumid, coDfull, colcl_full, coNaN
 character*100                        cnx, cny, cnz
 !
 integer                              nx, ny, nz
 real,allocatable,dimension(:)     :: r1lev
-real,allocatable,dimension(:,:)   :: r2Tsfc1, r2qsfc1, r2zsfc1, r2Psea1
-real,allocatable,dimension(:,:)   :: r2Tsfc2, r2qsfc2, r2zsfc2, r2Psea2
+real,allocatable,dimension(:,:)   :: r2PRC1, r2Tsfc1, r2qsfc1, r2zsfc1, r2Psea1
+real,allocatable,dimension(:,:)   :: r2PRC2, r2Tsfc2, r2qsfc2, r2zsfc2, r2Psea2
 real,allocatable,dimension(:,:,:) :: r3zg1, r3wap1
 real,allocatable,dimension(:,:,:) :: r3zg2, r3wap2
 
@@ -30,21 +30,28 @@ real                                 rSWA, rSdWA, rSWdA, rSWAdlcl
 integer                              ix, iy, iz, nnx
 real                                 rlat, rlon
 real,allocatable,dimension(:,:)   :: r2SWA, r2SdWA, r2SWdA, r2SWAdlcl
+real,allocatable,dimension(:,:)   :: r2dSWA
 real,allocatable,dimension(:,:)   :: r2full, r2lcl_full
+real,allocatable,dimension(:,:)   :: r2NaN
 real,allocatable,dimension(:,:)   :: r2Prec1, r2Prec2, r2dPrec
+real,allocatable,dimension(:,:)   :: r2dPRC, r2Pother1, r2Pother2, r2dPother
 real,allocatable,dimension(:,:)   :: r2dTsfc, r2dqsfc, r2dqsatsfc, r2dRHsfc, r2dPlcl, r2absdRHsfc
-real,allocatable,dimension(:)     :: r1Prec1, r1dPrec
+real,allocatable,dimension(:)     :: r1Prec1, r1dPrec, r1dPRC, r1dPother
 real,allocatable,dimension(:)     :: r1dTsfc, r1dqsfc, r1dqsatsfc, r1dRHsfc, r1dPlcl, r1abs, dRHsfc, r1absdRHsfc
 real,allocatable,dimension(:)     :: r1SWA, r1SdWA, r1SWdA, r1SWAdlcl
+real,allocatable,dimension(:)     :: r1dSWA
 real                                 re1, re2, res1, res2, rRH1, rRH2, rqsatsfc1, rqsatsfc2, rPlcl1, rPlcl2,rPsfc1, rPsfc2
 !***********************************************************
 !--------------------------------------------------
 ! Get filenames
 !--------------------------------------------------
-if (iargc().lt.26) then
-  print *, "Usage: cmd  [ifile_Tsfc1] [ifile_qsfc1]&
+if (iargc().lt.29) then
+  print *, "Usage: cmd &
+          & [ifile_prc1]  <-- convective precip &
+          & [ifile_Tsfc1] [ifile_qsfc1]&
           & [ifile_Psea1] [ifile_zg1] [ifile_wap1] &
           & [ifile_zsfc1] [ifile_Prec1] &
+          & [ifile_prc2]  <-- convective precip &
           & [ifile_Tsfc2] [ifile_qsfc2] &
           & [ifile_Psea2] [ifile_zg2] &
           & [ifile_wap2] [ifile_zsfc2] &
@@ -53,57 +60,66 @@ if (iargc().lt.26) then
           & [codPrec] [coDdynam] &
           & [coDlapse] [coDhumid] &
           & [coLCL_full] &
+          & [coNaN] &
           & [nx] [ny] [nz]"
   stop
 endif
 !
-call getarg(1, cTsfc1)
-call getarg(2, cqsfc1)
-call getarg(3, cPsea1)
-call getarg(4, czg1)
-call getarg(5, cwap1)
-call getarg(6, czsfc1)
-call getarg(7, cPrec1)
+call getarg(1, cPRC1)
+call getarg(2, cTsfc1)
+call getarg(3, cqsfc1)
+call getarg(4, cPsea1)
+call getarg(5, czg1)
+call getarg(6, cwap1)
+call getarg(7, czsfc1)
+call getarg(8, cPrec1)
 !
-call getarg(8, cTsfc2)
-call getarg(9, cqsfc2)
-call getarg(10, cPsea2)
-call getarg(11, czg2)
-call getarg(12, cwap2)
-call getarg(13, czsfc2)
-call getarg(14, cPrec2)
+call getarg(9, cPRC2)
+call getarg(10, cTsfc2)
+call getarg(11, cqsfc2)
+call getarg(12, cPsea2)
+call getarg(13, czg2)
+call getarg(14, cwap2)
+call getarg(15, czsfc2)
+call getarg(16, cPrec2)
 !
-call getarg(15, clev)
-call getarg(16, cofile1)
-call getarg(17, cofile2)
-call getarg(18, codPrec)
-call getarg(19, coDdynam)
-call getarg(20, coDlapse)
-call getarg(21, coDhumid)
-call getarg(22, coDfull)
-call getarg(23, colcl_full)
-call getarg(24, cnx)
-call getarg(25, cny)
-call getarg(26, cnz)
+call getarg(17, clev)
+call getarg(18, cofile1)
+call getarg(19, cofile2)
+call getarg(20, codPrec)
+call getarg(21, coDdynam)
+call getarg(22, coDlapse)
+call getarg(23, coDhumid)
+call getarg(24, coDfull)
+call getarg(25, colcl_full)
+call getarg(26, coNaN)
+call getarg(27, cnx)
+call getarg(28, cny)
+call getarg(29, cnz)
 read(cnx, *) nx
 read(cny, *) ny
 read(cnz, *) nz
 !--------------------------------------------------
 !*** for input ******
 allocate(r1lev(nz))
-allocate(r2Tsfc1(nx,ny), r2qsfc1(nx,ny), r2zsfc1(nx,ny), r2Psea1(nx,ny), r2Prec1(nx,ny))
-allocate(r2Tsfc2(nx,ny), r2qsfc2(nx,ny), r2zsfc2(nx,ny), r2Psea2(nx,ny), r2Prec2(nx,ny))
+allocate(r2PRC1(nx,ny), r2Tsfc1(nx,ny), r2qsfc1(nx,ny), r2zsfc1(nx,ny), r2Psea1(nx,ny), r2Prec1(nx,ny))
+allocate(r2PRC2(nx,ny), r2Tsfc2(nx,ny), r2qsfc2(nx,ny), r2zsfc2(nx,ny), r2Psea2(nx,ny), r2Prec2(nx,ny))
 allocate(r3zg1(nx,ny,nz), r3wap1(nx,ny,nz))
 allocate(r3zg2(nx,ny,nz), r3wap2(nx,ny,nz))
 !*** for SUBROUTINE calc_scales ****
 allocate(r1wap1(nz), r1zg1(nz))
 allocate(r1wap2(nz), r1zg2(nz))
 !*** for calculation ****
-allocate(r2dPrec(nx,ny),r2dTsfc(nx,ny), r2dqsfc(nx,ny), r2dqsatsfc(nx,ny), r2dRHsfc(nx,ny), r2dPlcl(nx,ny), r2absdRHsfc(nx,ny))
+allocate(r2dPrec(nx,ny),r2dPRC(nx,ny), r2dTsfc(nx,ny), r2dqsfc(nx,ny), r2dqsatsfc(nx,ny), r2dRHsfc(nx,ny), r2dPlcl(nx,ny), r2absdRHsfc(nx,ny))
+allocate(r2Pother1(nx,ny), r2Pother2(nx,ny), r2dPother(nx,ny))
 allocate(r2SWA(nx,ny), r2SdWA(nx,ny), r2SWdA(nx,ny), r2SWAdlcl(nx,ny))
+allocate(r2dSWA(nx,ny))
 allocate(r2full(nx,ny), r2lcl_full(nx,ny))
-allocate(r1Prec1(ny), r1dPrec(ny), r1dTsfc(ny), r1dqsfc(ny), r1dqsatsfc(ny), r1dRHsfc(ny), r1dPlcl(ny), r1absdRHsfc(ny))
+allocate(r2NaN(nx,ny))
+allocate(r1Prec1(ny), r1dPrec(ny), r1dPRC(ny), r1dTsfc(ny), r1dqsfc(ny), r1dqsatsfc(ny), r1dRHsfc(ny), r1dPlcl(ny), r1absdRHsfc(ny))
+allocate(r1dPother(ny))
 allocate(r1SWA(ny), r1SdWA(ny), r1SWdA(ny), r1SWAdlcl(ny))
+allocate(r1dSWA(ny))
 !!--------------------------------------------------
 !allocate( r1temp(nz) )
 !allocate( r2temp(nx,ny) )
@@ -111,31 +127,35 @@ allocate(r1SWA(ny), r1SdWA(ny), r1SWdA(ny), r1SWAdlcl(ny))
 !--------------------------------------------------
 ! read files : 2D files
 !--------------------------------------------------
-open(11, file = cTsfc1, access="DIRECT", status="old", recl =nx)
-open(12, file = cqsfc1, access="DIRECT", status="old", recl =nx)
-open(13, file = czsfc1, access="DIRECT", status="old", recl =nx)
-open(14, file = cPsea1, access="DIRECT", status="old", recl =nx)
-open(15, file = cPrec1, access="DIRECT", status="old", recl =nx)
+open(11, file = cPRC1 , access="DIRECT", status="old", recl =nx)
+open(12, file = cTsfc1, access="DIRECT", status="old", recl =nx)
+open(13, file = cqsfc1, access="DIRECT", status="old", recl =nx)
+open(14, file = czsfc1, access="DIRECT", status="old", recl =nx)
+open(15, file = cPsea1, access="DIRECT", status="old", recl =nx)
+open(16, file = cPrec1, access="DIRECT", status="old", recl =nx)
 !
-open(16, file = cTsfc2, access="DIRECT", status="old", recl =nx)
-open(17, file = cqsfc2, access="DIRECT", status="old", recl =nx)
-open(18, file = czsfc2, access="DIRECT", status="old", recl =nx)
-open(19, file = cPsea2, access="DIRECT", status="old", recl =nx)
-open(20, file = cPrec2, access="DIRECT", status="old", recl =nx)
+open(17, file = cPRC2,  access="DIRECT", status="old", recl =nx)
+open(18, file = cTsfc2, access="DIRECT", status="old", recl =nx)
+open(19, file = cqsfc2, access="DIRECT", status="old", recl =nx)
+open(20, file = czsfc2, access="DIRECT", status="old", recl =nx)
+open(21, file = cPsea2, access="DIRECT", status="old", recl =nx)
+open(22, file = cPrec2, access="DIRECT", status="old", recl =nx)
 
 do iy =1, ny
   !-----
-  read(11, rec=iy) ( r2Tsfc1(ix,iy) , ix=1, nx)
-  read(12, rec=iy) ( r2qsfc1(ix,iy) , ix=1, nx)
-  read(13, rec=iy) ( r2zsfc1(ix,iy) , ix=1, nx)
-  read(14, rec=iy) ( r2Psea1(ix,iy) , ix=1, nx)
-  read(15, rec=iy) ( r2Prec1(ix,iy) , ix=1, nx)
+  read(11, rec=iy) ( r2PRC1(ix,iy)  , ix=1, nx)
+  read(12, rec=iy) ( r2Tsfc1(ix,iy) , ix=1, nx)
+  read(13, rec=iy) ( r2qsfc1(ix,iy) , ix=1, nx)
+  read(14, rec=iy) ( r2zsfc1(ix,iy) , ix=1, nx)
+  read(15, rec=iy) ( r2Psea1(ix,iy) , ix=1, nx)
+  read(16, rec=iy) ( r2Prec1(ix,iy) , ix=1, nx)
   !
-  read(16, rec=iy) ( r2Tsfc2(ix,iy) , ix=1, nx)
-  read(17, rec=iy) ( r2qsfc2(ix,iy) , ix=1, nx)
-  read(18, rec=iy) ( r2zsfc2(ix,iy) , ix=1, nx)
-  read(19, rec=iy) ( r2Psea2(ix,iy) , ix=1, nx)
-  read(20, rec=iy) ( r2Prec2(ix,iy) , ix=1, nx)
+  read(17, rec=iy) ( r2PRC2(ix,iy)  , ix=1, nx)
+  read(18, rec=iy) ( r2Tsfc2(ix,iy) , ix=1, nx)
+  read(19, rec=iy) ( r2qsfc2(ix,iy) , ix=1, nx)
+  read(20, rec=iy) ( r2zsfc2(ix,iy) , ix=1, nx)
+  read(21, rec=iy) ( r2Psea2(ix,iy) , ix=1, nx)
+  read(22, rec=iy) ( r2Prec2(ix,iy) , ix=1, nx)
   !-----
 enddo
 close(11)
@@ -148,25 +168,27 @@ close(17)
 close(18)
 close(19)
 close(20)
+close(21)
+close(22)
 !-------------------------------------------------
 ! read files : 3D files
 !-------------------------------------------------
-open(21, file = czg1,   access="DIRECT", status="old", recl =nx)
-open(22, file = cwap1,   access="DIRECT", status="old", recl =nx)
-open(23, file = czg2,   access="DIRECT", status="old", recl =nx)
-open(24, file = cwap2,   access="DIRECT", status="old", recl =nx)
+open(31, file = czg1,   access="DIRECT", status="old", recl =nx)
+open(32, file = cwap1,   access="DIRECT", status="old", recl =nx)
+open(33, file = czg2,   access="DIRECT", status="old", recl =nx)
+open(34, file = cwap2,   access="DIRECT", status="old", recl =nx)
 do iz=1, nz
   do iy=1, ny
-    read(21, rec=(iz-1)*ny + iy) (r3zg1(ix,iy,iz) , ix=1, nx)
-    read(22, rec=(iz-1)*ny + iy) (r3wap1(ix,iy,iz) , ix=1, nx)
-    read(23, rec=(iz-1)*ny + iy) (r3zg2(ix,iy,iz) , ix=1, nx)
-    read(24, rec=(iz-1)*ny + iy) (r3wap2(ix,iy,iz) , ix=1, nx)
+    read(31, rec=(iz-1)*ny + iy) (r3zg1(ix,iy,iz) , ix=1, nx)
+    read(32, rec=(iz-1)*ny + iy) (r3wap1(ix,iy,iz) , ix=1, nx)
+    read(33, rec=(iz-1)*ny + iy) (r3zg2(ix,iy,iz) , ix=1, nx)
+    read(34, rec=(iz-1)*ny + iy) (r3wap2(ix,iy,iz) , ix=1, nx)
   enddo
 enddo
-close(21)
-close(22)
-close(23)
-close(24)
+close(31)
+close(32)
+close(33)
+close(34)
 !-------------------------------------------------
 ! read files : 1D files
 !-------------------------------------------------
@@ -175,12 +197,18 @@ do iz =1,nz
   read(11, *) r1lev(iz)
 enddo
 close(11)
+!-------------------------------------------------
+! calculate 2Pother
+!-------------------------------------------------
+r2Pother1 = r2Prec1 - r2PRC1
+r2Pother2 = r2Prec2 - r2PRC2
 !-----------------------------------------------------------
 ! calculation
 !-----------------------------------------------------------
 do iy =1,ny
   print *,iy
   do ix =1,nx
+    !---------------
     ! make input data for SUBROUTINE cal_scales
     !---------------
     rTsfc1 = r2Tsfc1(ix,iy)
@@ -207,11 +235,17 @@ do iy =1,ny
     r2dPrec(ix,iy) = r2Prec2(ix,iy) - r2Prec1(ix,iy)
     r2dPrec(ix,iy) = r2dPrec(ix,iy) / r2Prec1(ix,iy) *100
     !
+    r2dPRC(ix,iy)  = r2PRC2(ix,iy) - r2PRC1(ix,iy)
+    r2dPRC(ix,iy)  = r2dPRC(ix,iy) / r2PRC1(ix,iy) * 100
+    !
     r2dTsfc(ix,iy) = r2Tsfc2(ix,iy) - r2Tsfc1(ix,iy)
     r2dTsfc(ix,iy) = r2dTsfc(ix,iy) / r2Tsfc1(ix,iy) *100
     !
     r2dqsfc(ix,iy) = r2qsfc2(ix,iy) - r2qsfc1(ix,iy)
     r2dqsfc(ix,iy) = r2dqsfc(ix,iy) / r2qsfc1(ix,iy) *100
+    !
+    r2dPother(ix,iy) = r2Pother2(ix,iy) - r2Pother1(ix,iy)
+    r2dPother(ix,iy) = r2dPother(ix,iy) / r2Pother1(ix,iy) *100
     !---------------
     ! make RHsfc and qsatsfc difference map
     !---------------
@@ -247,12 +281,17 @@ do iy =1,ny
       r2full(ix,iy)    = rmiss
       !
       r2dPrec(ix,iy)   = rmiss
+      r2dPRC(ix,iy)    = rmiss
+      r2dPother(ix,iy) = rmiss
+      r2NaN(ix,iy)     = 1.0
     else
       r2SWA(ix,iy)     = rSWA         
       r2SdWA(ix,iy)    = rSdWA /abs(rSWA)      *100   
       r2SWdA(ix,iy)    = rSWdA /abs(rSWA)      *100 
       r2SWAdlcl(ix,iy) = rSWAdlcl /abs(rSWA)   *100
+      !
       r2full(ix,iy)    = r2SdWA(ix,iy) + r2SWdA(ix,iy) + r2SWAdlcl(ix,iy)
+      r2NaN(ix,iy)     = 0.0
     end if
     !------------------
     ! make r2SWAdlcl / r2full
@@ -263,20 +302,6 @@ do iy =1,ny
       r2lcl_full(ix,iy) = r2SWAdlcl(ix,iy) / abs(r2full(ix,iy))
     end if
     !------------------
-    if ((ix .eq. 104).and.(iy .eq. 39)) then
-    !if (iy .eq. 39) then
-      print *,"P1, P2",r2Prec1(ix,iy), r2Prec2(ix,iy)
-      print *,"nz=",nz
-      print *,"r1lev=",r1lev
-      print *,"dP=",dP
-      print *,"Tsfc1, Tsfc2= ", rTsfc1, rTsfc2
-      print *,"rqsfc1,rqsfc2=", rqsfc1, rqsfc2
-      print *,"rzsfc1,rzsfc2=", rzsfc1, rzsfc2
-      print *,"r1wap1=",r1wap1
-      print *,"r1zg1=",r1zg1
-      print *,ix,r2SWA(ix,iy), r2SdWA(ix,iy), r2SWdA(ix,iy), r2SWAdlcl(ix,iy)
-      !print *,iy,ix,rSWA,rSdWA,rSWdA,rSWAdlcl
-    endif
   end do
 end do
 !rtemp = integral_WdA_seg(100000.0, 99000.0, 5.0, -5.0, 293.15, 298.15, dP)
@@ -286,6 +311,8 @@ end do
 do iy = 1,ny
   !r1Prec1(iy)   = 0.0
   r1dPrec(iy)   = 0.0
+  r1dPRC(iy)    = 0.0
+  r1dPother(iy) = 0.0
   r1dTsfc(iy)   = 0.0
   r1dqsfc(iy)   = 0.0
   r1dRHsfc(iy)  = 0.0
@@ -299,10 +326,15 @@ do iy = 1,ny
   r1SWAdlcl(iy)= 0.0
   nnx = 0
   do ix = 1,nx
+    if (iy .eq. 1) then
+      print *,"iy,ix, r1dPrec=",iy,ix,r2dPrec(ix,iy)
+    end if
     if ( r2SWA(ix,iy) .ne. rmiss) then
       nnx = nnx + 1      
       !r1Prec1(iy)   = r1Prec1(iy)  + r2Prec1(ix,iy)
       r1dPrec(iy)   = r1dPrec(iy)  + r2dPrec(ix,iy)
+      r1dPRC(iy)    = r1dPRC(iy)   + r2dPRC(ix,iy)
+      r1dPother(iy) = r1dPother(iy)+ r2dPother(ix,iy)
       r1dTsfc(iy)   = r1dTsfc(iy)  + r2dTsfc(ix,iy)
       r1dqsfc(iy)   = r1dqsfc(iy)  + r2dqsfc(ix,iy)
       r1dRHsfc(iy)  = r1dRHsfc(iy) + r2dRHsfc(ix,iy)
@@ -317,6 +349,8 @@ do iy = 1,ny
     end if
   end do
   r1dPrec(iy)   = r1dPrec(iy) /nnx 
+  r1dPRC(iy)    = r1dPRC(iy) /nnx
+  r1dPother(iy) = r1dPother(iy) /nnx
   r1dTsfc(iy)   = r1dTsfc(iy) /nnx
   r1dqsfc(iy)   = r1dqsfc(iy) /nnx
   r1dRHsfc(iy)  = r1dRHsfc(iy) /nnx
@@ -330,9 +364,9 @@ do iy = 1,ny
   r1SWdA(iy)    = r1SWdA(iy) / nnx 
   r1SWAdlcl(iy) = r1SWAdlcl(iy) /nnx
 
-
-  print * ,"aa",iy,r1dPrec(iy), r1SdWA(iy)+ r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy)
+  print * ,"aa",iy,r1dPrec(iy), r1dPRC(iy), r1SdWA(iy)+ r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy)
 end do
+
 !------------------------------------------------
 !** write to file
 !------------------------------------------------
@@ -340,7 +374,7 @@ open(31, file=cofile1, status="replace")
 do iy = 1,ny
   rlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
 
-  write(31, '(i4, f7.2, 5f8.2)') ,iy, rlat, r1dPrec(iy), r1SdWA(iy) +r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy)
+  write(31, '(i4, f7.2, 7f8.2)') ,iy, rlat, r1dPrec(iy), r1SdWA(iy) +r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy), r1dPRC(iy), r1dPother(iy)
 
 end do
 close(31) 
@@ -367,6 +401,7 @@ open(35, file=coDlapse, access="direct", recl=nx)
 open(36, file=coDhumid, access="direct", recl=nx)
 open(37, file=coDfull , access="direct", recl=nx)
 open(38, file=colcl_full, access="direct",recl=nx)
+open(39, file=coNaN,    access="direct", recl=nx)
 do iy = 1,ny
   write(33, rec=iy) (r2dPrec(ix,iy)     , ix=1,nx)
   write(34, rec=iy) (r2SdWA(ix,iy)      , ix=1,nx)
@@ -374,6 +409,7 @@ do iy = 1,ny
   write(36, rec=iy) (r2SWAdlcl(ix,iy)   , ix=1,nx)
   write(37, rec=iy) (r2full(ix,iy)      , ix=1,nx)
   write(38, rec=iy) (r2lcl_full(ix,iy)  , ix=1,nx)
+  write(39, rec=iy) (r2NaN(ix,iy)       , ix=1,nx)
 end do
 close(33)
 close(34)
@@ -381,6 +417,7 @@ close(35)
 close(36)
 close(37)
 close(38)
+close(39)
 print *,trim(codPrec)
 !************************************
 CONTAINS

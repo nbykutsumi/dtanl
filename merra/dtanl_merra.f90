@@ -1,4 +1,4 @@
-PROGRAM dtanl_cmip
+PROGRAM dtanl_merra
 !--------------------------------------------------------------
 implicit none
 !
@@ -143,19 +143,19 @@ close(15)
 close(16)
 close(17)
 close(18)
-!-------
-! hPa -> Pa
-!-------
-do iy = 1,ny
-  do ix = 1,nx
-    if (r2Psfc1(ix,iy) .ne. rmiss) then
-      r2Psfc1(ix,iy) = r2Psfc1(ix,iy) *100
-    end if
-    if (r2Psfc2(ix,iy) .ne. rmiss) then
-      r2Psfc2(ix,iy) = r2Psfc2(ix,iy) *100
-    end if
-  end do
-end do
+!!-------
+!! hPa -> Pa
+!!-------
+!do iy = 1,ny
+!  do ix = 1,nx
+!    if (r2Psfc1(ix,iy) .ne. rmiss) then
+!      r2Psfc1(ix,iy) = r2Psfc1(ix,iy) *100
+!    end if
+!    if (r2Psfc2(ix,iy) .ne. rmiss) then
+!      r2Psfc2(ix,iy) = r2Psfc2(ix,iy) *100
+!    end if
+!  end do
+!end do
 !-------------------------------------------------
 ! read files : 3D files
 !-------------------------------------------------
@@ -175,21 +175,21 @@ close(21)
 close(22)
 close(23)
 close(24)
-!------
-! hPa -> Pa
-!------
-do iz =1,nz
-  do iy = 1,ny
-    do ix = 1,nx
-      if (r3wap1(ix,iy,iz) .ne. rmiss) then
-        r3wap1(ix,iy,iz) = r3wap1(ix,iy,iz)*100
-      endif
-      if (r3wap2(ix,iy,iz) .ne. rmiss) then
-        r3wap2(ix,iy,iz) = r3wap2(ix,iy,iz)*100
-      endif
-    end do
-  end do
-end do
+!!------
+!! hPa -> Pa
+!!------
+!do iz =1,nz
+!  do iy = 1,ny
+!    do ix = 1,nx
+!      if (r3wap1(ix,iy,iz) .ne. rmiss) then
+!        r3wap1(ix,iy,iz) = r3wap1(ix,iy,iz)*100
+!      endif
+!      if (r3wap2(ix,iy,iz) .ne. rmiss) then
+!        r3wap2(ix,iy,iz) = r3wap2(ix,iy,iz)*100
+!      endif
+!    end do
+!  end do
+!end do
 !-------------------------------------------------
 ! read files : 1D files
 !-------------------------------------------------
@@ -199,7 +199,7 @@ do iz =1,nz
 enddo
 close(11)
 !----
-! hPa -> Pa
+! hPa -> Pa  ! only pressure level is denoted by [hPa] 
 !----
 do iz = 1,nz
   if (r1lev(iz) .ne. rmiss) then
@@ -210,7 +210,6 @@ end do
 ! calculation
 !-----------------------------------------------------------
 do iy =1,ny
-  print *,iy
   do ix =1,nx
     !---------------
     ! make input data for SUBROUTINE cal_scales
@@ -229,10 +228,10 @@ do iy =1,ny
     r1wap2 = mk_r1wap_fillzero(nz, rTsfc2, rqsfc2, rPsfc2, r3wap2(ix,iy,:), r1lev)
     r1zg2  = r3zg2(ix,iy,:)
     !------------------
-!    call calc_scales(nz, r1lev, dsig &
-!             ,rTsfc1, rqsfc1, rPsfc1, r1wap1, r1zg1 &
-!             ,rTsfc2, rqsfc2, rPsfc2, r1wap2, r1zg2 &
-!             ,rSWA, rSdWA, rSWdA, rSWAdlcl, rdPsfcSWA)
+    call calc_scales(nz, r1lev, dsig &
+             ,rTsfc1, rqsfc1, rPsfc1, r1wap1, r1zg1 &
+             ,rTsfc2, rqsfc2, rPsfc2, r1wap2, r1zg2 &
+             ,rSWA, rSdWA, rSWdA, rSWAdlcl, rdPsfcSWA)
 !    !---------------
 !    ! make Prec, Tsfc, qsfc difference map between two era
 !    !---------------
@@ -443,20 +442,25 @@ SUBROUTINE calc_scales(nz, r1lev, dsig &
 !--- for calculation ----------------
   real                       :: rSWA, rSdWA, rSWdA, rSWAdlcl, rdPsfcWA, rdPsfcSWA
 !--
-
+  real,dimension(nz)         :: r1sig
   real,dimension(nz)         :: r1wap_fz1, r1wap_fz2
-  real,dimension(nz)         :: r1wap_fzjo1, r1wap_fzjo2
-  real,dimension(nz)         :: r1P_jo1, r1P_jo2
-  real,dimension(nz)         :: r1T1,      r1T2
   real,dimension(nz)         :: r1dqdP1,   r1dqdP2
-  real,dimension(nz)         :: r1state_jo, r1iz_jo, r1sig_jo
+  real,dimension(nz*2)       :: r1P_jo1, r1P_jo2
+  real,dimension(nz*2)       :: r1T_jo1, r1T_jo2
+  real,dimension(nz*2)       :: r1wap_fzjo1, r1wap_fzjo2
+  real,dimension(nz*2)       :: r1state_jo, r1iz_jo, r1sig_jo
 !--
   integer                       iz, iz_btm, iz_scnd
   integer                       iz_scnd1_lcl1
   integer                       iz_btm1, iz_btm2
   integer                       iz_scnd_lcl1, iz_scnd_lcl2
+  integer                       iz_scnd_jo_lcl1
   real,dimension(nz)         :: r1zg
+  real                          dP
+  real                          rdqdp
+  real                          rdqdsig
   real                          rPlcl1, rPlcl2
+  real                          rsiglcl1, rsiglcl2
   real                          rW1_lcl1, rW1_lcl2
   real                          rW2_lcl1, rW2_lcl2
   real                          rT1_lcl1,   rT1_lcl2
@@ -467,206 +471,170 @@ SUBROUTINE calc_scales(nz, r1lev, dsig &
   real,parameter             :: rmiss = -9999.0
   ! this missing value doesn't affect the calculation
 !-------------
-
-!!rPlcl1 = lcl(rPsfc1, rTsfc1, rqsfc1)
-!!rPlcl2 = lcl(rPsfc2, rTsfc2, rqsfc2)
-!!!**** state 1 *********
-!!rTsfc = rTsfc1
-!!rqsfc = rqsfc1
-!!!rzsfc = rzsfc1
-!!!rPsea = rPsea1
-!!rPsfc = rPsfc1
-!!r1wap = r1wap1
-!!r1zg  = r1zg1
-!!!------
-!!iz_btm1      = findiz_btm(r1zg, nz, rmiss)
-!!iz_scnd_lcl1 = findiz_scnd( nz, r1lev, rPlcl1 )
-!!!------
-!!r1wap_fz1  = mk_r1wap_fillzero(nz, rTsfc, rqsfc, rPsfc, r1wap, r1lev)
-!!r1T1       = mk_r1T_extend(nz, rTsfc, rqsfc, rPsfc, r1lev, dP)
-!!r1dqdP1    = mk_r1dqdP(r1lev, r1T1, nz, dP, rmiss)
-!!!------
-!!rW1_lcl1 = omega_lcl( nz, iz_btm1, iz_scnd_lcl1, r1wap, r1lev, rPsfc, rPlcl1)
-!!rW1_lcl2 = omega_lcl( nz, iz_btm1, iz_scnd_lcl1, r1wap, r1lev, rPsfc, rPlcl2)
-!!!------
-!!rT1_lcl1   = T1toT2dry(rTsfc, rPsfc1, rPlcl1)
-!!rT1_lcl2   = moistadiabat(r1lev(1),r1T1(1), rPlcl2, dP)
-!!!**** state 2 *********
-!!rTsfc = rTsfc2
-!!rqsfc = rqsfc2
-!!!rzsfc = rzsfc2
-!!!rPsea = rPsea2
-!!rPsfc = rPsfc2
-!!r1wap = r1wap2
-!!r1zg  = r1zg2
-!!
-!!!------
-!!iz_btm2      = findiz_btm(r1zg, nz, rmiss)
-!!iz_scnd_lcl2 = findiz_scnd( nz, r1lev, rPlcl2 )
-!!!------
-!!r1wap_fz2  = mk_r1wap_fillzero(nz, rTsfc, rqsfc, rPsfc, r1wap, r1lev)
-!!r1T2       = mk_r1T_extend(nz, rTsfc, rqsfc, rPsfc, r1lev, dP)
-!!r1dqdP2    = mk_r1dqdP(r1lev, r1T2, nz, dP, rmiss)
-!!!
-!!rW2_lcl2 = omega_lcl( nz, iz_btm2, iz_scnd_lcl2, r1wap, r1lev, rPsfc, rPlcl2)
-!!!
-!!rT2_lcl2   = T1toT2dry(rTsfc, rPsfc2, rPlcl2)
-!!rT2_lcl1   = moistadiabat(r1lev(1),r1T2(1), rPlcl1, dP)
-!!!***********************
-!!
-!
-!!!**** state 1 ***********
-!!!**** state 2 ***********
-
 !************************
 !** Plcl
 !************************
+print *,"rPsfc1, rTsfc1, rqsfc1"
+print *,rPsfc1, rTsfc1, rqsfc1
+print *,"qs"
+print *,cal_qs(rTsfc1, rPsfc1)
+
 rPlcl1 = lcl(rPsfc1, rTsfc1, rqsfc1)
 rPlcl2 = lcl(rPsfc2, rTsfc2, rqsfc2)
-
+!
 !************************
 !** sigma order
 !************************
 call sigma_order(nz, rPsfc1, rPsfc2, r1lev, r1state_jo, r1iz_jo, r1sig_jo)
-
 !************************
 !** iz_btm
 !************************
-iz_btm1         = findiz_btm(r1zg1, nz, rmiss)
-iz_btm2         = findiz_btm(r1zg2, nz, rmiss)
-
+iz_btm1         = findiz_btm(r1lev, rPsfc1, nz, rmiss)
+iz_btm2         = findiz_btm(r1lev, rPsfc2, nz, rmiss)
 !************************
 !** iz_scnd_lcl & iz_scnd_jo_lcl
 !************************
 iz_scnd_lcl1      = findiz_scnd( nz, r1lev, rPlcl1)
 iz_scnd_jo_lcl1   = findiz_scnd_jo( nz, r1sig_jo, rPlcl1, rPsfc1)
-!************************
-!** mk_wapjoint
-!************************
-call mk_wapjoint(nz, iz_btm1, iz_btm2, rPsfc1, rPsfc2, r1lev, r1wap1, r1wap2, r1sig_jo, r1wap_fzjo1, r1wap_fzjo2)
-
-!************************
-!** rsiglcl
-!************************
-rsiglcl1   = rPlcl1 / rPsfc1
-rsiglcl2   = rPlcl2 / rPsfc2
-
-!************************
-!** r1P_jo
-!************************
-r1P_jo1    = r1sig_jo * rPsfc1 
-r1P_jo2    = r1sig_jo * rPsfc2
-
-!************************
-!** rW_lcl
-!************************
-rW1_lcl1   = omega_lcl( nz, iz_btm1, iz_scnd_lcl1, r1wap_fz1, r1lev, rPsfc1, rPlcl1)
-rW2_lcl1   = omega_lcl( nz, iz_btm2, iz_scnd_lcl1, r1wap_fz2, r1lev, rPsfc2, rPlcl1)
-
-!************************
-!** r1T_jo
-!************************
-r1T_jo1    = mk_r1T_extend(nz*2, rTsfc1, rqsfc1, rPsfc1, r1P_jo1)
-r1T_jo2    = mk_r1T_extend(nz*2, rTsfc2, rqsfc2, rPsfc2, r1P_jo2)
-
-!************************
-!** rT_lcl
-!************************
-rT1_lcl1   = T1toT2dry(rTsfc1, rPsfc1, rPlcl1)
-rT2_lcl1   = T1toT2dry(rTsfc2, rPsfc2, rPlcl1)
-
-!************************
-!** from rSIGlcl1 to r1lev ***
-!************************
-rSWA  = integral_WA_seg(&
-            dsig                               &     ! dsig
-          , rsiglcl1, r1sig(iz_scnd_jo_lcl1)   &     ! rsigb, rsigt
-          , rW1_lcl1                           &     ! rWb
-          , r1wap_fzjo1(iz_scnd_jo_lcl1)       &     ! rWt
-          , rPsfc1                             &     ! rPsfc
-          , rT1_lcl1 )                               ! rTb 
-
-rSdWA = integral_dWA_seg(&
-            dsig                               &     ! dsig
-          , rsiglcl1, r1sig(iz_scnd_jo_lcl1)   &     ! rsigb, rsigt
-          , rW1_lcl1, rW2_lcl1                 &     ! rWb1, rWb2
-          , r1wap_fzjo1(iz_scnd_jo_lcl1)       &     ! rWt1
-          , r1wap_fzjo2(iz_scnd_jo_lcl1)       &     ! rWt2
-          , rPsfc1, rPsfc2                     &     ! rPsfc1, rPsfc2
-          , rT1_lcl1 )                               ! rTb1 
-
-rSWdA = integral_WdA_seg(&
-          , dsig                               &     ! dsig
-          , rsiglcl1, r1sig(iz_scnd_jo_lcl1)   &     ! rsigb, rsigt
-          , rW1_lcl1                           &     ! rWb1
-          , r1wap_fzjo1(iz_scnd_jo_lcl1)       &     ! rWt1
-          , rPsfc1, rPsfc2                     &     ! rPsfc1, rPsfc2
-          , rT1_lcl1, rT2_lcl1 )                     ! rTb1, rTb2
-!************************
-!** from r1lev(iz_scnd) to top *------------ 
-!************************
-do iz = iz_scnd_jo_lcl1, nz*2-1
-  rSWA  = rSWA &
-         + integral_WA_seg(&
-            dsig                                &  ! dsig
-          , rsig(iz), rsig(iz+1)                &  ! rsigb, rsigt
-          , r1wap_fzjo1(iz), r1wap_fzjo1(iz+1)  &  ! rWb, rWt
-          , rPsfc                               &  ! rPsfc
-          , r1T_jo1(iz)                            ! rTb
-
-  rSdWA = rSdWA &
-         + integral_dWA_seg(&
-            dsig                               &   ! dsig
-          , r1sig(iz)                          &   ! rsigb
-          , r1sig(iz + 1)                      &   ! rsigt
-          , r1wap_fzjo1(iz)                    &   ! rWb1
-          , r1wap_fzjo2(iz)                    &   ! rWb2
-          , r1wap_fzjo1(iz + 1)                &   ! rWt1
-          , r1wap_fzjo2(iz + 1)                &   ! rWt2
-          , rPsfc1, rPsfc2                     &   ! rPsfc1, rPsfc2
-          , r1T_jo1(iz) )                          ! rTb1 
-
-  rSWdA = rSWdA &
-         + integral_WdA_seg(&
-          , dsig                               &   ! dsig
-          , r1sig(iz), r1sig(iz+1)             &   ! rsigb, rsigt
-          , r1wap_fzjo1(iz)                    &   ! rWb1
-          , r1wap_fzjo1(iz+1)                  &   ! rWt1
-          , rPsfc1, rPsfc2                     &   ! rPsfc1, rPsfc2 
-          , r1T_jo1(iz)                        &   ! rTb1
-          , r1T_jo2(iz) )                          ! rTb2
-end do
-!************************
-!** effect of LCL change ( from rPlcl1 to rPlcl2 )
-!************************
-if (rW1_lcl1 .lt. 0.0) then
-  dP = dsig * rPsfc
-  rdqdP = cal_rdqdP(rPlcl1, rT1_lcl1, dP)
-  rdqdsig = rdqdP * rPsfc1
-  rSWAdlcl = - rPsfc1 * rW1_lcl1 * rdqdsig * (rsiglcl2 - rsiglcl1)
-else
-  rSWAdlcl = 0.0
-end if
-!************************
-!** effect of Psfc change
-!************************
-rdPsfcSWA = (rPsfc2 - rPsfc1) * rSWA
+print *,"Plcl1"
+print *,rPlcl1
+print *,"rPsfc1"
+print *,rPsfc1
+print *,"Plcl1/Psfc1="
+print *,rPlcl1/rPsfc1
+!print *,"r1sig_jo="
+!print *,r1sig_jo
+!print *,"iz_scnd_jo_lcl1="
+!print *,iz_scnd_jo_lcl1
+print *,"ここまで"
+stop
+!!************************
+!!** mk_wapjoint
+!!************************
+!call mk_wapjoint(nz, iz_btm1, iz_btm2, rPsfc1, rPsfc2, r1lev, r1wap1, r1wap2, r1sig_jo, r1wap_fzjo1, r1wap_fzjo2)
+!
+!!************************
+!!** rsiglcl
+!!************************
+!rsiglcl1   = rPlcl1 / rPsfc1
+!rsiglcl2   = rPlcl2 / rPsfc2
+!
+!!************************
+!!** r1P_jo
+!!************************
+!r1P_jo1    = r1sig_jo * rPsfc1 
+!r1P_jo2    = r1sig_jo * rPsfc2
+!
+!!************************
+!!** rW_lcl
+!!************************
+!rW1_lcl1   = omega_lcl( nz, iz_btm1, iz_scnd_lcl1, r1wap_fz1, r1lev, rPsfc1, rPlcl1)
+!rW2_lcl1   = omega_lcl( nz, iz_btm2, iz_scnd_lcl1, r1wap_fz2, r1lev, rPsfc2, rPlcl1)
+!
+!!************************
+!!** r1T_jo
+!!************************
+!r1T_jo1    = mk_r1T_extend(nz*2, rTsfc1, rqsfc1, rPsfc1, r1P_jo1)
+!r1T_jo2    = mk_r1T_extend(nz*2, rTsfc2, rqsfc2, rPsfc2, r1P_jo2)
+!
+!!************************
+!!** rT_lcl
+!!************************
+!rT1_lcl1   = T1toT2dry(rTsfc1, rPsfc1, rPlcl1)
+!rT2_lcl1   = T1toT2dry(rTsfc2, rPsfc2, rPlcl1)
+!
+!!************************
+!!** from rSIGlcl1 to r1lev ***
+!!************************
+!rSWA  = integral_WA_seg(&
+!            dsig                               &     ! dsig
+!          , rsiglcl1, r1sig(iz_scnd_jo_lcl1)   &     ! rsigb, rsigt
+!          , rW1_lcl1                           &     ! rWb
+!          , r1wap_fzjo1(iz_scnd_jo_lcl1)       &     ! rWt
+!          , rPsfc1                             &     ! rPsfc
+!          , rT1_lcl1 )                               ! rTb 
+!
+!rSdWA = integral_dWA_seg(&
+!            dsig                               &     ! dsig
+!          , rsiglcl1, r1sig(iz_scnd_jo_lcl1)   &     ! rsigb, rsigt
+!          , rW1_lcl1, rW2_lcl1                 &     ! rWb1, rWb2
+!          , r1wap_fzjo1(iz_scnd_jo_lcl1)       &     ! rWt1
+!          , r1wap_fzjo2(iz_scnd_jo_lcl1)       &     ! rWt2
+!          , rPsfc1, rPsfc2                     &     ! rPsfc1, rPsfc2
+!          , rT1_lcl1 )                               ! rTb1 
+!
+!rSWdA = integral_WdA_seg(&
+!            dsig                               &     ! dsig
+!          , rsiglcl1, r1sig(iz_scnd_jo_lcl1)   &     ! rsigb, rsigt
+!          , rW1_lcl1                           &     ! rWb1
+!          , r1wap_fzjo1(iz_scnd_jo_lcl1)       &     ! rWt1
+!          , rPsfc1, rPsfc2                     &     ! rPsfc1, rPsfc2
+!          , rT1_lcl1, rT2_lcl1 )                     ! rTb1, rTb2
+!!************************
+!!** from r1lev(iz_scnd) to top *------------ 
+!!************************
+!do iz = iz_scnd_jo_lcl1, nz*2-1
+!  rSWA  = rSWA &
+!         + integral_WA_seg(&
+!            dsig                                &  ! dsig
+!          , r1sig(iz), r1sig(iz+1)                &  ! rsigb, rsigt
+!          , r1wap_fzjo1(iz), r1wap_fzjo1(iz+1)  &  ! rWb, rWt
+!          , rPsfc                               &  ! rPsfc
+!          , r1T_jo1(iz) )                          ! rTb
+!
+!  rSdWA = rSdWA &
+!         + integral_dWA_seg(&
+!            dsig                               &   ! dsig
+!          , r1sig(iz)                          &   ! rsigb
+!          , r1sig(iz + 1)                      &   ! rsigt
+!          , r1wap_fzjo1(iz)                    &   ! rWb1
+!          , r1wap_fzjo2(iz)                    &   ! rWb2
+!          , r1wap_fzjo1(iz + 1)                &   ! rWt1
+!          , r1wap_fzjo2(iz + 1)                &   ! rWt2
+!          , rPsfc1, rPsfc2                     &   ! rPsfc1, rPsfc2
+!          , r1T_jo1(iz) )                          ! rTb1 
+!
+!  rSWdA = rSWdA &
+!         + integral_WdA_seg(&
+!            dsig                               &   ! dsig
+!          , r1sig(iz), r1sig(iz+1)             &   ! rsigb, rsigt
+!          , r1wap_fzjo1(iz)                    &   ! rWb1
+!          , r1wap_fzjo1(iz+1)                  &   ! rWt1
+!          , rPsfc1, rPsfc2                     &   ! rPsfc1, rPsfc2 
+!          , r1T_jo1(iz)                        &   ! rTb1
+!          , r1T_jo2(iz) )                          ! rTb2
+!end do
+!!************************
+!!** effect of LCL change ( from rPlcl1 to rPlcl2 )
+!!************************
+!if (rW1_lcl1 .lt. 0.0) then
+!  dP = dsig * rPsfc
+!  rdqdP = cal_rdqdP(rPlcl1, rT1_lcl1, dP)
+!  rdqdsig = rdqdP * rPsfc1
+!  rSWAdlcl = - rPsfc1 * rW1_lcl1 * rdqdsig * (rsiglcl2 - rsiglcl1)
+!else
+!  rSWAdlcl = 0.0
+!end if
+!!************************
+!!** effect of Psfc change
+!!************************
+!rdPsfcSWA = (rPsfc2 - rPsfc1) * rSWA
 RETURN
 END SUBROUTINE
 
 !!***********************************************************
 !!* sigma_order
 !!***********************************************************
-SUBROUTINE singma_order(nz, rPsfc1, rPsfc2, r1lev, r1state_jo, r1iz_jo, r1sig_jo)
+SUBROUTINE sigma_order(nz, rPsfc1, rPsfc2, r1lev, r1state_jo, r1iz_jo, r1sig_jo)
   implicit none
   integer                     nz
   real                        rPsfc1, rPsfc2
-  real,dimension(nz)       :: r1lev
-  real,dimension(nz)       :: r1state_jo, r1iz_jo
-  real,dimension(nz)       :: r1sig_jo
+  real,dimension(nz)         :: r1lev
+  real,dimension(nz*2)       :: r1state_jo, r1iz_jo
+  real,dimension(nz*2)       :: r1sig_jo
 !
   integer                     iz, iz1, iz2
-  real,dimension(nz*2)     :: r1sig1, r1sig2
+  real,dimension(nz)     :: r1sig1, r1sig2
 !
 r1sig1 = r1lev / rPsfc1
 r1sig2 = r1lev / rPsfc2
@@ -675,21 +643,23 @@ iz1 = 1
 iz2 = 1
 
 do iz = 1, nz*2
-  if ( r1sig1(iz1) .le. r1sig2(iz2) )then
-    r1state_jo(iz) = r1sig1
+  if ((iz1 .le. nz).and.( r1sig1(iz1) .ge. r1sig2(iz2) ))then
+    r1state_jo(iz) = 1
     r1iz_jo(iz)    = iz1
     r1sig_jo(iz)   = r1sig1(iz1)
-    if (iz1 .ne. nz) then
+    if (iz1 .le. nz) then
       iz1 = iz1 + 1
     end if
   else
-    r1state_jo(iz) = r1sig2
+    r1state_jo(iz) = 2
     r1iz_jo(iz)    = iz2
     r1sig_jo(iz)   = r1sig2(iz2)
-    if (iz2 .ne. nz) then
+    if (iz2 .lt. nz) then
       iz2 = iz2 + 1
     end if
   end if
+end do
+
 RETURN
 END SUBROUTINE
 !!***********************************************************
@@ -711,35 +681,13 @@ SUBROUTINE mk_wapjoint(nz, iz_btm1, iz_btm2, rPsfc1, rPsfc2, r1lev, r1wap1, r1wa
 do iz = 1,nz*2
   rP1 = r1sig_jo(iz) * rPsfc1
   rP2 = r1sig_jo(iz) * rPsfc2
-  r1wap_fzjo1(iz) = omega_atP(nz, iz_btm1, r1wap1, r1lev, rPsfc1, rP1, 0)
-  r1wap_fzjo2(iz) = omega_atP(nz, iz_btm2, r1wap2, r1lev, rPsfc2, rP2, 0)
+  r1wap_fzjo1(iz) = omega_atP(nz, iz_btm1, r1wap1, r1lev, rPsfc1, rP1, 0.0)
+  r1wap_fzjo2(iz) = omega_atP(nz, iz_btm2, r1wap2, r1lev, rPsfc2, rP2, 0.0)
 end do
 !
-print *,r1wap_fzjo1
 RETURN
 END SUBROUTINE
 
-!!***********************************************************
-!!* estimate Psfc
-!!***********************************************************
-!FUNCTION Psea2Psfc(Tsfc, qsfc, zsfc, Psea)
-!  implicit none
-!  real              Tsfc, qsfc, zsfc, Psea
-!  real              Psea2Psfc, Psfc
-!  real              Tvsfc  ! virtual temperature
-!  real              Tvm    ! mean virtual temperature
-!  real,parameter :: lapse_e = 0.0065   ! [K/m]
-!  real,parameter :: g       = 9.80665  ! [m/s^2]
-!  real,parameter :: Rd      = 287.04   !(J kg^-1 K^-1)
-!!
-!Tvsfc = Tsfc * (1.0 + 0.61*qsfc)
-!Tvm   =  Tvsfc + 1.0/2.0 *(1.0 + 0.61*qsfc)*lapse_e * zsfc
-!!
-!Psfc  = Psea * exp(-g*zsfc/(Rd*Tvm))
-!Psea2Psfc = Psfc
-!!
-!RETURN
-!END FUNCTION Psea2Psfc
 !***********************************************************
 
 FUNCTION lcl(rPsfc, rTsfc, rqsfc)
@@ -758,9 +706,9 @@ double precision      delta
 integer               k
 INTEGER,PARAMETER :: KMAX=99
 !-------------
-!Psfc = 1000   !(hPa)
-!Tsfc = 293.15 !(K)
-!q    = 0.0087268029 !(kg/kg)
+!rPsfc = 67943.93   !(Pa)
+!rTsfc = 233.7704 !(K)
+!rqsfc    = 0.00017255328 !(kg/kg)
 !-------------
 dPsfc_hPa = dble(rPsfc)*0.01d0  ! Pa -> hPa
 dTsfc = dble(rTsfc)
@@ -794,15 +742,6 @@ lcl = real(x) *100.0  ! [hPa] -> [Pa]
 return
 END FUNCTION lcl
 !###########################################################
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!FUNCTION func(xx)
-!   REAL(8),INTENT(IN) :: xx
-!   REAL(8) :: func
-!   func=xx**3+6.d0*xx**2+21.d0*xx+32.d0
-!RETURN
-!END FUNCTION func
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION func(P, Psfc, Tsfc, q)
   implicit none
   double precision      P, Psfc, Tsfc, q
@@ -824,13 +763,6 @@ func = f1 - f2
 RETURN
 END FUNCTION func
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!FUNCTION fnewton(xx)
-!   REAL(8),INTENT(IN) :: xx
-!   REAL(8) :: fnewton
-!fnewton=xx-(xx**3+6.d0*xx**2+21.d0*xx+32.d0)/(3.d0*xx**2+12.d0*xx+21.d0)
-!RETURN
-!END FUNCTION fnewton
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION fnewton(P, Psfc, Tsfc, q)
   implicit none
@@ -873,14 +805,14 @@ rT2 = rT1 * (rP2/rP1)**(Rd/Cpd)
 T1toT2dry = rT2
 END FUNCTION T1toT2dry
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION findiz_btm(r1zg, nz, rmiss)
+FUNCTION findiz_btm(r1lev, rPsfc, nz, rmiss)
   implicit none
-  real,dimension(nz)             :: r1zg
-  real                              findiz_btm, rmiss
+  real,dimension(nz)             :: r1lev
+  real                              rPsfc, findiz_btm, rmiss
   integer                           iz,nz
 !
 do iz = 1, nz
-  if(r1zg(iz) > rmiss ) then
+  if(-r1lev(iz) > -rPsfc ) then
     findiz_btm = iz
     exit
   elseif (iz .eq. nz) then
@@ -914,46 +846,22 @@ FUNCTION findiz_scnd_jo( nz, r1sig_jo, rPlcl, rPsfc )
   integer                          nz
   real,dimension(nz)           ::  r1sig_jo
   real                             rPlcl, rPsfc
-  integer                          iz, findiz_scnd
+  integer                          iz, findiz_scnd_jo
 !
   real                             rsiglcl
 ! 
 rsiglcl = rPlcl / rPsfc
 do iz =1,nz*2
-  if (rsig_jo(iz) .lt. rsiglcl)then
-    findiz_scnd = iz
+  if (r1sig_jo(iz) .lt. rsiglcl)then
+    findiz_scnd_jo = iz
     exit
   elseif (iz .eq. nz) then
-    findiz_scnd = -9999
+    findiz_scnd_jo = -9999
   end if
 end do
 RETURN
-END FUNCTION findiz_scnd
+END FUNCTION findiz_scnd_jo
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!FUNCTION omega_atP(nz, iz_btm, r1wap, r1lev, rPsfc, rP, rmiss)
-!  implicit none
-!  integer                           nz, iz_btm
-!  real,dimension(nz)             :: r1wap, r1lev
-!  real                              rPsfc, rP, rmiss
-!  integer                           iz_scnd
-!  real                              omega_atP
-!!
-!if ( -rP .lt. -rPsfc ) then
-!  omega_atP = rmiss
-!else if ( -rP .lt. -r1lev(iz_btm) ) then
-!  omega_atP = r1wap(iz_btm) + ( rP - r1lev(iz_btm) )&
-!                  *(0.0 - r1wap(iz_btm))/(rPsfc - r1lev(iz_btm))
-!else
-!  iz_scnd = findiz_scnd( nz, r1lev, rP )
-!  omega_atP =r1wap(iz_scnd)&
-!             + ( r1wap(iz_scnd -1) - r1wap(iz_scnd) )&
-!             /( r1lev(iz_scnd -1) - r1lev(iz_scnd) )&
-!             *( rP - r1lev(iz_scnd) )
-!
-!end if
-!RETURN
-!END FUNCTION omega_atP
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION omega_atP(nz, iz_btm, r1wap, r1lev, rPsfc, rP, rmiss)
   implicit none
@@ -1252,9 +1160,9 @@ real                             rWb, rWt
 real                             rPsfc
 real                             rTb
 !------
-integer                          nsig
-real                             dP, rPb. rPt, rdWdP
-real                             rPnew. rWnew, rTnew
+integer                          isig, nsig
+real                             dP, rPb, rPt, rdWdP
+real                             rPnew, rWnew, rTnew
 real                             rP, rT, rW, rdqdP, rdqdsig, rV
 !------
 real                             integral_WA_seg
@@ -1319,7 +1227,11 @@ FUNCTION integral_dWA_seg(dsig, rsigb, rsigt, rWb1, rWb2, rWt1, rWt2, rPsfc1, rP
   !--for calculation---
   integer                        isig, nsig
   real                           dP1, dP2
-  real                           rWnew1, rWnew2, rPew
+  real                           rPb1, rPb2, rPt1, rPt2
+  real                           rWnew1, rWnew2, rPnew1, rTnew1
+  real                           rW1, rW2
+  real                           rP1, rP2
+  real                           rT1
   real                           rdWdP1, rdWdP2
   real                           rdqdP1, rdqdsig1
   real                           rV
@@ -1397,9 +1309,14 @@ real                            rPsfc1, rPsfc2
 real                            rTb1, rTb2
 !
 integer                         isig, nsig
-real                            dP1, dP2, dPnew1, dPnew2
+real                            dP1, dP2
+real                            rsigb1, rsigb2
+real                            rPb1, rPb2, rPt1, rPt2, rPnew1, rPnew2
+real                            rP1, rP2
+real                            rsig1, rsig2
 real                            rT1, rT2, rTnew1, rTnew2
 real                            rW1, rWnew1
+real                            rdwdp1
 real                            rdqdP1, rdqdP2, rdqdsig1, rdqdsig2
 real                            rV
 !
@@ -1457,7 +1374,7 @@ rdqdsig2 = rdqdP2 * rPsfc2
 if (rW1 .ge. 0.0) then
   rV = 0.0d0
 else
-  rV = rW1 /rPsfc1 * (rdqdsig2 - rddqdsig1)
+  rV = rW1 /rPsfc1 * (rdqdsig2 - rdqdsig1)
 endif
 integral_WdA_seg = integral_WdA_seg + rV * ( (rsig1 - rsig2) - dsig*nsig ) 
 !-----------------------------------a
@@ -1468,5 +1385,5 @@ END FUNCTION integral_WdA_seg
 !****************************************************
 
 
-END PROGRAM dtanl_cmip
+END PROGRAM dtanl_merra
 

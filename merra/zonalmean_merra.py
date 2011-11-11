@@ -10,7 +10,7 @@ nz = 1
 #nz = 25
 #--------
 iyear = 2001
-eyear = 2010
+eyear = 2002
 im = 1
 em = 12
 tstp = "day"

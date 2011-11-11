@@ -24,7 +24,7 @@ xth =99.0
 idir_root = "/media/disk2/data/CMIP5/bn"
 odir_root = idir_root
 cmd = "/home/utsumi/bin/dtanl/cmip5/dtanl_cmip"
-lvar = ["tas", "huss", "psl", "zg", "wap"]
+lvar = ["tas", "huss", "psl", "zg", "wap","prc"]
 #####################################################
 # functions
 #####################################################
@@ -65,6 +65,7 @@ soDlapse = somapdir + "/dP.lapse.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soDhumid = somapdir + "/dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soDfull  = somapdir + "/dP.full.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soLCL_full = somapdir + "/dP.lcl_full.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+sonan   = somapdir + "/nan.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 #---------------------------
 # set szgfile
 #---------------------------
@@ -119,8 +120,9 @@ for era in ["his", "fut"]:
 
    
 #----------------------------------------------------
-os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
+os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
           %(cmd \
+          , smeanfile["his","prc"] \
           , smeanfile["his","tas"] \
           , smeanfile["his","huss"]\
           , smeanfile["his","psl"]\
@@ -128,6 +130,7 @@ os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s 
           , smeanfile["his","wap"]\
           , szgfile["his"]\
           , sPrecfile["his"]\
+          , smeanfile["fut","prc"] \
           , smeanfile["fut","tas"] \
           , smeanfile["fut","huss"]\
           , smeanfile["fut","psl"]\
@@ -144,6 +147,7 @@ os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s 
           , soDhumid\
           , soDfull\
           , soLCL_full\
+          , sonan\
           , nx\
           , ny\
           , nz) )
