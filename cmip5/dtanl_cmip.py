@@ -66,6 +66,9 @@ soDhumid = somapdir + "/dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soDfull  = somapdir + "/dP.full.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soLCL_full = somapdir + "/dP.lcl_full.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 sonan   = somapdir + "/nan.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+soFracChngLCL = somapdir + "/frac.chng.LCL_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+soFracChngRH = somapdir + "/frac.chng.RH_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+soChngRH = somapdir + "/chng.RH_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 #---------------------------
 # set szgfile
 #---------------------------
@@ -99,9 +102,12 @@ for era in ["his", "fut"]:
   #---------------------------
   dir_Prec = "/media/disk2/out/CMIP5/%s/%s/%s/%s/prxth/%04d-%04d/%02d-%02d"\
               %(tstp, model, expr, ens, iy, ey, im, em)
-  sname_Prec= "prxth_%s_%s_%s_%s_%06.2f.bn"%(tstp, model, expr
-, ens, xth)
+  sname_Prec= "prxth_%s_%s_%s_%s_%06.2f.bn"%(tstp, model, expr, ens, xth)
+  #dir_Prec = "/media/disk2/out/CMIP5/%s/%s/%s/%s/cnd.mean/pr/%04d-%04d/%02d-%02d"%(tstp, model, expr, ens, iy, ey, im, em)
+  #sname_Prec = "pr_%s_%s_%s_%s_%06.2f.bn"%(tstp, model, expr, ens, xth)
+  #
   sPrecfile[(era)] = dir_Prec +"/%s"%(sname_Prec)
+
   #
   check_file(sPrecfile[(era)])
 
@@ -120,7 +126,7 @@ for era in ["his", "fut"]:
 
    
 #----------------------------------------------------
-os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
+os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
           %(cmd \
           , smeanfile["his","prc"] \
           , smeanfile["his","tas"] \
@@ -148,6 +154,9 @@ os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s 
           , soDfull\
           , soLCL_full\
           , sonan\
+          , soFracChngLCL\
+          , soFracChngRH\
+          , soChngRH\
           , nx\
           , ny\
           , nz) )

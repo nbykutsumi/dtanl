@@ -6,11 +6,11 @@ character*1000                       cPRC1, cTsfc1, cqsfc1, cPsea1, cPlcl1, czg1
 character*1000                       cPRC2, cTsfc2, cqsfc2, cPsea2, cPlcl2, czg2, cwap2, czsfc2, cPrec2
 character*1000                       clev
 character*1000                       cofile1, cofile2
-character*1000                       codPrec, coDdynam, coDlapse, coDhumid, coDfull, colcl_full, coNaN
+character*1000                       codPrec, coDdynam, coDlapse, coDhumid, coDfull, colcl_full, coNaN, coFracChngLCL, coFracChngRH, coChngRH
 character*100                        cnx, cny, cnz
 !
 integer                              nx, ny, nz
-real,allocatable,dimension(:)     :: r1lev
+real,allocatable,dimension(:)     :: r1lev     ! [Pa], not [hPa]
 real,allocatable,dimension(:,:)   :: r2PRC1, r2Tsfc1, r2qsfc1, r2zsfc1, r2Psea1
 real,allocatable,dimension(:,:)   :: r2PRC2, r2Tsfc2, r2qsfc2, r2zsfc2, r2Psea2
 real,allocatable,dimension(:,:,:) :: r3zg1, r3wap1
@@ -25,7 +25,7 @@ real                                 rTsfc1, rqsfc1, rzsfc1, rPsea1
 real                                 rTsfc2, rqsfc2, rzsfc2, rPsea2
 real,allocatable,dimension(:)     :: r1wap1, r1zg1
 real,allocatable,dimension(:)     :: r1wap2, r1zg2
-real                                 rSWA, rSdWA, rSWdA, rSWAdlcl
+real                                 rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA
 !** for calculation **
 integer                              ix, iy, iz, nnx
 real                                 rlat, rlon
@@ -45,7 +45,7 @@ real                                 re1, re2, res1, res2, rRH1, rRH2, rqsatsfc1
 !--------------------------------------------------
 ! Get filenames
 !--------------------------------------------------
-if (iargc().lt.29) then
+if (iargc().lt.32) then
   print *, "Usage: cmd &
           & [ifile_prc1]  <-- convective precip &
           & [ifile_Tsfc1] [ifile_qsfc1]&
@@ -61,6 +61,9 @@ if (iargc().lt.29) then
           & [coDlapse] [coDhumid] &
           & [coLCL_full] &
           & [coNaN] &
+          & [coFracChngLCL] &
+          & [coFracChngRH]  &
+          & [coChngRH]  &
           & [nx] [ny] [nz]"
   stop
 endif
@@ -93,9 +96,12 @@ call getarg(23, coDhumid)
 call getarg(24, coDfull)
 call getarg(25, colcl_full)
 call getarg(26, coNaN)
-call getarg(27, cnx)
-call getarg(28, cny)
-call getarg(29, cnz)
+call getarg(27, coFracChngLCL)
+call getarg(28, coFracChngRH)
+call getarg(29, coChngRH)
+call getarg(30, cnx)
+call getarg(31, cny)
+call getarg(32, cnz)
 read(cnx, *) nx
 read(cny, *) ny
 read(cnz, *) nz
@@ -228,7 +234,7 @@ do iy =1,ny
     call calc_scales(nz, r1lev, dP &
              ,rTsfc1, rqsfc1, rzsfc1, rPsea1, r1wap1, r1zg1 &
              ,rTsfc2, rqsfc2, rzsfc2, rPsea2, r1wap2, r1zg2 &
-             ,rSWA, rSdWA, rSWdA, rSWAdlcl)
+             ,rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA)
     !---------------
     ! make Prec, Tsfc, qsfc difference map between two era
     !---------------
@@ -268,7 +274,7 @@ do iy =1,ny
     !---------------
     rPlcl1 = lcl(rPsfc1, rTsfc1, rqsfc1)
     rPlcl2 = lcl(rPsfc2, rTsfc2, rqsfc2)
-    r2dPlcl(ix,iy) = rPlcl1 - rPlcl2
+    r2dPlcl(ix,iy) = rPlcl2 - rPlcl1
     r2dPlcl(ix,iy) = r2dPlcl(ix,iy) / rPlcl1 *100
     !------------------
     !* filter too small r2Prec1 and r2SWA
@@ -279,6 +285,7 @@ do iy =1,ny
       r2SWdA(ix,iy)    = rmiss 
       r2SWAdlcl(ix,iy) = rmiss 
       r2full(ix,iy)    = rmiss
+      r2dSWA(ix,iy)    = rmiss
       !
       r2dPrec(ix,iy)   = rmiss
       r2dPRC(ix,iy)    = rmiss
@@ -289,6 +296,7 @@ do iy =1,ny
       r2SdWA(ix,iy)    = rSdWA /abs(rSWA)      *100   
       r2SWdA(ix,iy)    = rSWdA /abs(rSWA)      *100 
       r2SWAdlcl(ix,iy) = rSWAdlcl /abs(rSWA)   *100
+      r2dSWA(ix,iy)    = rdSWA /abs(rSWA)      *100
       !
       r2full(ix,iy)    = r2SdWA(ix,iy) + r2SWdA(ix,iy) + r2SWAdlcl(ix,iy)
       r2NaN(ix,iy)     = 0.0
@@ -324,6 +332,7 @@ do iy = 1,ny
   r1SdWA(iy)   = 0.0
   r1SWdA(iy)   = 0.0
   r1SWAdlcl(iy)= 0.0
+  r1dSWA(iy)   = 0.0
   nnx = 0
   do ix = 1,nx
     if (iy .eq. 1) then
@@ -346,6 +355,7 @@ do iy = 1,ny
       r1SdWA(iy)    = r1SdWA(iy)   + r2SdWA(ix,iy)
       r1SWdA(iy)    = r1SWdA(iy)   + r2SWdA(ix,iy)
       r1SWAdlcl(iy) = r1SWAdlcl(iy) + r2SWAdlcl(ix,iy) 
+      r1dSWA(iy)    = r1dSWA(iy)   + r2dSWA(ix,iy)
     end if
   end do
   r1dPrec(iy)   = r1dPrec(iy) /nnx 
@@ -363,8 +373,8 @@ do iy = 1,ny
   r1SdWA(iy)    = r1SdWA(iy) / nnx 
   r1SWdA(iy)    = r1SWdA(iy) / nnx 
   r1SWAdlcl(iy) = r1SWAdlcl(iy) /nnx
+  r1dSWA(iy)    = r1dSWA(iy) / nnx
 
-  print * ,"aa",iy,r1dPrec(iy), r1dPRC(iy), r1SdWA(iy)+ r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy)
 end do
 
 !------------------------------------------------
@@ -373,8 +383,8 @@ end do
 open(31, file=cofile1, status="replace")
 do iy = 1,ny
   rlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
-
-  write(31, '(i4, f7.2, 7f8.2)') ,iy, rlat, r1dPrec(iy), r1SdWA(iy) +r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy), r1dPRC(iy), r1dPother(iy)
+  print *,"r1dSWA=",r1dSWA(iy)
+  write(31, '(i4, f7.2, 9f8.2)') ,iy, rlat, r1dPrec(iy), r1SdWA(iy) +r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy), r1dSWA(iy), r1dPRC(iy), r1dPother(iy)
 
 end do
 close(31) 
@@ -387,7 +397,7 @@ open(32, file=cofile2, status="replace")
 do iy = 1,ny
   rlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
   print *,r1dPlcl(iy),r1dqsfc(iy),r1dqsatsfc(iy)
-  write(32,'(i4, f7.2, 5f8.2)' ), iy, rlat, r1dTsfc(iy),r1absdRHsfc(iy), r1dPlcl(iy), r1dqsfc(iy), r1dqsatsfc(iy)
+  write(32,'(i4, f7.2, 6f8.2)' ), iy, rlat, r1dTsfc(iy),r1absdRHsfc(iy), r1dPlcl(iy), r1dqsfc(iy), r1dqsatsfc(iy), r1dRHsfc(iy)
 
 end do
 close(32)
@@ -402,6 +412,9 @@ open(36, file=coDhumid, access="direct", recl=nx)
 open(37, file=coDfull , access="direct", recl=nx)
 open(38, file=colcl_full, access="direct",recl=nx)
 open(39, file=coNaN,    access="direct", recl=nx)
+open(40, file=coFracChngLCL,access="direct", recl=nx)
+open(41, file=coFracChngRH,access="direct", recl=nx)
+open(42, file=coChngRH,access="direct", recl=nx)
 do iy = 1,ny
   write(33, rec=iy) (r2dPrec(ix,iy)     , ix=1,nx)
   write(34, rec=iy) (r2SdWA(ix,iy)      , ix=1,nx)
@@ -410,6 +423,9 @@ do iy = 1,ny
   write(37, rec=iy) (r2full(ix,iy)      , ix=1,nx)
   write(38, rec=iy) (r2lcl_full(ix,iy)  , ix=1,nx)
   write(39, rec=iy) (r2NaN(ix,iy)       , ix=1,nx)
+  write(40, rec=iy) (r2dPlcl(ix,iy)     , ix=1,nx)
+  write(41, rec=iy) (r2dRHsfc(ix,iy)    , ix=1,nx)
+  write(42, rec=iy) (r2absdRHsfc(ix,iy) , ix=1,nx)
 end do
 close(33)
 close(34)
@@ -418,6 +434,9 @@ close(36)
 close(37)
 close(38)
 close(39)
+close(40)
+close(41)
+close(42)
 print *,trim(codPrec)
 !************************************
 CONTAINS
@@ -427,7 +446,7 @@ CONTAINS
 SUBROUTINE calc_scales(nz, r1lev, dP &
            ,rTsfc1, rqsfc1, rzsfc1, rPsea1, r1wap1, r1zg1 &
            ,rTsfc2, rqsfc2, rzsfc2, rPsea2, r1wap2, r1zg2 &
-           ,rSWA, rSdWA, rSWdA, rSWAdlcl)
+           ,rSWA1, rSdWA, rSWdA, rSWAdlcl, rdSWA)
 !-----------------------------------------------------
   implicit none
   integer                       nz
@@ -442,7 +461,8 @@ SUBROUTINE calc_scales(nz, r1lev, dP &
   real,dimension(nz)         :: r1wap2, r1zg2
 !
 !--- for calculation ----------------
-  real                       :: rSWA, rSdWA, rSWdA, rSWAdlcl
+  real                       :: rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA
+  real                       :: rSWA1, rSWA2
 !--
   real,dimension(nz)         :: r1wap_fz1, r1wap_fz2
   real,dimension(nz)         :: r1T1,      r1T2
@@ -464,16 +484,6 @@ SUBROUTINE calc_scales(nz, r1lev, dP &
   real,parameter             :: rmiss = -9999.0
   ! this missing value doesn't affect the calculation
 !-------------
-!
-!print *,"nz",nz
-!print *,"Tsfc",rTsfc2
-!print *,"qsfc",rqsfc2
-!print *,"zsfc",rzsfc2
-!print *,"Psea",rPsea2
-!print *,"wap", r1wap2
-!print *,"lev", r1lev
-!
-!--------
 rPsfc1 = Psea2Psfc(rTsfc1, rqsfc1, rzsfc1, rPsea1)
 rPsfc2 = Psea2Psfc(rTsfc2, rqsfc2, rzsfc2, rPsea2)
 rPlcl1 = lcl(rPsfc1, rTsfc1, rqsfc1)
@@ -520,21 +530,19 @@ rW2_lcl2 = omega_lcl( nz, iz_btm2, iz_scnd_lcl2, r1wap, r1lev, rPsfc, rPlcl2)
 !
 rT2_lcl2   = T1toT2dry(rTsfc, rPsfc2, rPlcl2)
 rT2_lcl1   = moistadiabat(r1lev(1),r1T2(1), rPlcl1, dP)
-!**********************
-!print *,r1wap_fz1
-!print *,rT2_lcl2
-!print *,rT2_lcl1
-!** scales ************
-!  integral_WA_seg(rP1, rP2, rW1, rW2, rT1, dP)
-!  integral_dWA_seg(rP1, rP2, rW1_i, rW2_i, rW1_e, rW2_e, rT1, dP)
-!  integral_WdA_seg(rP1, rP2, rW1, rW2, rT1_i, rT1_e, dP)
 !************************
 !** from rPlcl1 to r1lev(iz_scnd_lcl1) ***
 !************************
-rSWA  =  integral_WA_seg(&
-            rPlcl1, r1lev(iz_scnd_lcl1) &               ! rP1, rP2
+rSWA1  =  integral_WA_seg(&
+            rPlcl1, r1lev(iz_scnd_lcl1) &                ! rP1, rP2
            , rW1_lcl1, r1wap_fz1(iz_scnd_lcl1)&          ! rW1, rW2
            , rT1_lcl1, dP)                               ! rT1, dP
+
+rSWA2  =  integral_WA_seg(&
+            rPlcl2, r1lev(iz_scnd_lcl2) &                ! rP1, rP2
+           , rW2_lcl2, r1wap_fz2(iz_scnd_lcl2)&          ! rW1, rW2
+           , rT1_lcl2, dP)                               ! rT1, dP
+
 rSdWA = integral_dWA_seg(&
             rPlcl1, r1lev(iz_scnd_lcl1) &               ! rP1, rP2
            , rW1_lcl1, r1wap_fz1(iz_scnd_lcl1) &         ! rW1_i, rW2_i
@@ -550,11 +558,18 @@ rSWdA = integral_WdA_seg(&
 !** from r1lev(iz_scnd) to top *------------ 
 !************************
 do iz = iz_scnd_lcl1, nz-1
-  rSWA  = rSWA &
+  rSWA1  = rSWA1 &
          + integral_WA_seg(&
               r1lev(iz), r1lev(iz +1) &                  ! rP1, rP2
              , r1wap_fz1(iz), r1wap_fz1(iz+1)&            ! rW1, rW2
              , r1T1(iz) , dP)                             ! rT1, dP
+
+  rSWA2  = rSWA2 &
+         + integral_WA_seg(&
+              r1lev(iz), r1lev(iz +1) &                  ! rP1, rP2
+             , r1wap_fz2(iz), r1wap_fz2(iz+1)&            ! rW1, rW2
+             , r1T2(iz) , dP)                             ! rT1, dP
+
   rSdWA = rSdWA &
          + integral_dWA_seg(&
               r1lev(iz), r1lev(iz+1) &                   ! rP1, rP2
@@ -568,25 +583,42 @@ do iz = iz_scnd_lcl1, nz-1
              , r1T1(iz), r1T2(iz)  &                      ! rT1_i, rT1_e
              , dP)                                        ! dP
   
-  !rSWAdlcl = rSWAdlcl &
-  !       + rW1_lcl1 * cal_rdqdP(rPlcl1, rT1_lcl1, dP) * (rPlcl2 - rPlcl1)
-
-
-!  integral_WA_seg(rP1, rP2, rW1, rW2, rT1, dP)
-!  integral_dWA_seg(rP1, rP2, rW1_i, rW2_i, rW1_e, rW2_e, rT1, dP)
-!  integral_WdA_seg(rP1, rP2, rW1, rW2, rT1_i, rT1_e, dP)
 end do
 !************************
 !** effect of LCL change ( from rPlcl1 to rPlcl2 )
 !************************
 if (rW1_lcl1 .lt. 0.0) then
   rSWAdlcl = -rW1_lcl1 * cal_rdqdP(rPlcl1, rT1_lcl1, dP) * (rPlcl2 - rPlcl1)
+  !if ( (rPlcl2 - rPlcl1)/rPlcl1 *100.0 > 3.0) then
+  !  print *,"*******************************"
+  !  print *,"fac.Plcl=",  (rPlcl2 - rPlcl1)/rPlcl1 * 100.0
+  !  print *,"SWAdlcl=  ", rSWAdlcl
+  !  print *,"-rW1_lcl1=",-rW1_lcl1
+  !  print *,"dqdP=     ",cal_rdqdP(rPlcl1, rT1_lcl1, dP)
+  !  print *,"dPlcl=    ",rPlcl2 - rPlcl1
+  !  print *,"Plcl1=    ",rPlcl1
+  !  print *,"rSWA1=    ",rSWA1
+  !endif
+  !if (( 0.005 < (rPlcl2 - rPlcl1)/rPlcl1 *100.0) .and. ( (rPlcl2 - rPlcl1)/rPlcl1 *100.0 < 0.01)) then
+  !  print *,"*******************************"
+  !  print *,"fac.Plcl=",  (rPlcl2 - rPlcl1)/rPlcl1 * 100.0
+  !  print *,"SWAdlcl=  ", rSWAdlcl
+  !  print *,"-rW1_lcl1=",-rW1_lcl1
+  !  print *,"dqdP=     ",cal_rdqdP(rPlcl1, rT1_lcl1, dP)
+  !  print *,"dPlcl=    ",rPlcl2 - rPlcl1
+  !  print *,"Plcl1=    ",rPlcl1
+  !  print *,"rSWA1=    ",rSWA1
+  !endif
+
+
 else
   rSWAdlcl = 0.0
 end if
-!print *, "bbbb",rSWAdlcl, rW1_lcl1, cal_rdqdP(rPlcl1, rT1_lcl1, dP), rPlcl1, rPlcl2
-
 !************************
+!** dSWA
+!************************
+rdSWA = rSWA2 - rSWA1
+
 
 RETURN
 END SUBROUTINE
