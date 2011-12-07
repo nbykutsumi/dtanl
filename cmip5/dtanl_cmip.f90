@@ -2,8 +2,8 @@ PROGRAM dtanl_cmip
 !--------------------------------------------------------------
 implicit none
 !
-character*1000                       cPRC1, cTsfc1, cqsfc1, cPsea1, cPlcl1, czg1, cwap1, czsfc1, cPrec1
-character*1000                       cPRC2, cTsfc2, cqsfc2, cPsea2, cPlcl2, czg2, cwap2, czsfc2, cPrec2
+character*1000                       cPRC1, cTsfc1, cqsfc1, cPsea1, cRHsfc1, cPlcl1, czg1, cwap1, czsfc1, cPrec1
+character*1000                       cPRC2, cTsfc2, cqsfc2, cPsea2, cRHsfc2, cPlcl2, czg2, cwap2, czsfc2, cPrec2
 character*1000                       clev
 character*1000                       cofile1, cofile2
 character*1000                       codPrec, coDdynam, coDlapse, coDhumid, coDfull, colcl_full, coNaN, coFracChngLCL, coFracChngRH, coChngRH
@@ -11,8 +11,8 @@ character*100                        cnx, cny, cnz
 !
 integer                              nx, ny, nz
 real,allocatable,dimension(:)     :: r1lev     ! [Pa], not [hPa]
-real,allocatable,dimension(:,:)   :: r2PRC1, r2Tsfc1, r2qsfc1, r2zsfc1, r2Psea1
-real,allocatable,dimension(:,:)   :: r2PRC2, r2Tsfc2, r2qsfc2, r2zsfc2, r2Psea2
+real,allocatable,dimension(:,:)   :: r2PRC1, r2Tsfc1, r2qsfc1, r2RHsfc1, r2zsfc1, r2Psea1
+real,allocatable,dimension(:,:)   :: r2PRC2, r2Tsfc2, r2qsfc2, r2RHsfc2, r2zsfc2, r2Psea2
 real,allocatable,dimension(:,:,:) :: r3zg1, r3wap1
 real,allocatable,dimension(:,:,:) :: r3zg2, r3wap2
 
@@ -40,12 +40,13 @@ real,allocatable,dimension(:)     :: r1Prec1, r1dPrec, r1dPRC, r1dPother
 real,allocatable,dimension(:)     :: r1dTsfc, r1dqsfc, r1dqsatsfc, r1dRHsfc, r1dPlcl, r1abs, dRHsfc, r1absdRHsfc
 real,allocatable,dimension(:)     :: r1SWA, r1SdWA, r1SWdA, r1SWAdlcl
 real,allocatable,dimension(:)     :: r1dSWA
-real                                 re1, re2, res1, res2, rRH1, rRH2, rqsatsfc1, rqsatsfc2, rPlcl1, rPlcl2,rPsfc1, rPsfc2
+real                                 re1, re2, res1, res2, rqsatsfc1, rqsatsfc2, rPlcl1, rPlcl2
+real                                 rPsfc1, rPsfc2, rRHsfc1, rRHsfc2
 !***********************************************************
 !--------------------------------------------------
 ! Get filenames
 !--------------------------------------------------
-if (iargc().lt.32) then
+if (iargc().lt.34) then
   print *, "Usage: cmd &
           & [ifile_prc1]  <-- convective precip &
           & [ifile_Tsfc1] [ifile_qsfc1]&
@@ -71,45 +72,47 @@ endif
 call getarg(1, cPRC1)
 call getarg(2, cTsfc1)
 call getarg(3, cqsfc1)
-call getarg(4, cPsea1)
-call getarg(5, czg1)
-call getarg(6, cwap1)
-call getarg(7, czsfc1)
-call getarg(8, cPrec1)
+call getarg(4, cRHsfc1)
+call getarg(5, cPsea1)
+call getarg(6, czg1)
+call getarg(7, cwap1)
+call getarg(8, czsfc1)
+call getarg(9, cPrec1)
 !
-call getarg(9, cPRC2)
-call getarg(10, cTsfc2)
-call getarg(11, cqsfc2)
-call getarg(12, cPsea2)
-call getarg(13, czg2)
-call getarg(14, cwap2)
-call getarg(15, czsfc2)
-call getarg(16, cPrec2)
+call getarg(10, cPRC2)
+call getarg(11, cTsfc2)
+call getarg(12, cqsfc2)
+call getarg(13, cRHsfc2)
+call getarg(14, cPsea2)
+call getarg(15, czg2)
+call getarg(16, cwap2)
+call getarg(17, czsfc2)
+call getarg(18, cPrec2)
 !
-call getarg(17, clev)
-call getarg(18, cofile1)
-call getarg(19, cofile2)
-call getarg(20, codPrec)
-call getarg(21, coDdynam)
-call getarg(22, coDlapse)
-call getarg(23, coDhumid)
-call getarg(24, coDfull)
-call getarg(25, colcl_full)
-call getarg(26, coNaN)
-call getarg(27, coFracChngLCL)
-call getarg(28, coFracChngRH)
-call getarg(29, coChngRH)
-call getarg(30, cnx)
-call getarg(31, cny)
-call getarg(32, cnz)
+call getarg(19, clev)
+call getarg(20, cofile1)
+call getarg(21, cofile2)
+call getarg(22, codPrec)
+call getarg(23, coDdynam)
+call getarg(24, coDlapse)
+call getarg(25, coDhumid)
+call getarg(26, coDfull)
+call getarg(27, colcl_full)
+call getarg(28, coNaN)
+call getarg(29, coFracChngLCL)
+call getarg(30, coFracChngRH)
+call getarg(31, coChngRH)
+call getarg(32, cnx)
+call getarg(33, cny)
+call getarg(34, cnz)
 read(cnx, *) nx
 read(cny, *) ny
 read(cnz, *) nz
 !--------------------------------------------------
 !*** for input ******
 allocate(r1lev(nz))
-allocate(r2PRC1(nx,ny), r2Tsfc1(nx,ny), r2qsfc1(nx,ny), r2zsfc1(nx,ny), r2Psea1(nx,ny), r2Prec1(nx,ny))
-allocate(r2PRC2(nx,ny), r2Tsfc2(nx,ny), r2qsfc2(nx,ny), r2zsfc2(nx,ny), r2Psea2(nx,ny), r2Prec2(nx,ny))
+allocate(r2PRC1(nx,ny), r2Tsfc1(nx,ny), r2qsfc1(nx,ny), r2RHsfc1(nx,ny), r2zsfc1(nx,ny), r2Psea1(nx,ny), r2Prec1(nx,ny))
+allocate(r2PRC2(nx,ny), r2Tsfc2(nx,ny), r2qsfc2(nx,ny), r2RHsfc2(nx,ny), r2zsfc2(nx,ny), r2Psea2(nx,ny), r2Prec2(nx,ny))
 allocate(r3zg1(nx,ny,nz), r3wap1(nx,ny,nz))
 allocate(r3zg2(nx,ny,nz), r3wap2(nx,ny,nz))
 !*** for SUBROUTINE calc_scales ****
@@ -136,32 +139,36 @@ allocate(r1dSWA(ny))
 open(11, file = cPRC1 , access="DIRECT", status="old", recl =nx)
 open(12, file = cTsfc1, access="DIRECT", status="old", recl =nx)
 open(13, file = cqsfc1, access="DIRECT", status="old", recl =nx)
-open(14, file = czsfc1, access="DIRECT", status="old", recl =nx)
-open(15, file = cPsea1, access="DIRECT", status="old", recl =nx)
-open(16, file = cPrec1, access="DIRECT", status="old", recl =nx)
+open(14, file = cRHsfc1,access="DIRECT", status="old", recl =nx)
+open(15, file = czsfc1, access="DIRECT", status="old", recl =nx)
+open(16, file = cPsea1, access="DIRECT", status="old", recl =nx)
+open(17, file = cPrec1, access="DIRECT", status="old", recl =nx)
 !
-open(17, file = cPRC2,  access="DIRECT", status="old", recl =nx)
-open(18, file = cTsfc2, access="DIRECT", status="old", recl =nx)
-open(19, file = cqsfc2, access="DIRECT", status="old", recl =nx)
-open(20, file = czsfc2, access="DIRECT", status="old", recl =nx)
-open(21, file = cPsea2, access="DIRECT", status="old", recl =nx)
-open(22, file = cPrec2, access="DIRECT", status="old", recl =nx)
+open(18, file = cPRC2,  access="DIRECT", status="old", recl =nx)
+open(19, file = cTsfc2, access="DIRECT", status="old", recl =nx)
+open(20, file = cqsfc2, access="DIRECT", status="old", recl =nx)
+open(21, file = cRHsfc2,access="DIRECT", status="old", recl =nx)
+open(22, file = czsfc2, access="DIRECT", status="old", recl =nx)
+open(23, file = cPsea2, access="DIRECT", status="old", recl =nx)
+open(24, file = cPrec2, access="DIRECT", status="old", recl =nx)
 
 do iy =1, ny
   !-----
   read(11, rec=iy) ( r2PRC1(ix,iy)  , ix=1, nx)
   read(12, rec=iy) ( r2Tsfc1(ix,iy) , ix=1, nx)
   read(13, rec=iy) ( r2qsfc1(ix,iy) , ix=1, nx)
-  read(14, rec=iy) ( r2zsfc1(ix,iy) , ix=1, nx)
-  read(15, rec=iy) ( r2Psea1(ix,iy) , ix=1, nx)
-  read(16, rec=iy) ( r2Prec1(ix,iy) , ix=1, nx)
+  read(14, rec=iy) ( r2RHsfc1(ix,iy), ix=1, nx)
+  read(15, rec=iy) ( r2zsfc1(ix,iy) , ix=1, nx)
+  read(16, rec=iy) ( r2Psea1(ix,iy) , ix=1, nx)
+  read(17, rec=iy) ( r2Prec1(ix,iy) , ix=1, nx)
   !
-  read(17, rec=iy) ( r2PRC2(ix,iy)  , ix=1, nx)
-  read(18, rec=iy) ( r2Tsfc2(ix,iy) , ix=1, nx)
-  read(19, rec=iy) ( r2qsfc2(ix,iy) , ix=1, nx)
-  read(20, rec=iy) ( r2zsfc2(ix,iy) , ix=1, nx)
-  read(21, rec=iy) ( r2Psea2(ix,iy) , ix=1, nx)
-  read(22, rec=iy) ( r2Prec2(ix,iy) , ix=1, nx)
+  read(18, rec=iy) ( r2PRC2(ix,iy)  , ix=1, nx)
+  read(19, rec=iy) ( r2Tsfc2(ix,iy) , ix=1, nx)
+  read(20, rec=iy) ( r2qsfc2(ix,iy) , ix=1, nx)
+  read(21, rec=iy) ( r2RHsfc2(ix,iy), ix=1, nx)
+  read(22, rec=iy) ( r2zsfc2(ix,iy) , ix=1, nx)
+  read(23, rec=iy) ( r2Psea2(ix,iy) , ix=1, nx)
+  read(24, rec=iy) ( r2Prec2(ix,iy) , ix=1, nx)
   !-----
 enddo
 close(11)
@@ -176,6 +183,8 @@ close(19)
 close(20)
 close(21)
 close(22)
+close(23)
+close(24)
 !-------------------------------------------------
 ! read files : 3D files
 !-------------------------------------------------
@@ -219,22 +228,46 @@ do iy =1,ny
     !---------------
     rTsfc1 = r2Tsfc1(ix,iy)
     rqsfc1 = r2qsfc1(ix,iy)
+    rRHsfc1= r2RHsfc1(ix,iy)
     rzsfc1 = r2zsfc1(ix,iy)
     rPsea1 = r2Psea1(ix,iy)
-    r1wap1 = mk_r1wap_fillzero(nz, rTsfc1, rqsfc1, rzsfc1, rPsea1, r3wap1(ix,iy,:), r1lev)
+    !r1wap1 = mk_r1wap_fillzero(nz, rTsfc1, rqsfc1, rzsfc1, rPsea1, r3wap1(ix,iy,:), r1lev)
     r1zg1  = r3zg1(ix,iy,:)
     !
     rTsfc2 = r2Tsfc2(ix,iy)
     rqsfc2 = r2qsfc2(ix,iy)
+    rRHsfc2= r2RHsfc2(ix,iy)
     rzsfc2 = r2zsfc2(ix,iy)
     rPsea2 = r2Psea2(ix,iy)
-    r1wap2 = mk_r1wap_fillzero(nz, rTsfc2, rqsfc2, rzsfc2, rPsea2, r3wap2(ix,iy,:), r1lev)
     r1zg2  = r3zg2(ix,iy,:)
     !------------------
+    ! calc surface pressure
+    !------------------
+    rPsfc1 = P_from_T_RH_q(rTsfc1, rRHsfc1, rqsfc1)     
+    rPsfc2 = P_from_T_RH_q(rTsfc2, rRHsfc2, rqsfc2)
+    !------------------
+    r1wap1 = mk_r1wap_fillzero(nz, rPsfc1, r3wap1(ix,iy,:), r1lev)
+    r1wap2 = mk_r1wap_fillzero(nz, rPsfc2, r3wap2(ix,iy,:), r1lev)
+    !------------------
+    ! calc surface pressure
+    !------------------
+    rPsfc1 = P_from_T_RH_q(rTsfc1, rRHsfc1, rqsfc1)     
+    rPsfc2 = P_from_T_RH_q(rTsfc2, rRHsfc2, rqsfc2)
+
+    !------------------
     call calc_scales(nz, r1lev, dP &
-             ,rTsfc1, rqsfc1, rzsfc1, rPsea1, r1wap1, r1zg1 &
-             ,rTsfc2, rqsfc2, rzsfc2, rPsea2, r1wap2, r1zg2 &
+             ,rTsfc1, rqsfc1, rPsfc1, rzsfc1, r1wap1, r1zg1 &
+             ,rTsfc2, rqsfc2, rPsfc2, rzsfc2, r1wap2, r1zg2 &
              ,rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA)
+
+
+    if (rSWA .gt. 1.0/60/60/24)then
+      if (abs(rSdWA/rSWA *100) .gt. 200.0)then
+        print *,"iy, ix=", iy, ix
+        print '("rPrec1=", e9.1)', r2Prec1(ix,iy)
+        print '("rPrec2=", e9.1)', r2Prec2(ix,iy)
+      endif
+    endif
     !---------------
     ! make Prec, Tsfc, qsfc difference map between two era
     !---------------
@@ -255,16 +288,16 @@ do iy =1,ny
     !---------------
     ! make RHsfc and qsatsfc difference map
     !---------------
-    rPsfc1 = Psea2Psfc( rTsfc1, rqsfc1, rzsfc1, rPsea1)
-    rPsfc2 = Psea2Psfc( rTsfc2, rqsfc2, rzsfc2, rPsea2)
+    !rPsfc1 = Psea2Psfc( rTsfc1, rqsfc1, rzsfc1, rPsea1)
+    !rPsfc2 = Psea2Psfc( rTsfc2, rqsfc2, rzsfc2, rPsea2)
     re1 = rPsfc1 *rqsfc1 /(rqsfc1 + 0.62185)
     re2 = rPsfc2 *rqsfc2 /(rqsfc2 + 0.62185)
     res1 = cal_es(rTsfc1)
     res2 = cal_es(rTsfc2)
-    rRH1 = re1 / res1 *100
-    rRH2 = re2 / res2 *100
-    r2absdRHsfc(ix,iy) = rRH2 - rRH1
-    r2dRHsfc(ix,iy) = (rRH2 - rRH1)/rRH1
+    !rRHsfc1 = re1 / res1 *100
+    !rRHsfc2 = re2 / res2 *100
+    r2absdRHsfc(ix,iy) = rRHsfc2 - rRHsfc1
+    r2dRHsfc(ix,iy) = (rRHsfc2 - rRHsfc1)/rRHsfc1
     !
     rqsatsfc1 = 0.62185*res1 / (rPsfc1 - res1)
     rqsatsfc2 = 0.62185*res2 / (rPsfc2 - res2)
@@ -335,9 +368,6 @@ do iy = 1,ny
   r1dSWA(iy)   = 0.0
   nnx = 0
   do ix = 1,nx
-    if (iy .eq. 1) then
-      print *,"iy,ix, r1dPrec=",iy,ix,r2dPrec(ix,iy)
-    end if
     if ( r2SWA(ix,iy) .ne. rmiss) then
       nnx = nnx + 1      
       !r1Prec1(iy)   = r1Prec1(iy)  + r2Prec1(ix,iy)
@@ -367,7 +397,6 @@ do iy = 1,ny
   r1dPlcl(iy)   = r1dPlcl(iy)  /nnx
   r1absdRHsfc(iy)=r1absdRHsfc(iy)/nnx
   r1dqsatsfc(iy)= r1dqsatsfc(iy) /nnx
-  print *,"dqsat",r1dqsatsfc(iy)      
   !
   r1SWA(iy)     = r1SWA(iy) / nnx 
   r1SdWA(iy)    = r1SdWA(iy) / nnx 
@@ -383,8 +412,7 @@ end do
 open(31, file=cofile1, status="replace")
 do iy = 1,ny
   rlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
-  print *,"r1dSWA=",r1dSWA(iy)
-  write(31, '(i4, f7.2, 9f8.2)') ,iy, rlat, r1dPrec(iy), r1SdWA(iy) +r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy), r1dSWA(iy), r1dPRC(iy), r1dPother(iy)
+  write(31, '(i4, f9.2, 9f10.2)') ,iy, rlat, r1dPrec(iy), r1SdWA(iy) +r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy), r1dSWA(iy), r1dPRC(iy), r1dPother(iy)
 
 end do
 close(31) 
@@ -396,8 +424,7 @@ print *,cofile1
 open(32, file=cofile2, status="replace")
 do iy = 1,ny
   rlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
-  print *,r1dPlcl(iy),r1dqsfc(iy),r1dqsatsfc(iy)
-  write(32,'(i4, f7.2, 6f8.2)' ), iy, rlat, r1dTsfc(iy),r1absdRHsfc(iy), r1dPlcl(iy), r1dqsfc(iy), r1dqsatsfc(iy), r1dRHsfc(iy)
+  write(32,'(i4, f9.2, 6f10.2)' ), iy, rlat, r1dTsfc(iy),r1absdRHsfc(iy), r1dPlcl(iy), r1dqsfc(iy), r1dqsatsfc(iy), r1dRHsfc(iy)
 
 end do
 close(32)
@@ -444,8 +471,8 @@ CONTAINS
 !* estimate scales
 !***********************************************************
 SUBROUTINE calc_scales(nz, r1lev, dP &
-           ,rTsfc1, rqsfc1, rzsfc1, rPsea1, r1wap1, r1zg1 &
-           ,rTsfc2, rqsfc2, rzsfc2, rPsea2, r1wap2, r1zg2 &
+           ,rTsfc1, rqsfc1, rPsfc1, rzsfc1, r1wap1, r1zg1 &
+           ,rTsfc2, rqsfc2, rPsfc2, rzsfc2, r1wap2, r1zg2 &
            ,rSWA1, rSdWA, rSWdA, rSWAdlcl, rdSWA)
 !-----------------------------------------------------
   implicit none
@@ -453,11 +480,11 @@ SUBROUTINE calc_scales(nz, r1lev, dP &
   real,dimension(nz)         :: r1lev
   real                          dP
 !
-  real                          rTsfc, rqsfc, rzsfc, rPsea
+  real                          rTsfc, rqsfc, rPsfc, rzsfc
   real,dimension(nz)         :: r1wap
-  real                          rTsfc1, rqsfc1, rzsfc1, rPsea1
+  real                          rTsfc1, rqsfc1, rPsfc1, rzsfc1
   real,dimension(nz)         :: r1wap1, r1zg1
-  real                          rTsfc2, rqsfc2, rzsfc2, rPsea2
+  real                          rTsfc2, rqsfc2, rPsfc2, rzsfc2
   real,dimension(nz)         :: r1wap2, r1zg2
 !
 !--- for calculation ----------------
@@ -473,26 +500,31 @@ SUBROUTINE calc_scales(nz, r1lev, dP &
   integer                       iz_scnd_lcl1, iz_scnd_lcl2
   real,dimension(nz)         :: r1zg
   real                          rPlcl1, rPlcl2
-  real                          rPsfc, rPsfc1, rPsfc2
   real                          rW1_lcl1, rW1_lcl2
   real                          rW2_lcl1, rW2_lcl2
+  real                          rW1_Psfc2
   real                          rT1_lcl1,   rT1_lcl2
   real                          rT2_lcl1,   rT2_lcl2
   real                          rdqdP1_lcl1, rdqdP1_lcl2
   real                          rdqdP2_lcl1, rdqdP2_lcl2
+!--- for check ----------------------
+  real                       :: rSWAbtm1, rSWAbtm2, rSdWAbtm, rSWdAbtm
+  real,dimension(nz)         :: r1SWA1,r1SWA2, r1SdWA, r1SWdA, r1SWAdlcl, r1full
+
+
 !-------------
   real,parameter             :: rmiss = -9999.0
   ! this missing value doesn't affect the calculation
 !-------------
-rPsfc1 = Psea2Psfc(rTsfc1, rqsfc1, rzsfc1, rPsea1)
-rPsfc2 = Psea2Psfc(rTsfc2, rqsfc2, rzsfc2, rPsea2)
+!rPsfc1 = Psea2Psfc(rTsfc1, rqsfc1, rzsfc1, rPsea1)
+!rPsfc2 = Psea2Psfc(rTsfc2, rqsfc2, rzsfc2, rPsea2)
 rPlcl1 = lcl(rPsfc1, rTsfc1, rqsfc1)
 rPlcl2 = lcl(rPsfc2, rTsfc2, rqsfc2)
 !**** state 1 *********
 rTsfc = rTsfc1
 rqsfc = rqsfc1
 rzsfc = rzsfc1
-rPsea = rPsea1
+!rPsea = rPsea1
 r1wap = r1wap1
 r1zg  = r1zg1
 rPsfc = rPsfc1
@@ -500,8 +532,10 @@ rPsfc = rPsfc1
 iz_btm1      = findiz_btm( rzsfc, r1zg, nz)
 iz_scnd_lcl1 = findiz_scnd( nz, r1lev, rPlcl1 )
 !------
-r1wap_fz1  = mk_r1wap_fillzero(nz, rTsfc, rqsfc, rzsfc, rPsea, r1wap, r1lev)
-r1T1       = mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
+!r1wap_fz1  = mk_r1wap_fillzero(nz, rTsfc, rqsfc, rzsfc, rPsea, r1wap, r1lev)
+r1wap_fz1  = mk_r1wap_fillzero(nz, rPsfc, r1wap, r1lev)
+!r1T1       = mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
+r1T1       = mk_r1T_extend(nz, rPsfc, rTsfc, rqsfc, r1lev, dP)
 r1dqdP1    = mk_r1dqdP(r1lev, r1T1, nz, dP, rmiss)
 !------
 rW1_lcl1 = omega_lcl( nz, iz_btm1, iz_scnd_lcl1, r1wap, r1lev, rPsfc, rPlcl1)
@@ -513,7 +547,7 @@ rT1_lcl2   = moistadiabat(r1lev(1),r1T1(1), rPlcl2, dP)
 rTsfc = rTsfc2
 rqsfc = rqsfc2
 rzsfc = rzsfc2
-rPsea = rPsea2
+!rPsea = rPsea2
 r1wap = r1wap2
 r1zg  = r1zg2
 rPsfc = rPsfc2
@@ -521,8 +555,10 @@ rPsfc = rPsfc2
 iz_btm2      = findiz_btm( rzsfc, r1zg, nz)
 iz_scnd_lcl2 = findiz_scnd( nz, r1lev, rPlcl2 )
 !------
-r1wap_fz2  = mk_r1wap_fillzero(nz, rTsfc, rqsfc, rzsfc, rPsea, r1wap, r1lev)
-r1T2       = mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
+!r1wap_fz2  = mk_r1wap_fillzero(nz, rTsfc, rqsfc, rzsfc, rPsea, r1wap, r1lev)
+r1wap_fz2  = mk_r1wap_fillzero(nz, rPsfc, r1wap, r1lev)
+!r1T2       = mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
+r1T2       = mk_r1T_extend(nz, rPsfc, rTsfc, rqsfc, r1lev, dP)
 r1dqdP2    = mk_r1dqdP(r1lev, r1T2, nz, dP, rmiss)
 !
 rW2_lcl1 = omega_lcl( nz, iz_btm2, iz_scnd_lcl2, r1wap, r1lev, rPsfc, rPlcl1)
@@ -543,16 +579,43 @@ rSWA2  =  integral_WA_seg(&
            , rW2_lcl2, r1wap_fz2(iz_scnd_lcl2)&          ! rW1, rW2
            , rT1_lcl2, dP)                               ! rT1, dP
 
-rSdWA = integral_dWA_seg(&
-            rPlcl1, r1lev(iz_scnd_lcl1) &               ! rP1, rP2
-           , rW1_lcl1, r1wap_fz1(iz_scnd_lcl1) &         ! rW1_i, rW2_i
-           , rW2_lcl1, r1wap_fz2(iz_scnd_lcl1)  &        ! rW1_e, rW2_e
-           , rT1_lcl1, dP )                    ! rT1, dP
+if ( -rPsfc2 .gt. -r1lev(iz_scnd_lcl1) )then
+  rSdWA  = 0.0
+else if ( (-rPsfc2 .gt. -rPlcl1).and.(-rPsfc2 .lt. -r1lev(iz_scnd_lcl1)) )then
+  rW1_Psfc2 = omega_atP(nz, iz_btm2, r1wap, r1lev, rPsfc1, rPsfc2, rmiss)
+  !
+  rSdWA  =  integral_dWA_seg(&
+            rPlcl1, rPsfc2 &                             ! rPb, rPt
+           , rW1_lcl1, rW1_Psfc2  &                      ! rWb_i, rWt_i
+           , 0.0, 0.0 &                                  ! rWb_e, rWt_e
+           , rT1_lcl1, dP ) &                            ! rTb, dP
+
+          + integral_dWA_seg(&
+            rPsfc2, r1lev(iz_scnd_lcl1) &                ! rPb, rPt
+           , rW1_Psfc2, r1wap_fz1(iz_scnd_lcl1) &        ! rWb_i, rWt_i
+           , 0.0, r1wap_fz2(iz_scnd_lcl1)  &             ! rWb_e, rWt_e
+           , rT1_lcl1, dP )                              ! rTb, dP
+else
+  rSdWA  =  integral_dWA_seg(&
+            rPlcl1, r1lev(iz_scnd_lcl1) &                ! rPb, rPt
+           , rW1_lcl1, r1wap_fz1(iz_scnd_lcl1) &         ! rWb_i, rWt_i
+           , rW2_lcl1, r1wap_fz2(iz_scnd_lcl1)  &        ! rWb_e, rWt_e
+           , rT1_lcl1, dP )                              ! rTb, dP
+end if
+
+
 rSWdA = integral_WdA_seg(&
-            rPlcl1, r1lev(iz_scnd_lcl1)  &              ! rP1, rP2
+            rPlcl1, r1lev(iz_scnd_lcl1)  &               ! rP1, rP2
            , rW1_lcl1, r1wap_fz1(iz_scnd_lcl1)  &        ! rW1, rW2
            , rT1_lcl1, rT2_lcl1   &                      ! rT1_i, rT1_e
            , dP)                                         ! dP
+
+!-----------------------------------
+rSWAbtm1 = rSWA1
+rSWAbtm2 = rSWA2
+rSdWAbtm = rSdWA
+rSWdAbtm = rSWdA
+
 
 !************************
 !** from r1lev(iz_scnd) to top *------------ 
@@ -582,35 +645,53 @@ do iz = iz_scnd_lcl1, nz-1
              , r1wap_fz1(iz), r1wap_fz1(iz+1) &            ! rW1, rW2
              , r1T1(iz), r1T2(iz)  &                      ! rT1_i, rT1_e
              , dP)                                        ! dP
-  
+  !-----------------------------
+  ! make 1D SWA
+  !-----------------------------
+  r1SWA1(iz) = integral_WA_seg(&
+              r1lev(iz), r1lev(iz +1) &                  ! rP1, rP2
+             , r1wap_fz1(iz), r1wap_fz1(iz+1)&            ! rW1, rW2
+             , r1T1(iz) , dP)                             ! rT1, dP
+
+  r1SWA2(iz) = integral_WA_seg(&
+              r1lev(iz), r1lev(iz +1) &                  ! rP1, rP2
+             , r1wap_fz2(iz), r1wap_fz2(iz+1)&            ! rW1, rW2
+             , r1T2(iz) , dP)                             ! rT1, dP
+
+  r1SdWA(iz) = integral_dWA_seg(&
+              r1lev(iz), r1lev(iz+1) &                   ! rP1, rP2
+             , r1wap_fz1(iz), r1wap_fz1(iz+1) &           ! rW1_i, rW2_i
+             , r1wap_fz2(iz), r1wap_fz2(iz+1) &           ! rW1_e, rW2_e
+             , r1T1(iz), dP )                             ! rT1, dP
+
+  r1SWdA(iz) = integral_WdA_seg(&
+              r1lev(iz), r1lev(iz+1) &                   ! rP1, rP2
+             , r1wap_fz1(iz), r1wap_fz1(iz+1) &            ! rW1, rW2
+             , r1T1(iz), r1T2(iz)  &                      ! rT1_i, rT1_e
+             , dP)                                        ! dP
+
+  r1full(iz) = r1SdWA(iz) + r1SWdA(iz)
+  !-----------------------------
 end do
+!----------------
+! for 1D SWA
+!----------------
+do iz = 1,iz_scnd_lcl1 -1
+  r1SWA1(iz) = 0.0
+  r1SWA2(iz) = 0.0
+  r1SdWA(iz) = 0.0
+  r1SWdA(iz) = 0.0
+enddo
+r1SWA1(nz) = 0.0
+r1SWA2(nz) = 0.0
+r1SdWA(nz) = 0.0
+r1SWdA(nz) = 0.0
+
 !************************
 !** effect of LCL change ( from rPlcl1 to rPlcl2 )
 !************************
 if (rW1_lcl1 .lt. 0.0) then
   rSWAdlcl = -rW1_lcl1 * cal_rdqdP(rPlcl1, rT1_lcl1, dP) * (rPlcl2 - rPlcl1)
-  !if ( (rPlcl2 - rPlcl1)/rPlcl1 *100.0 > 3.0) then
-  !  print *,"*******************************"
-  !  print *,"fac.Plcl=",  (rPlcl2 - rPlcl1)/rPlcl1 * 100.0
-  !  print *,"SWAdlcl=  ", rSWAdlcl
-  !  print *,"-rW1_lcl1=",-rW1_lcl1
-  !  print *,"dqdP=     ",cal_rdqdP(rPlcl1, rT1_lcl1, dP)
-  !  print *,"dPlcl=    ",rPlcl2 - rPlcl1
-  !  print *,"Plcl1=    ",rPlcl1
-  !  print *,"rSWA1=    ",rSWA1
-  !endif
-  !if (( 0.005 < (rPlcl2 - rPlcl1)/rPlcl1 *100.0) .and. ( (rPlcl2 - rPlcl1)/rPlcl1 *100.0 < 0.01)) then
-  !  print *,"*******************************"
-  !  print *,"fac.Plcl=",  (rPlcl2 - rPlcl1)/rPlcl1 * 100.0
-  !  print *,"SWAdlcl=  ", rSWAdlcl
-  !  print *,"-rW1_lcl1=",-rW1_lcl1
-  !  print *,"dqdP=     ",cal_rdqdP(rPlcl1, rT1_lcl1, dP)
-  !  print *,"dPlcl=    ",rPlcl2 - rPlcl1
-  !  print *,"Plcl1=    ",rPlcl1
-  !  print *,"rSWA1=    ",rSWA1
-  !endif
-
-
 else
   rSWAdlcl = 0.0
 end if
@@ -619,31 +700,95 @@ end if
 !************************
 rdSWA = rSWA2 - rSWA1
 
+if (rSWA1 .gt. 1.0/60/60/24)then
+  if (abs(rSdWA / rSWA1 *100.0) .gt. 200.0) then
+    print *,"************************************************"
+    print *,"iy, ix=", iy, ix
+    print *,"frac.rdyn=" , rSdWA/ rSWA1 *100.0
+    print '("r1wap_fz1= ", 8e10.1)',r1wap_fz1
+    print '("r1wap_fz2= ", 8e10.1)',r1wap_fz2
+    print *,"---------------------------"
+    print '("rSWA1=", 8e10.2)', r1SWA1
+    print '("rSWA2=", 8e10.2)', r1SWA2
+    print *,"---------------------------"
+    print '("rSdWA=", 8e10.2)', r1SdWA
+    print '("rSWdA=", 8e10.2)', r1SWdA
+    print '("full=",  8e10.2)', r1full
+    print *,"---------------------------"
+    print '("rSWAbtm1=", e10.2)', rSWAbtm1
+    print '("rSWAbtm2=", e10.2)', rSWAbtm2
+    print '("rSdWAbtm=", e10.2)', rSdWAbtm
+    print '("rSWdAbtm=", e10.2)', rSWdAbtm
+    print *,"---------------------------"
+    print '("rSWA1=", e10.2)', rSWA1
+    print '("rSdWA=", e10.2)', rSdWA
+    print '("rSWdA=", e10.2)', rSWdA
+    print '("full= ", e10.2)', rSWA1 + rSdWA + rSWdA + rSWAdlcl
+    print *,"---------------------------"
+    print *,"iy, ix=",iy,ix
+    print *,"rW1_lcl1=",rW1_lcl1
+    print *,"rW2_lcl1=",rW2_lcl1
+    print *,"iz_scnd_lcl1=", iz_scnd_lcl1
+    print *,"r1wap_fz1(iz_scnd_lcl1)=",r1wap_fz1(iz_scnd_lcl1)
+    print *,"r1wap_fz2(iz_scnd_lcl1)=",r1wap_fz2(iz_scnd_lcl1)
+    print *,"Piz_scnd_lcl1=", r1lev(iz_scnd_lcl1)
+    print *,"rPlcl1=", rPlcl1
+    print *,"rPsfc1=", rPsfc1
+    print *,"rPsfc2=", rPsfc2
+    print *,"---------------------------"
+
+
+
+  !else if (rSdWA / rSWA1 *100.0 .lt. 0.1)then
+  !  print *,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  !  print *,"rSWA1=", rSWA1
+  !  print *,"rSdWA=", rSdWA
+  !  print *,"r1wap_fz1=", r1wap_fz1
+  endif
+endif
 
 RETURN
 END SUBROUTINE
 !***********************************************************
-!* estimate Psfc
+!* estimate Psfc from qsfc and RHsfc
 !***********************************************************
-FUNCTION Psea2Psfc(Tsfc, qsfc, zsfc, Psea)
+FUNCTION P_from_T_RH_q(rT, rRH, rq)
   implicit none
-  real              Tsfc, qsfc, zsfc, Psea
-  real              Psea2Psfc, Psfc
-  real              Tvsfc  ! virtual temperature
-  real              Tvm    ! mean virtual temperature
-  real,parameter :: lapse_e = 0.0065   ! [K/m]
-  real,parameter :: g       = 9.80665  ! [m/s^2]
-  real,parameter :: Rd      = 287.04   !(J kg^-1 K^-1)
-!
-Tvsfc = Tsfc * (1.0 + 0.61*qsfc)
-Tvm   =  Tvsfc + 1.0/2.0 *(1.0 + 0.61*qsfc)*lapse_e * zsfc
-!
-Psfc  = Psea * exp(-g*zsfc/(Rd*Tvm))
-Psea2Psfc = Psfc
-!
+  real                      rT, rq, rRH
+  real                      res
+  real                      P_from_T_RH_q
+  real,parameter         :: epsi = 0.62185
+  !---------------------------------------
+  !!!  P = e * ( q + epsi) / q
+  !!!  e = RH/100 * es
+  !!!  then, P = RH/100 * es * (q + epsi) /q
+  !---------------------------------------
+res = cal_es(rT)
+P_from_T_RH_q = rRH / 100.0 * res * (rq + epsi)/rq
 RETURN
-END FUNCTION Psea2Psfc
-!***********************************************************
+END FUNCTION P_from_T_RH_q
+!!!***********************************************************
+!!!* estimate Psfc from sea level pressure--> DO NOT USE!!
+!!!***********************************************************
+!!FUNCTION Psea2Psfc(Tsfc, qsfc, zsfc, Psea)
+!!  implicit none
+!!  real              Tsfc, qsfc, zsfc, Psea
+!!  real              Psea2Psfc, Psfc
+!!  real              Tvsfc  ! virtual temperature
+!!  real              Tvm    ! mean virtual temperature
+!!  real,parameter :: lapse_e = 0.0065   ! [K/m]
+!!  real,parameter :: g       = 9.80665  ! [m/s^2]
+!!  real,parameter :: Rd      = 287.04   !(J kg^-1 K^-1)
+!!!
+!!Tvsfc = Tsfc * (1.0 + 0.61*qsfc)
+!!Tvm   =  Tvsfc + 1.0/2.0 *(1.0 + 0.61*qsfc)*lapse_e * zsfc
+!!!
+!!Psfc  = Psea * exp(-g*zsfc/(Rd*Tvm))
+!!Psea2Psfc = Psfc
+!!!
+!!RETURN
+!!END FUNCTION Psea2Psfc
+!!!***********************************************************
 
 FUNCTION lcl(rPsfc, rTsfc, rqsfc)
 !###########################################################
@@ -694,6 +839,13 @@ STOP
 100 CONTINUE
 !
 lcl = real(x) *100.0  ! [hPa] -> [Pa]
+!--------------------
+! for the case : lcl is lower than surface (RH > 100%)
+!--------------------
+if (-lcl .lt. -rPsfc)then
+  lcl = rPsfc
+endif
+!--------------------
 return
 END FUNCTION lcl
 !###########################################################
@@ -845,7 +997,9 @@ FUNCTION omega_lcl( nz, iz_btm, iz_scnd, r1wap, r1lev, rPsfc, rPlcl)
   real                              rPsfc, rPlcl
   real                              omega_lcl
 !
-if (-rPlcl .lt. -r1lev(iz_btm) )then 
+if (-rPlcl .lt. -rPsfc) then
+  omega_lcl = 0.0
+else if (-rPlcl .lt. -r1lev(iz_btm) )then 
   omega_lcl = -r1wap(iz_btm) &
             / (rPsfc - r1lev(iz_btm)) &
             * (rPlcl - rPsfc)
@@ -939,6 +1093,20 @@ cal_qs = repsi * res / (rP - res)
 RETURN
 END FUNCTION cal_qs
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION cal_RH(rP, rT, rq)
+  implicit none
+  real                 rT, rP, rq
+  !
+  real                 res, re
+  real,parameter    :: repsi = 0.62185
+  real                 cal_RH
+!
+res = cal_es(rT)
+re  = rP *  rq /(rq + repsi)
+cal_RH = re / res *100.0
+RETURN
+END FUNCTION cal_RH
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION cal_rdqdP(rP, rT, dP)
   implicit none
   real                   rP, rT, dP
@@ -1001,17 +1169,36 @@ end if
 RETURN
 END FUNCTION cal_latentheat
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION mk_r1wap_fillzero(nz, rTsfc, rqsfc, rzsfc, rPsea, r1wap, r1lev)
+!FUNCTION mk_r1wap_fillzero(nz, rTsfc, rqsfc, rzsfc, rPsea, r1wap, r1lev)
+!  implicit none
+!  integer                          nz
+!  real                             rTsfc, rqsfc, rzsfc, rPsea
+!  real,dimension(nz)            :: r1wap,r1lev
+!!-----
+!  integer                          iz
+!  real                             rPsfc
+!  real,dimension(nz)            :: mk_r1wap_fillzero
+!!-----------------
+!rPsfc = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
+!do iz =1,nz
+!  if (-r1lev(iz) .le. -rPsfc) then
+!    mk_r1wap_fillzero(iz) = 0.0
+!  else
+!    mk_r1wap_fillzero(iz) = r1wap(iz)
+!  endif
+!end do
+!RETURN
+!END FUNCTION mk_r1wap_fillzero
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION mk_r1wap_fillzero(nz, rPsfc, r1wap, r1lev)
   implicit none
   integer                          nz
-  real                             rTsfc, rqsfc, rzsfc, rPsea
+  real                             rPsfc
   real,dimension(nz)            :: r1wap,r1lev
 !-----
   integer                          iz
-  real                             rPsfc
   real,dimension(nz)            :: mk_r1wap_fillzero
 !-----------------
-rPsfc = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
 do iz =1,nz
   if (-r1lev(iz) .le. -rPsfc) then
     mk_r1wap_fillzero(iz) = 0.0
@@ -1021,16 +1208,63 @@ do iz =1,nz
 end do
 RETURN
 END FUNCTION mk_r1wap_fillzero
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
+!FUNCTION mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
+!  implicit none
+!  integer                   nz
+!  real                      rTsfc, rqsfc, rzsfc, rPsea
+!  real,dimension(nz)     :: r1lev
+!  real                      dP
+!!-------------
+!  integer                   iz, iz_scnd
+!  real                      rPsfc
+!  real                      rPlcl, rTlcl
+!  real                      rT1, rT2, rP1, rP2
+!  real,dimension(nz)     :: mk_r1T_extend
+!!------------------------------------------
+!! Extend the moist adiabatic temperature profile
+!! to the layers below LCL.
+!!------------------------------------------
+!rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
+!rPlcl   = lcl(rPsfc, rTsfc, rqsfc)
+!iz_scnd = findiz_scnd( nz, r1lev, rPlcl )
+!rTlcl   = T1toT2dry(rTsfc, rPsfc, rPlcl)
+!if (iz_scnd .gt. 1) then
+!  do iz = 1,iz_scnd-1
+!    mk_r1T_extend(iz) =  moistadiabat(rPlcl, rTlcl, r1lev(iz), dP)
+!  end do
+!  !
+!  mk_r1T_extend(iz_scnd) = moistadiabat(rPlcl, rTlcl, r1lev(iz_scnd), dP)
+!  !
+!  do iz = iz_scnd +1, nz
+!    rT1 = mk_r1T_extend(iz -1)
+!    rP1 = r1lev(iz -1)
+!    rP2 = r1lev(iz)
+!    mk_r1T_extend(iz) = moistadiabat(rP1, rT1, rP2, dP)
+!  end do
+!else if (iz_scnd .eq. 1) then
+!  !
+!  mk_r1T_extend(iz_scnd) = moistadiabat(rPlcl, rTlcl, r1lev(iz_scnd), dP)
+!  !
+!  do iz = iz_scnd+1, nz
+!    rT1 = mk_r1T_extend(iz -1)
+!    rP1 = r1lev(iz -1)
+!    rP2 = r1lev(iz)
+!    mk_r1T_extend(iz) = moistadiabat(rP1, rT1, rP2, dP)
+!  end do
+!end if
+!RETURN
+!END FUNCTION mk_r1T_extend
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FUNCTION mk_r1T_extend(nz, rPsfc, rTsfc, rqsfc, r1lev, dP)
   implicit none
   integer                   nz
-  real                      rTsfc, rqsfc, rzsfc, rPsea
+  real                      rPsfc, rTsfc, rqsfc
   real,dimension(nz)     :: r1lev
   real                      dP
 !-------------
   integer                   iz, iz_scnd
-  real                      rPsfc
   real                      rPlcl, rTlcl
   real                      rT1, rT2, rP1, rP2
   real,dimension(nz)     :: mk_r1T_extend
@@ -1038,7 +1272,7 @@ FUNCTION mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
 ! Extend the moist adiabatic temperature profile
 ! to the layers below LCL.
 !------------------------------------------
-rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
+!rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
 rPlcl   = lcl(rPsfc, rTsfc, rqsfc)
 iz_scnd = findiz_scnd( nz, r1lev, rPlcl )
 rTlcl   = T1toT2dry(rTsfc, rPsfc, rPlcl)
@@ -1068,22 +1302,66 @@ else if (iz_scnd .eq. 1) then
 end if
 RETURN
 END FUNCTION mk_r1T_extend
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!FUNCTION mk_r1T(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP, rmiss)
+!  implicit none
+!  integer                   nz
+!  real                      rTsfc, rqsfc, rzsfc, rPsea
+!  real,dimension(nz)     :: r1lev
+!  real                      dP, rmiss
+!!-------------
+!  integer                   iz, iz_scnd
+!  real                      rPsfc
+!  real                      rPlcl, rTlcl
+!  real                      rT1, rT2, rP1, rP2
+!  real,dimension(nz)     :: mk_r1T
+!!
+!!-------------------------
+!rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
+!rPlcl   = lcl(rPsfc, rTsfc, rqsfc)
+!iz_scnd = findiz_scnd( nz, r1lev, rPlcl )
+!rTlcl   = T1toT2dry(rTsfc, rPsfc, rPlcl)
+!if (iz_scnd .gt. 1) then
+!  do iz = 1,iz_scnd-1
+!    mk_r1T(iz) = rmiss 
+!  end do
+!  !
+!  mk_r1T(iz_scnd) = moistadiabat(rPlcl, rTlcl, r1lev(iz_scnd), dP)
+!  !
+!  do iz = iz_scnd +1, nz
+!    rT1 = mk_r1T(iz -1)
+!    rP1 = r1lev(iz -1)
+!    rP2 = r1lev(iz)
+!    mk_r1T(iz) = moistadiabat(rP1, rT1, rP2, dP)
+!  end do
+!else if (iz_scnd .eq. 1) then
+!  !
+!  mk_r1T(iz_scnd) = moistadiabat(rPlcl, rTlcl, r1lev(iz_scnd), dP)
+!  !
+!  do iz = iz_scnd+1, nz
+!    rT1 = mk_r1T(iz -1)
+!    rP1 = r1lev(iz -1)
+!    rP2 = r1lev(iz)
+!    mk_r1T(iz) = moistadiabat(rP1, rT1, rP2, dP)
+!  end do
+!end if
+!RETURN
+!END FUNCTION mk_r1T
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FUNCTION mk_r1T(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP, rmiss)
+FUNCTION mk_r1T(nz, rPsfc, rTsfc, rqsfc, r1lev, dP, rmiss)
   implicit none
   integer                   nz
-  real                      rTsfc, rqsfc, rzsfc, rPsea
+  real                      rPsfc, rTsfc, rqsfc
   real,dimension(nz)     :: r1lev
   real                      dP, rmiss
 !-------------
   integer                   iz, iz_scnd
-  real                      rPsfc
   real                      rPlcl, rTlcl
   real                      rT1, rT2, rP1, rP2
   real,dimension(nz)     :: mk_r1T
 !
 !-------------------------
-rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
+!rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
 rPlcl   = lcl(rPsfc, rTsfc, rqsfc)
 iz_scnd = findiz_scnd( nz, r1lev, rPlcl )
 rTlcl   = T1toT2dry(rTsfc, rPsfc, rPlcl)
@@ -1114,6 +1392,9 @@ end if
 RETURN
 END FUNCTION mk_r1T
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION integral_fromP(nz, rVlcl, rPlcl, r1V, r1lev)
   implicit none
   integer                     nz

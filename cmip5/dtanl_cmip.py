@@ -24,7 +24,7 @@ xth =99.0
 idir_root = "/media/disk2/data/CMIP5/bn"
 odir_root = idir_root
 cmd = "/home/utsumi/bin/dtanl/cmip5/dtanl_cmip"
-lvar = ["tas", "huss", "psl", "zg", "wap","prc"]
+lvar = ["tas", "huss", "rhs","psl", "zg", "wap","prc"]
 #####################################################
 # functions
 #####################################################
@@ -126,11 +126,12 @@ for era in ["his", "fut"]:
 
    
 #----------------------------------------------------
-os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
+os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
           %(cmd \
           , smeanfile["his","prc"] \
           , smeanfile["his","tas"] \
           , smeanfile["his","huss"]\
+          , smeanfile["his","rhs"]\
           , smeanfile["his","psl"]\
           , smeanfile["his","zg"]\
           , smeanfile["his","wap"]\
@@ -139,6 +140,7 @@ os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s 
           , smeanfile["fut","prc"] \
           , smeanfile["fut","tas"] \
           , smeanfile["fut","huss"]\
+          , smeanfile["fut","rhs"]\
           , smeanfile["fut","psl"]\
           , smeanfile["fut","zg"]\
           , smeanfile["fut","wap"]\

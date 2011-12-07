@@ -1,16 +1,118 @@
 module dtanl_p_swa
 
 CONTAINS
+
 !**************************************************************
 !* SUBROUTINE
 !**************************************************************
+SUBROUTINE calc_swa_map( ctype, clev, cTsfc, cqsfc, cPsfc, cwap, cSWA, dP, rmiss, nx, ny, nz)
+  implicit none
+  integer                            nx,ny,nz
+!f2py intent(in)                     nx,ny,nz
+  real                               dP       ! [Pa]
+!f2py intent(in)                     dP
+  real                               rmiss
+!f2py intetn(in)                     rmiss
+  character*384                      ctype
+!f2py intent(in)                     ctype
+  character*384                      clev, cTsfc, cqsfc, cPsfc, cwap, cSWA
+!f2py intent(in)                     clev, cTsfc, cqsfc, cPsfc, cwap, cSWA
+
+!---
+  real,dimension(nz)              :: r1lev
+  real,dimension(nx,ny)           :: r2Tsfc, r2qsfc, r2Psfc, r2SWA
+  real,dimension(nx,ny,nz)        :: r3wap
+!
+  real                               rTsfc, rqsfc, rPsfc
+  real,dimension(nz)              :: r1wap
+!---
+  integer                            ix, iy, iz
+  real                               rSWA
+  integer                            t1, t2, t_rate
+!---
+!------------
+! time counter 1
+!------------
+!call system_clock(t1)
+!----------------------------------
+! read 1D file
+!----------------------------------
+open(11, file = clev, status="old")
+do iz = 1,nz
+  read(11,*) r1lev(iz)
+enddo
+close(11)
+!-- convert [hPa] -> [Pa] ----
+r1lev = 100.0 * r1lev
+!----------------------------------
+! read 2D files
+!----------------------------------
+open(21, file = cTsfc, access="DIRECT", status="old", recl=nx)
+open(22, file = cqsfc, access="DIRECT", status="old", recl=nx)
+open(23, file = cPsfc , access="DIRECT", status="old", recl=nx)
+do iy = 1, ny
+  !----
+  read(21, rec=iy) ( r2Tsfc(ix,iy) , ix=1,nx)
+  read(22, rec=iy) ( r2qsfc(ix,iy) , ix=1,nx)
+  read(23, rec=iy) ( r2Psfc(ix,iy) , ix=1,nx)
+enddo
+close(21)
+close(22)
+close(23)
+!----------------------------------
+! read 3D files
+!----------------------------------
+open(31, file = cwap, access="DIRECT", status="old", recl =nx)
+do iz =1, nz
+  do iy=1, ny
+    read(31, rec=(iz-1)*ny + iy) (r3wap(ix,iy,iz), ix=1,nx)
+  enddo
+enddo
+close(31)
+!----------------------------------
+! calculation
+!----------------------------------
+do iy =1,ny
+  do ix =1,nx
+    !----------
+    rTsfc = r2Tsfc(ix,iy)
+    rqsfc = r2qsfc(ix,iy)
+    rPsfc = r2Psfc(ix,iy)
+    r1wap = r3wap(ix,iy,:)
+    !----------
+    if (trim(ctype) .eq. "swa")then
+      call calc_swa( dP, r1lev, rTsfc, rqsfc, rPsfc, r1wap, nz, rSWA)
+    else if (trim(ctype) .eq. "fromsurface")then
+      call calc_swa_fromsurface( dP, r1lev, rTsfc, rPsfc, r1wap, nz, rSWA) 
+    endif
+    r2SWA(ix,iy) = rSWA
+  enddo
+enddo
+!----------------------------------
+! write to file
+!----------------------------------
+open( 41, file=cSWA, access="direct", recl = nx)
+do iy =1,ny
+  write(41, rec=iy) (r2SWA(ix,iy)    , ix=1,nx)
+enddo
+close(41)
+!----------------------------------
+! time counter 2
+!----------------------------------
+!call system_clock(t2, t_rate)
+!print *, t_rate
+!print *,"time=",(t2-t1)/real(t_rate)
+!!----------------------------------
+RETURN
+END SUBROUTINE calc_swa_map
+
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 SUBROUTINE calc_swa( dP, r1lev, rTsfc, rqsfc, rPsfc, r1wap, nz, rSWA) 
 
   implicit none
   integer                            nz
   real                               dP       ! [Pa]
-  real,dimension(nz)             ::  r1lev    ! [hPa]. This should be converted to [Pa]
+  real,dimension(nz)             ::  r1lev    ! [Pa]
 !f2py intent(in)                     dP
 !f2py intent(in)                     r1lev
 
@@ -29,45 +131,111 @@ SUBROUTINE calc_swa( dP, r1lev, rTsfc, rqsfc, rPsfc, r1wap, nz, rSWA)
 !f2py intent(out)                    rSWA
   real,parameter                 ::  rmiss = -9999.0
 
-!  print *,"nz=",nz
-!  print *,"dP=",dP
-!  print *,"r1lev=",r1lev
-!  print *,"r1wap=",r1wap
 !---------------------------
 ! convert r1lev from [hPa] -> [Pa]
 !---------------------------
-r1lev = r1lev *100.0
+!r1lev = r1lev *100.0
 
 !---------------------------
 rPlcl    = lcl(rPsfc, rTsfc, rqsfc)
-iz_btm   = findiz_btm( nz, r1lev, rPsfc)
-iz_scnd  = findiz_scnd( nz, r1lev, rPlcl)
+
+!---------------------------
+! check LCL pressure
+!---------------------------
+if (isnan(rPlcl) )then
+  rSWA = 0.0
+else
+  
+  iz_btm   = findiz_btm( nz, r1lev, rPsfc)
+  iz_scnd  = findiz_scnd( nz, r1lev, rPlcl)
+  
+  !
+  !***************************
+  !* correct_r1wap is used only for MERRA
+  !***************************
+  r1wap    = correct_r1wap(r1wap, r1lev, rPsfc, rmiss, iz_btm, nz) 
+  !-------------
+  !
+  rW_lcl   = omega_lcl( nz, iz_btm, iz_scnd, r1wap, r1lev, rPsfc, rPlcl)
+  !
+  rT_lcl   = T1toT2dry( rTsfc, rPsfc, rPlcl)
+  !
+  r1wap_fz = mk_r1wap_fillzero(nz, r1wap, r1lev, rPsfc)
+  !
+  r1T      = mk_r1T_extend(nz, rTsfc, rqsfc, r1lev, rPsfc, dP)
+  !***************************
+  !* from LCL to r1lev(iz_scnd_lcl1)
+  !***************************
+  rSWA = integral_WA_seg(&
+             rPlcl, r1lev(iz_scnd)        &   ! rPb, rPt
+           , rW_lcl,  r1wap_fz(iz_scnd)   &   ! rWb, rWt
+           , rT_lcl                       &   ! rTb
+           , dP)                              ! dP
+  !***************************
+  !** from r1lev(iz_scnd) to top *------------
+  !***************************
+  do iz = iz_scnd, nz-1
+    rSWA = rSWA &
+         + integral_WA_seg(&
+           r1lev(iz), r1lev(iz +1)        &   ! rPb, rPt
+         , r1wap_fz(iz), r1wap_fz(iz+1)   &   ! rWb, rWt
+         , r1T(iz)                        &   ! rTb
+         , dP)                                ! dP
+  end do
+  !***************************
+endif
+
+RETURN
+END SUBROUTINE calc_swa
+!**************************************************************
+
+!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+SUBROUTINE calc_swa_fromsurface( dP, r1lev, rTsfc, rPsfc, r1wap, nz, rSWA) 
+
+  implicit none
+  integer                            nz
+  real                               dP       ! [Pa]
+  real,dimension(nz)             ::  r1lev    ! [Pa]
+!f2py intent(in)                     dP
+!f2py intent(in)                     r1lev
+
 !
+  real                               rTsfc, rPsfc
+  real,dimension(nz)             ::  r1wap
+!f2py intent(in)                     rTsfc, rPsfc
+!f2py intent(in)                     r1wap
+
+!-- for calculation ------
+  integer                            iz, iz_btm, iz_scnd
+  real,dimension(nz)             ::  r1wap_fz, r1T
+  !
+  real                               rSWA
+!f2py intent(out)                    rSWA
+  real,parameter                 ::  rmiss = -9999.0
+
+!
+iz_btm   = findiz_btm( nz, r1lev, rPsfc)
 !***************************
 !* correct_r1wap is used only for MERRA
 !***************************
 r1wap    = correct_r1wap(r1wap, r1lev, rPsfc, rmiss, iz_btm, nz) 
-!-------------
-!
-rW_lcl   = omega_lcl( nz, iz_btm, iz_scnd, r1wap, r1lev, rPsfc, rPlcl)
-!
-rT_lcl   = T1toT2dry( rTsfc, rPsfc, rPlcl)
+!***************************
 !
 r1wap_fz = mk_r1wap_fillzero(nz, r1wap, r1lev, rPsfc)
 !
-r1T      = mk_r1T_extend(nz, rTsfc, rqsfc, r1lev, rPsfc, dP)
+r1T      = mk_r1T_moist(nz, iz_btm, rPsfc, rTsfc, r1lev, dP, rmiss)
 !***************************
-!* from LCL to r1lev(iz_scnd_lcl1)
+!* from Psfc to r1lev(iz_btm)
 !***************************
 rSWA = integral_WA_seg(&
-           rPlcl, r1lev(iz_scnd)        &   ! rPb, rPt
-         , rW_lcl,  r1wap_fz(iz_scnd)   &   ! rWb, rWt
-         , rT_lcl                       &   ! rTb
+           rPsfc, r1lev(iz_btm)         &   ! rPb, rPt
+         , 0.0,  r1wap_fz(iz_btm)       &   ! rWb, rWt
+         , rTsfc                        &   ! rTb
          , dP)                              ! dP
 !***************************
-!** from r1lev(iz_scnd) to top *------------
+!** from r1lev(iz_btm) to top 
 !***************************
-do iz = iz_scnd, nz-1
+do iz = iz_btm, nz-1
   rSWA = rSWA &
        + integral_WA_seg(&
          r1lev(iz), r1lev(iz +1)        &   ! rPb, rPt
@@ -76,17 +244,9 @@ do iz = iz_scnd, nz-1
        , dP)                                ! dP
 end do
 !***************************
-if ( rSWA .gt. 2.0)then
-  print *,"/////////////////////////////////////////////////"
-  print *,"Plcl=", rPlcl
-  print *,"iz_scnd=",iz_scnd
-  print *,""
-  print *,"r1lev=",r1lev
-end if
 RETURN
-END SUBROUTINE calc_swa
+END SUBROUTINE calc_swa_fromsurface
 !**************************************************************
-
 
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 !**************************************************************
@@ -195,7 +355,9 @@ FUNCTION omega_lcl( nz, iz_btm, iz_scnd, r1wap, r1lev, rPsfc, rPlcl)
   real                              rPsfc, rPlcl
   real                              omega_lcl
 !
-if (-rPlcl .lt. -r1lev(iz_btm) )then
+if ( -rPlcl .lt. -rPsfc ) then
+  omega_lcl = 0.0
+else if (-rPlcl .lt. -r1lev(iz_btm) )then
   omega_lcl = -r1wap(iz_btm) &
             / (rPsfc - r1lev(iz_btm)) &
             * (rPlcl - rPsfc)
@@ -255,7 +417,7 @@ double precision      dPsfc_hPa, dTsfc, dq
 double precision      x, xk, fx
 double precision      delta
 integer               k
-INTEGER,PARAMETER :: KMAX=99
+INTEGER,PARAMETER :: KMAX=200
 !-------------
 !Psfc = 1000   !(hPa)
 !Tsfc = 293.15 !(K)
@@ -285,11 +447,30 @@ fx=func(xk, dPsfc_hPa, dTsfc, dq)
 x=xk    ! LCL [hPa]
 
 END DO
+
 WRITE(*,*) 'could not solve.'
-STOP
+print *, "Psfc=",dPsfc_hPa
+print *, "Tsfc=",dTsfc
+print *, "q=",dq
+print *, "fx=",fx
+if (.not.isnan(x)) then
+  STOP
+endif
+
 100 CONTINUE
 !
-lcl = real(x) *100.0  ! [hPa] -> [Pa]
+if (isnan(x) ) then
+  lcl = x    ! lcl = nan
+else
+  lcl = real(x) *100.0  ! [hPa] -> [Pa]
+endif
+!-----------------
+! for the case: lcl is lower than the surface (RH > 100%)
+!-----------------
+if (-lcl .lt. -rPsfc) then
+  lcl = rPsfc
+endif
+!-----------------
 return
 END FUNCTION lcl
 
@@ -468,7 +649,7 @@ END FUNCTION cal_es
 FUNCTION mk_r1T_extend(nz, rTsfc, rqsfc, r1lev, rPsfc, dP)
   implicit none
   integer                   nz
-  real                      rTsfc, rqsfc, rzsfc, rPsea
+  real                      rTsfc, rqsfc, rzsfc
   real,dimension(nz)     :: r1lev
   real                      dP
 !-------------
@@ -510,6 +691,40 @@ else if (iz_scnd .eq. 1) then
 end if
 RETURN
 END FUNCTION mk_r1T_extend
+!**************************************************************
+FUNCTION mk_r1T_moist(nz, iz_btm, rPsfc, rTsfc, r1lev, dP, rmiss)
+  implicit none
+  integer                      nz, iz_btm
+  real                         rPsfc, rTsfc
+  real,dimension(nz)        :: r1lev
+  real                      :: dP, rmiss
+!
+  real,dimension(nz)        :: mk_r1T_moist
+!
+  integer                      iz
+  real                         rPb, rPt, rTb
+!------------------------
+! extend moist adiabatic temperature profile from surface
+!------------------------
+if (iz_btm .ne. 1)then
+  do iz = 1, iz_btm -1
+    mk_r1T_moist(iz) = rmiss
+  enddo
+endif
+!---
+mk_r1T_moist(iz_btm) = moistadiabat(rPsfc, rTsfc, r1lev(iz_btm), dP)
+!
+do iz = iz_btm, nz-1
+  rPb = r1lev(iz)
+  rPt = r1lev(iz+1)
+  rTb = mk_r1T_moist(iz)
+  mk_r1T_moist(iz+1) =   moistadiabat(rPb, rTb, rPt, dP)
+enddo
+RETURN
+END FUNCTION mk_r1T_moist
+!**************************************************************
+
+
 !**************************************************************
 FUNCTION correct_r1wap(r1wap, r1lev, rPsfc, rmiss, iz_btm, nz)
 !**************************************************************

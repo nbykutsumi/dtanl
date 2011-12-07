@@ -6,8 +6,8 @@ import sys
 cmd   = "/home/utsumi/bin/dtanl/cmip5/conditional_means"
 nx = 144
 ny = 96
-dnz ={"wap":8, "zg":8, "huss":1, "psl":1, "tas":1, "prc":1}
-lvar = ["prc"]
+dnz ={"wap":8, "zg":8, "huss":1, "psl":1, "tas":1, "prc":1,"pr":1, "rhs":1}
+lvar = ["rhs"]
 
 #nz = 8
 #lvar = ["wap","zg"]  # multiple layers
@@ -108,6 +108,7 @@ for expr in lexpr:
       dir_Psea = odir_root + "/%s/%04d"%(mk_dir_tail("psl", tstp, model,expr,ens), y)
       dir_zg = odir_root + "/%s/%04d"%(mk_dir_tail("zg", tstp, model,expr,ens), y) 
       dir_wap = odir_root + "/%s/%04d"%(mk_dir_tail("wap", tstp, model,expr,ens), y) 
+      dir_rhs = odir_root + "/%s/%04d"%(mk_dir_tail("rhs", tstp, model,expr,ens), y) 
       #--------------------
       for m in range(1,12+1):
       #for m in range(1,1+1):
@@ -132,6 +133,7 @@ for expr in lexpr:
           dname["psl"] = dir_Psea + "/%s_%s.bn"%(mk_namehead("psl", tstp, model,expr,ens), stime)
           dname["zg"] = dir_zg + "/%s_%s.bn"%(mk_namehead("zg", tstp, model,expr,ens), stime)
           dname["wap"] = dir_wap + "/%s_%s.bn"%(mk_namehead("wap", tstp, model,expr,ens), stime)
+          dname["rhs"] = dir_rhs + "/%s_%s.bn"%(mk_namehead("rhs", tstp, model,expr,ens), stime)
           #-----------
           checkfile(dname["pr"])
           checkfile(dname[var])
