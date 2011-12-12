@@ -45,6 +45,7 @@ real,allocatable,dimension(:)     :: r1SWA, r1SdWA, r1SWdA, r1SWAdlcl
 real,allocatable,dimension(:)     :: r1dSWA
 real                                 re1, re2, res1, res2, rqsatsfc1, rqsatsfc2, rPlcl1, rPlcl2
 real                                 rPsfc1, rPsfc2, rRHsfc1, rRHsfc2
+real                                 rqsfc_org1, rqsfc_org2
 !** for check ****
 real,allocatable,dimension(:,:)   :: r2Psfc_est1, r2Psfc_est2
 real,allocatable,dimension(:,:)   :: r2RHsfc_est1, r2RHsfc_est2
@@ -245,15 +246,14 @@ do iy =1,ny
     ! make input data for SUBROUTINE cal_scales
     !---------------
     rTsfc1 = r2Tsfc1(ix,iy)
-    rqsfc1 = r2qsfc1(ix,iy)
+    rqsfc_org1 = r2qsfc1(ix,iy)
     rRHsfc1= r2RHsfc1(ix,iy)
     rzsfc1 = r2zsfc1(ix,iy)
     rPsea1 = r2Psea1(ix,iy)
-    !r1wap1 = mk_r1wap_fillzero(nz, rTsfc1, rqsfc1, rzsfc1, rPsea1, r3wap1(ix,iy,:), r1lev)
     r1zg1  = r3zg1(ix,iy,:)
     !
     rTsfc2 = r2Tsfc2(ix,iy)
-    rqsfc2 = r2qsfc2(ix,iy)
+    rqsfc_org2 = r2qsfc2(ix,iy)
     rRHsfc2= r2RHsfc2(ix,iy)
     rzsfc2 = r2zsfc2(ix,iy)
     rPsea2 = r2Psea2(ix,iy)
@@ -261,19 +261,20 @@ do iy =1,ny
     !------------------
     ! calc surface pressure
     !------------------
-    rPsfc1 = P_from_T_RH_q(rTsfc1, rRHsfc1, rqsfc1)     
-    rPsfc2 = P_from_T_RH_q(rTsfc2, rRHsfc2, rqsfc2)
+    !rPsfc1 = P_from_T_RH_q(rTsfc1, rRHsfc1, rqsfc1)     
+    !rPsfc2 = P_from_T_RH_q(rTsfc2, rRHsfc2, rqsfc2)
+    rPsfc1 = Psea2Psfc(rTsfc1, rqsfc_org1, rzsfc1, rPsea1)
+    rPsfc2 = Psea2Psfc(rTsfc2, rqsfc_org2, rzsfc2, rPsea2)
     r2Psfc1(ix,iy) = rPsfc1
     r2Psfc2(ix,iy) = rPsfc2
     !------------------
+    ! calc surface specific humidity from RH , T, P
+    !------------------
+    rqsfc1 = cal_q(rTsfc1, rPsfc1, rRHsfc1)
+    rqsfc2 = cal_q(rTsfc2, rPsfc2, rRHsfc2)
+    !------------------
     r1wap1 = mk_r1wap_fillzero(nz, rPsfc1, r3wap1(ix,iy,:), r1lev)
     r1wap2 = mk_r1wap_fillzero(nz, rPsfc2, r3wap2(ix,iy,:), r1lev)
-    !------------------
-    ! calc surface pressure
-    !------------------
-    rPsfc1 = P_from_T_RH_q(rTsfc1, rRHsfc1, rqsfc1)     
-    rPsfc2 = P_from_T_RH_q(rTsfc2, rRHsfc2, rqsfc2)
-
     !------------------
     call calc_scales(nz, r1lev, dP &
              ,rTsfc1, rqsfc1, rPsfc1, rzsfc1, r1wap1, r1zg1 &
@@ -900,6 +901,7 @@ x=xk    ! LCL [hPa]
 
 END DO
 WRITE(*,*) 'could not solve.'
+print *,"rPsfc, rTsfc, rqsfc=",rPsfc, rTsfc, rqsfc
 STOP
 100 CONTINUE
 !
@@ -1687,6 +1689,21 @@ integral_WdA_seg = -integral_WdA_seg
 RETURN
 END FUNCTION integral_WdA_seg
 !****************************************************
+FUNCTION cal_q(rT, rP, rRH)
+  implicit none
+  !--------------
+  real                  rT, rP, rRH
+  !----
+  real,parameter     :: repsi = 0.62185
+  real                  res, re
+  real                  cal_q
+  !---------------
+res = cal_es(rT)
+re  = rRH * res
+cal_q = repsi * re / (rP - re)
+!
+RETURN
+END FUNCTION cal_q
 !****************************************************
 
 END PROGRAM dtanl_cmip
