@@ -49,6 +49,7 @@ real                                 rqsfc_org1, rqsfc_org2
 !** for check ****
 real,allocatable,dimension(:,:)   :: r2Psfc_est1, r2Psfc_est2
 real,allocatable,dimension(:,:)   :: r2RHsfc_est1, r2RHsfc_est2
+real                                 rtemp1, rtemp2
 !***********************************************************
 !--------------------------------------------------
 ! Get filenames
@@ -280,7 +281,6 @@ do iy =1,ny
              ,rTsfc1, rqsfc1, rPsfc1, rzsfc1, r1wap1, r1zg1 &
              ,rTsfc2, rqsfc2, rPsfc2, rzsfc2, r1wap2, r1zg2 &
              ,rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA)
-
     !---------------
     ! make Prec, Tsfc, qsfc difference map between two era
     !---------------
@@ -1699,7 +1699,7 @@ FUNCTION cal_q(rT, rP, rRH)
   real                  cal_q
   !---------------
 res = cal_es(rT)
-re  = rRH * res
+re  = rRH * res *0.01
 cal_q = repsi * re / (rP - re)
 !
 RETURN
