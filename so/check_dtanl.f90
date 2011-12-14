@@ -4,9 +4,9 @@ CONTAINS
 !*****************
 FUNCTION f(x)
   implicit none
-  real               x
+  double precision               x
 !f2py intent(in)     x
-  real               f
+  double precision               f
 !f2py intent(out)    f
 !-----------------
 f = x*2
@@ -20,11 +20,11 @@ END FUNCTION
 !*********************************************************************
 FUNCTION cal_rdqdP(rP, rT, dP)
   implicit none
-  real                   rP, rT, dP
+  double precision                   rP, rT, dP
 !f2py intent(in)         rP, rT, dP         ! rP : [Pa], not in [hPa]
 !--------
-  real                   rP1, rP2, rT1, rT2, rqs1, rqs2
-  real                   cal_rdqdP          ! [(g/g)/Pa], not in [(g/g)/hPa]   
+  double precision                   rP1, rP2, rT1, rT2, rqs1, rqs2
+  double precision                   cal_rdqdP          ! [(g/g)/Pa], not in [(g/g)/hPa]   
 !f2py intent(out)        cal_rdqdP 
 !-------------------
 cal_rdqdP = rP*2
@@ -42,12 +42,12 @@ END FUNCTION cal_rdqdP
 FUNCTION cal_q(rT, rP, rRH)
   implicit none
   !--------------
-  real                  rT, rP, rRH     ! rP:[Pa], rRH:[%]
+  double precision                  rT, rP, rRH     ! rP:[Pa], rRH:[%]
 !f2py intent(in)        rT, rP, rRH
   !----
-  real,parameter     :: repsi = 0.62185
-  real                  res, re
-  real                  cal_q
+  double precision,parameter     :: repsi = 0.62185
+  double precision                  res, re
+  double precision                  cal_q
 !f2py intent(out)       cal_q
   !---------------
 res = cal_es(rT)
@@ -65,9 +65,9 @@ FUNCTION lcl(rPsfc, rTsfc, rqsfc)
 ! f(x)=x**3+6*x**2+21*x+32
 !###########################################################
 implicit none
-real                  rPsfc, rTsfc, rqsfc   ! rPsfc:[Pa]
+double precision                  rPsfc, rTsfc, rqsfc   ! rPsfc:[Pa]
 !f2py intent(in)      rPsfc, rTsfc, rqsfc
-real                  lcl
+double precision                  lcl
 !f2py intent(out)     lcl
 double precision      dPsfc_hPa, dTsfc, dq
 double precision      x, xk, fx
@@ -117,7 +117,7 @@ endif
 if (isnan(x) ) then
   lcl = x    ! lcl = nan
 else
-  lcl = real(x) *100.0  ! [hPa] -> [Pa]
+  lcl = dble(x) *100.0  ! [hPa] -> [Pa]
 endif
 !-----------------
 ! for the case: lcl is lower than the surface (RH > 100%)
@@ -143,7 +143,7 @@ FUNCTION func(P, Psfc, Tsfc, q)
   double precision :: Rd    = 287.04  !(J kg^-1 K^-1)
   double precision :: Cpd   = 1004.67 !(J kg^-1 K^-1)
 !
-L = dble(cal_latentheat( real(Tsfc) ))
+L = dble(cal_latentheat( dble(Tsfc) ))
 f1 = (1/T0 - Rv/L *log( q * P /( e0*(epsi + q) ) ) )**-1
 f2 = Tsfc * ( P / Psfc )**(Rd/Cpd)
 func = f1 - f2
@@ -167,7 +167,7 @@ FUNCTION fnewton(P, Psfc, Tsfc, q)
   double precision :: Rd    = 287.04  !(J kg^-1 K^-1)
   double precision :: Cpd   = 1004.67 !(J kg^-1 K^-1)
 !
-L = dble(cal_latentheat( real(Tsfc) ))
+L = dble(cal_latentheat( dble(Tsfc) ))
 f1 = (1/T0 - Rv/L *log( q * P /( e0*(epsi + q) ) ) )**-1
 f2 = Tsfc * ( P / Psfc )**(Rd/Cpd)
 func = f1 - f2
@@ -184,16 +184,16 @@ END FUNCTION fnewton
 !*********************************************************************
 FUNCTION moistadiabat(rP1,rT1, rP2, dP)
   implicit none
-  real                       rP1, rP2, rT1, dP
+  double precision                       rP1, rP2, rT1, dP
 !f2py intent(in)             rP1, rP2, rT1, dP
-  real                       rP, rT
-  real                       rsign
-  real                       rTnext, rT2, dT_dP
-  real                       moistadiabat
+  double precision                       rP, rT
+  double precision                       rsign
+  double precision                       rTnext, rT2, dT_dP
+  double precision                       moistadiabat
 !f2py intent(out)            moistadiabat
   integer                    ip, np
 !
-  real                       rtemp
+  double precision                       rtemp
 !
 if (rP1 .ge. rP2) then
   rsign = 1.0
@@ -215,20 +215,20 @@ END FUNCTION moistadiabat
 !*********************************************************************
 FUNCTION dT_dP_moist(rP, rT)
   implicit none
-  real                        rP, rT
+  double precision                        rP, rT
 !f2py                         rP, rT
-  real                        res, rqs        ! rP:[Pa], not [hPa]
-  real                        dT_dP_moist     ! [K/Pa], not [K/hPa]
+  double precision                        res, rqs        ! rP:[Pa], not [hPa]
+  double precision                        dT_dP_moist     ! [K/Pa], not [K/hPa]
 !f2py                         dT_dP_moist
 !** parameters ******
-  real                          L, a, b, c
-  real,parameter            ::  epsi = 0.62185
-  real,parameter            ::  cp   = 1004.67
-  real,parameter            ::  Rd   = 287.04
-  !real,parameter            ::  a0 = 0.28571
-  !real,parameter            ::  b0 = 1.347e7
-  !real,parameter            ::  c0 = 2488.4
-  real                          rtemp
+  double precision                          L, a, b, c
+  double precision,parameter            ::  epsi = 0.62185
+  double precision,parameter            ::  cp   = 1004.67
+  double precision,parameter            ::  Rd   = 287.04
+  !double precision,parameter            ::  a0 = 0.28571
+  !double precision,parameter            ::  b0 = 1.347e7
+  !double precision,parameter            ::  c0 = 2488.4
+  double precision                          rtemp
 !********************
 L = cal_latentheat(rT)
 a = Rd / cp
@@ -242,12 +242,12 @@ END FUNCTION dT_dP_moist
 !*********************************************************************
 FUNCTION cal_qs(rT, rP)
   implicit none
-  real                 rT, rP
+  double precision                 rT, rP
 !f2py intent(in)       rT, rP
-  real                 res
-  real                 cal_qs
+  double precision                 res
+  double precision                 cal_qs
 !f2py intent(out)      cal_qs
-  real,parameter    :: repsi = 0.62185
+  double precision,parameter    :: repsi = 0.62185
 !
 res = cal_es(rT)
 cal_qs = repsi * res / (rP - res)
@@ -256,26 +256,26 @@ END FUNCTION cal_qs
 !*********************************************************************
 FUNCTION T1toT2dry(rT1, rP1, rP2)
   implicit none
-  real                 rT1, rP1, rP2
+  double precision                 rT1, rP1, rP2
 !f2py intent(in)       rT1, rP1, rP2   
-  real                 T1toT2dry, rT2
+  double precision                 T1toT2dry, rT2
 !f2py intent(out)      T1toT2dry
-  real              :: Rd    = 287.04  !(J kg^-1 K^-1)
-  real              :: Cpd   = 1004.67 !(J kg^-1 K^-1)
+  double precision              :: Rd    = 287.04  !(J kg^-1 K^-1)
+  double precision              :: Cpd   = 1004.67 !(J kg^-1 K^-1)
 !
 rT2 = rT1 * (rP2/rP1)**(Rd/Cpd)
 T1toT2dry = rT2
 END FUNCTION T1toT2dry
 !*********************************************************************
 FUNCTION cal_es(rT)
-  real rT
-  real cal_es
+  double precision rT
+  double precision cal_es
 !
-  real                          L
-  real,parameter            ::  rT0 = 273.16
-  real,parameter            ::  res0= 611.73 ![Pa]
-  !real,parameter            ::  Lv  = 2.5e6  ![J kg-1]
-  real,parameter            ::  Rv  = 461.7 ![J K-1 kg -1]
+  double precision                          L
+  double precision,parameter            ::  rT0 = 273.16
+  double precision,parameter            ::  res0= 611.73 ![Pa]
+  !double precision,parameter            ::  Lv  = 2.5e6  ![J kg-1]
+  double precision,parameter            ::  Rv  = 461.7 ![J K-1 kg -1]
 !
 L = cal_latentheat(rT)
 cal_es = res0 * exp( L/Rv *(1.0/rT0 - 1.0/rT))
@@ -284,15 +284,15 @@ END FUNCTION cal_es
 !*********************************************************************
 FUNCTION cal_latentheat(rT)
   implicit none
-  real                  rT
-  real,parameter     :: Lv = 2.5e6  ! for vaporization
-  real,parameter     :: Ld = 2.834e6 ! for sublimation
-  real,parameter     :: rTliq = 273.15  !   0 deg.C
-  real,parameter     :: rTice = 250.15   ! -23 deg.C
-  !real,parameter     :: rTice = 273.15   ! -23 deg.C
-  !real,parameter     :: rTliq = 0.0  !  -273.15 deg.C
-  !real,parameter     :: rTice = 0.0   ! -273.15
-  real               cal_latentheat
+  double precision                  rT
+  double precision,parameter     :: Lv = 2.5e6  ! for vaporization
+  double precision,parameter     :: Ld = 2.834e6 ! for sublimation
+  double precision,parameter     :: rTliq = 273.15  !   0 deg.C
+  double precision,parameter     :: rTice = 250.15   ! -23 deg.C
+  !double precision,parameter     :: rTice = 273.15   ! -23 deg.C
+  !double precision,parameter     :: rTliq = 0.0  !  -273.15 deg.C
+  !double precision,parameter     :: rTice = 0.0   ! -273.15
+  double precision               cal_latentheat
 !
 if ( rT .ge. rTliq) then
   cal_latentheat = Lv
