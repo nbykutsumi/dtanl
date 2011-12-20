@@ -12,44 +12,69 @@ character*1000                       coPsfc1, coPsfc2
 character*100                        cnx, cny, cnz
 !
 integer                              nx, ny, nz
-real,allocatable,dimension(:)     :: r1lev     ! [Pa], not [hPa]
-real,allocatable,dimension(:,:)   :: r2PRC1, r2Tsfc1, r2qsfc1, r2RHsfc1, r2zsfc1, r2Psea1
-real,allocatable,dimension(:,:)   :: r2PRC2, r2Tsfc2, r2qsfc2, r2RHsfc2, r2zsfc2, r2Psea2
-real,allocatable,dimension(:,:,:) :: r3zg1, r3wap1
-real,allocatable,dimension(:,:,:) :: r3zg2, r3wap2
+!** for input data with single precision ("real") ***
+real,allocatable,dimension(:)     :: rr1lev     ! [Pa], not [hPa]
+real,allocatable,dimension(:,:)   :: rr2PRC1, rr2Tsfc1, rr2qsfc1, rr2RHsfc1, rr2zsfc1, rr2Psea1, rr2Prec1
+real,allocatable,dimension(:,:)   :: rr2PRC2, rr2Tsfc2, rr2qsfc2, rr2RHsfc2, rr2zsfc2, rr2Psea2, rr2Prec2
+real,allocatable,dimension(:,:,:) :: rr3zg1, rr3wap1
+real,allocatable,dimension(:,:,:) :: rr3zg2, rr3wap2
+
+!** for output data with single precision ("real") ***
+real                                 rrlat
+!
+real,allocatable,dimension(:)     :: rr1dPrec, rr1dSWA, rr1SdWA, rr1SWdA, rr1SWAdlcl
+real,allocatable,dimension(:)     :: rr1dPRC, rr1dPother
+real,allocatable,dimension(:)     :: rr1dTsfc
+real,allocatable,dimension(:)     :: rr1absdRHsfc, rr1dPlcl, rr1dqsfc, rr1dqsatsfc, rr1dRHsfc
+!
+real,allocatable,dimension(:,:)   :: rr2dPrec, rr2SdWA, rr2SWdA, rr2SWAdlcl
+real,allocatable,dimension(:,:)   :: rr2full, rr2lcl_full, rr2NaN
+real,allocatable,dimension(:,:)   :: rr2dPlcl
+real,allocatable,dimension(:,:)   :: rr2dRHsfc, rr2dPsfc
+real,allocatable,dimension(:,:)   :: rr2absdRHsfc, rr2absdPsfc
+real,allocatable,dimension(:,:)   :: rr2Psfc_est1, rr2Psfc_est2
+real,allocatable,dimension(:,:)   :: rr2RHsfc_est1, rr2RHsfc_est2
+real,allocatable,dimension(:,:)   :: rr2Psfc1, rr2Psfc2
+
+!******************************************************
+double precision,allocatable,dimension(:)     :: r1lev     ! [Pa], not [hPa]
+double precision,allocatable,dimension(:,:)   :: r2PRC1, r2Tsfc1, r2qsfc1, r2RHsfc1, r2zsfc1, r2Psea1
+double precision,allocatable,dimension(:,:)   :: r2PRC2, r2Tsfc2, r2qsfc2, r2RHsfc2, r2zsfc2, r2Psea2
+double precision,allocatable,dimension(:,:,:) :: r3zg1, r3wap1
+double precision,allocatable,dimension(:,:,:) :: r3zg2, r3wap2
 
 !** parameter *
-real,parameter                    :: dP =100.0 ! [Pa], not [hPa]
-real,parameter                    :: rmiss = -9999.0
-!real,parameter                    :: rmiss = 0.0/0.0
+double precision,parameter                    :: dP =100.0d0 ! [Pa], not [hPa]
+double precision,parameter                    :: rmiss = -9999.0d0
+!double precision,parameter                    :: rmiss = 0.0/0.0
 !** input for SUBROUTINE calc_scales ****
-real                                 rTsfc1, rqsfc1, rzsfc1, rPsea1
-real                                 rTsfc2, rqsfc2, rzsfc2, rPsea2
-real,allocatable,dimension(:)     :: r1wap1, r1zg1
-real,allocatable,dimension(:)     :: r1wap2, r1zg2
-real                                 rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA
+double precision                                 rTsfc1, rqsfc1, rzsfc1, rPsea1
+double precision                                 rTsfc2, rqsfc2, rzsfc2, rPsea2
+double precision,allocatable,dimension(:)     :: r1wap1, r1zg1
+double precision,allocatable,dimension(:)     :: r1wap2, r1zg2
+double precision                                 rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA
 !** for calculation **
 integer                              ix, iy, iz, nnx
-real                                 rlat, rlon
-real,allocatable,dimension(:,:)   :: r2SWA, r2SdWA, r2SWdA, r2SWAdlcl
-real,allocatable,dimension(:,:)   :: r2dSWA
-real,allocatable,dimension(:,:)   :: r2full, r2lcl_full
-real,allocatable,dimension(:,:)   :: r2NaN
-real,allocatable,dimension(:,:)   :: r2Prec1, r2Prec2, r2dPrec
-real,allocatable,dimension(:,:)   :: r2dPRC, r2Pother1, r2Pother2, r2dPother
-real,allocatable,dimension(:,:)   :: r2dTsfc, r2dqsfc, r2dqsatsfc, r2dRHsfc, r2dPlcl, r2absdRHsfc, r2dPsfc, r2absdPsfc
-real,allocatable,dimension(:,:)   :: r2Psfc1, r2Psfc2
-real,allocatable,dimension(:)     :: r1Prec1, r1dPrec, r1dPRC, r1dPother
-real,allocatable,dimension(:)     :: r1dTsfc, r1dqsfc, r1dqsatsfc, r1dRHsfc, r1dPlcl, r1abs, dRHsfc, r1absdRHsfc
-real,allocatable,dimension(:)     :: r1SWA, r1SdWA, r1SWdA, r1SWAdlcl
-real,allocatable,dimension(:)     :: r1dSWA
-real                                 re1, re2, res1, res2, rqsatsfc1, rqsatsfc2, rPlcl1, rPlcl2
-real                                 rPsfc1, rPsfc2, rRHsfc1, rRHsfc2
-real                                 rqsfc_org1, rqsfc_org2
+double precision                                 rlat, rlon
+double precision,allocatable,dimension(:,:)   :: r2SWA, r2SdWA, r2SWdA, r2SWAdlcl
+double precision,allocatable,dimension(:,:)   :: r2dSWA
+double precision,allocatable,dimension(:,:)   :: r2full, r2lcl_full
+double precision,allocatable,dimension(:,:)   :: r2NaN
+double precision,allocatable,dimension(:,:)   :: r2Prec1, r2Prec2, r2dPrec
+double precision,allocatable,dimension(:,:)   :: r2dPRC, r2Pother1, r2Pother2, r2dPother
+double precision,allocatable,dimension(:,:)   :: r2dTsfc, r2dqsfc, r2dqsatsfc, r2dRHsfc, r2dPlcl, r2absdRHsfc, r2dPsfc, r2absdPsfc
+double precision,allocatable,dimension(:,:)   :: r2Psfc1, r2Psfc2
+double precision,allocatable,dimension(:)     :: r1Prec1, r1dPrec, r1dPRC, r1dPother
+double precision,allocatable,dimension(:)     :: r1dTsfc, r1dqsfc, r1dqsatsfc, r1dRHsfc, r1dPlcl, r1abs, dRHsfc, r1absdRHsfc
+double precision,allocatable,dimension(:)     :: r1SWA, r1SdWA, r1SWdA, r1SWAdlcl
+double precision,allocatable,dimension(:)     :: r1dSWA
+double precision                                 re1, re2, res1, res2, rqsatsfc1, rqsatsfc2, rPlcl1, rPlcl2
+double precision                                 rPsfc1, rPsfc2, rRHsfc1, rRHsfc2
+double precision                                 rqsfc_org1, rqsfc_org2
 !** for check ****
-real,allocatable,dimension(:,:)   :: r2Psfc_est1, r2Psfc_est2
-real,allocatable,dimension(:,:)   :: r2RHsfc_est1, r2RHsfc_est2
-real                                 rtemp1, rtemp2
+double precision,allocatable,dimension(:,:)   :: r2Psfc_est1, r2Psfc_est2
+double precision,allocatable,dimension(:,:)   :: r2RHsfc_est1, r2RHsfc_est2
+double precision                                 rtemp1, rtemp2
 !***********************************************************
 !--------------------------------------------------
 ! Get filenames
@@ -125,7 +150,28 @@ read(cnx, *) nx
 read(cny, *) ny
 read(cnz, *) nz
 !--------------------------------------------------
-!*** for input ******
+!*** for input whith REAL precision********
+allocate( rr1lev(nz) )
+allocate( rr2PRC1(nx,ny), rr2Tsfc1(nx,ny), rr2qsfc1(nx,ny), rr2RHsfc1(nx,ny), rr2zsfc1(nx,ny), rr2Psea1(nx,ny) ,rr2Prec1(nx,ny))
+allocate( rr2PRC2(nx,ny), rr2Tsfc2(nx,ny), rr2qsfc2(nx,ny), rr2RHsfc2(nx,ny), rr2zsfc2(nx,ny), rr2Psea2(nx,ny), rr2Prec2(nx,ny))
+allocate( rr3zg1(nx,ny,nz), rr3wap1(nx,ny,nz) )
+allocate( rr3zg2(nx,ny,nz), rr3wap2(nx,ny,nz) )
+
+!*** for output whith REAL precision*******
+allocate( rr1dPrec(ny), rr1SdWA(ny), rr1SWdA(ny), rr1SWAdlcl(ny), rr1dSWA(ny) )
+allocate( rr1dPRC(ny), rr1dPother(ny) )
+allocate( rr1dTsfc(ny))
+allocate( rr1absdRHsfc(ny), rr1dPlcl(ny), rr1dqsfc(ny), rr1dqsatsfc(ny), rr1dRHsfc(ny) )
+allocate( rr2dPrec(nx,ny), rr2SdWA(nx,ny), rr2SWdA(nx,ny), rr2SWAdlcl(nx,ny) )
+allocate( rr2full(nx,ny), rr2lcl_full(nx,ny), rr2NaN(nx,ny) )
+allocate( rr2dPlcl(nx,ny) )
+allocate( rr2dRHsfc(nx,ny), rr2dPsfc(nx,ny) )
+allocate( rr2absdRHsfc(nx,ny), rr2absdPsfc(nx,ny) )
+allocate( rr2Psfc_est1(nx,ny), rr2Psfc_est2(nx,ny) )
+allocate( rr2Psfc1(nx,ny), rr2Psfc2(nx,ny) )
+allocate( rr2RHsfc_est1(nx,ny), rr2RHsfc_est2(nx,ny) )
+!******************************************
+
 allocate(r1lev(nz))
 allocate(r2PRC1(nx,ny), r2Tsfc1(nx,ny), r2qsfc1(nx,ny), r2RHsfc1(nx,ny), r2zsfc1(nx,ny), r2Psea1(nx,ny), r2Prec1(nx,ny))
 allocate(r2PRC2(nx,ny), r2Tsfc2(nx,ny), r2qsfc2(nx,ny), r2RHsfc2(nx,ny), r2zsfc2(nx,ny), r2Psea2(nx,ny), r2Prec2(nx,ny))
@@ -174,21 +220,21 @@ open(24, file = cPrec2, access="DIRECT", status="old", recl =nx)
 
 do iy =1, ny
   !-----
-  read(11, rec=iy) ( r2PRC1(ix,iy)  , ix=1, nx)
-  read(12, rec=iy) ( r2Tsfc1(ix,iy) , ix=1, nx)
-  read(13, rec=iy) ( r2qsfc1(ix,iy) , ix=1, nx)
-  read(14, rec=iy) ( r2RHsfc1(ix,iy), ix=1, nx)
-  read(15, rec=iy) ( r2zsfc1(ix,iy) , ix=1, nx)
-  read(16, rec=iy) ( r2Psea1(ix,iy) , ix=1, nx)
-  read(17, rec=iy) ( r2Prec1(ix,iy) , ix=1, nx)
+  read(11, rec=iy) ( rr2PRC1(ix,iy)  , ix=1, nx)
+  read(12, rec=iy) ( rr2Tsfc1(ix,iy) , ix=1, nx)
+  read(13, rec=iy) ( rr2qsfc1(ix,iy) , ix=1, nx)
+  read(14, rec=iy) ( rr2RHsfc1(ix,iy), ix=1, nx)
+  read(15, rec=iy) ( rr2zsfc1(ix,iy) , ix=1, nx)
+  read(16, rec=iy) ( rr2Psea1(ix,iy) , ix=1, nx)
+  read(17, rec=iy) ( rr2Prec1(ix,iy) , ix=1, nx)
   !
-  read(18, rec=iy) ( r2PRC2(ix,iy)  , ix=1, nx)
-  read(19, rec=iy) ( r2Tsfc2(ix,iy) , ix=1, nx)
-  read(20, rec=iy) ( r2qsfc2(ix,iy) , ix=1, nx)
-  read(21, rec=iy) ( r2RHsfc2(ix,iy), ix=1, nx)
-  read(22, rec=iy) ( r2zsfc2(ix,iy) , ix=1, nx)
-  read(23, rec=iy) ( r2Psea2(ix,iy) , ix=1, nx)
-  read(24, rec=iy) ( r2Prec2(ix,iy) , ix=1, nx)
+  read(18, rec=iy) ( rr2PRC2(ix,iy)  , ix=1, nx)
+  read(19, rec=iy) ( rr2Tsfc2(ix,iy) , ix=1, nx)
+  read(20, rec=iy) ( rr2qsfc2(ix,iy) , ix=1, nx)
+  read(21, rec=iy) ( rr2RHsfc2(ix,iy), ix=1, nx)
+  read(22, rec=iy) ( rr2zsfc2(ix,iy) , ix=1, nx)
+  read(23, rec=iy) ( rr2Psea2(ix,iy) , ix=1, nx)
+  read(24, rec=iy) ( rr2Prec2(ix,iy) , ix=1, nx)
   !-----
 enddo
 close(11)
@@ -205,6 +251,23 @@ close(21)
 close(22)
 close(23)
 close(24)
+
+r2PRC1   = dble( rr2PRC1  )
+r2Tsfc1  = dble( rr2Tsfc1 )
+r2qsfc1  = dble( rr2qsfc1 )
+r2RHsfc1 = dble( rr2RHsfc1)
+r2zsfc1  = dble( rr2zsfc1 )
+r2Psea1  = dble( rr2Psea1 )
+r2Prec1  = dble( rr2Prec1 )
+                
+r2PRC2   = dble( rr2PRC2   )
+r2Tsfc2  = dble( rr2Tsfc2  )
+r2qsfc2  = dble( rr2qsfc2  )
+r2RHsfc2 = dble( rr2RHsfc2 )
+r2zsfc2  = dble( rr2zsfc2  )
+r2Psea2  = dble( rr2Psea2  )
+r2Prec2  = dble( rr2Prec2  )
+
 !-------------------------------------------------
 ! read files : 3D files
 !-------------------------------------------------
@@ -214,24 +277,32 @@ open(33, file = czg2,   access="DIRECT", status="old", recl =nx)
 open(34, file = cwap2,   access="DIRECT", status="old", recl =nx)
 do iz=1, nz
   do iy=1, ny
-    read(31, rec=(iz-1)*ny + iy) (r3zg1(ix,iy,iz) , ix=1, nx)
-    read(32, rec=(iz-1)*ny + iy) (r3wap1(ix,iy,iz) , ix=1, nx)
-    read(33, rec=(iz-1)*ny + iy) (r3zg2(ix,iy,iz) , ix=1, nx)
-    read(34, rec=(iz-1)*ny + iy) (r3wap2(ix,iy,iz) , ix=1, nx)
+    read(31, rec=(iz-1)*ny + iy) (rr3zg1(ix,iy,iz) , ix=1, nx)
+    read(32, rec=(iz-1)*ny + iy) (rr3wap1(ix,iy,iz) , ix=1, nx)
+    read(33, rec=(iz-1)*ny + iy) (rr3zg2(ix,iy,iz) , ix=1, nx)
+    read(34, rec=(iz-1)*ny + iy) (rr3wap2(ix,iy,iz) , ix=1, nx)
   enddo
 enddo
 close(31)
 close(32)
 close(33)
 close(34)
+
+r3zg1 = dble( rr3zg1  )  
+r3wap1= dble( rr3wap1 )
+r3zg2 = dble( rr3zg2  )
+r3wap2= dble( rr3wap2 )
+
 !-------------------------------------------------
 ! read files : 1D files
 !-------------------------------------------------
 open(11, file=clev, status="old")
 do iz =1,nz
-  read(11, *) r1lev(iz)
+  read(11, *) rr1lev(iz)
 enddo
 close(11)
+
+r1lev = dble(rr1lev)
 !-------------------------------------------------
 ! calculate 2Pother
 !-------------------------------------------------
@@ -285,19 +356,19 @@ do iy =1,ny
     ! make Prec, Tsfc, qsfc difference map between two era
     !---------------
     r2dPrec(ix,iy) = r2Prec2(ix,iy) - r2Prec1(ix,iy)
-    r2dPrec(ix,iy) = r2dPrec(ix,iy) / r2Prec1(ix,iy) *100
+    r2dPrec(ix,iy) = r2dPrec(ix,iy) / r2Prec1(ix,iy) *100d0
     !
     r2dPRC(ix,iy)  = r2PRC2(ix,iy) - r2PRC1(ix,iy)
-    r2dPRC(ix,iy)  = r2dPRC(ix,iy) / r2PRC1(ix,iy) * 100
+    r2dPRC(ix,iy)  = r2dPRC(ix,iy) / r2PRC1(ix,iy) * 100d0
     !
     r2dTsfc(ix,iy) = r2Tsfc2(ix,iy) - r2Tsfc1(ix,iy)
-    r2dTsfc(ix,iy) = r2dTsfc(ix,iy) / r2Tsfc1(ix,iy) *100
+    r2dTsfc(ix,iy) = r2dTsfc(ix,iy) / r2Tsfc1(ix,iy) *100d0
     !
     r2dqsfc(ix,iy) = r2qsfc2(ix,iy) - r2qsfc1(ix,iy)
-    r2dqsfc(ix,iy) = r2dqsfc(ix,iy) / r2qsfc1(ix,iy) *100
+    r2dqsfc(ix,iy) = r2dqsfc(ix,iy) / r2qsfc1(ix,iy) *100d0
     !
     r2dPother(ix,iy) = r2Pother2(ix,iy) - r2Pother1(ix,iy)
-    r2dPother(ix,iy) = r2dPother(ix,iy) / r2Pother1(ix,iy) *100
+    r2dPother(ix,iy) = r2dPother(ix,iy) / r2Pother1(ix,iy) *100d0
     !---------------
     ! make Psfc difference map
     !---------------
@@ -310,25 +381,25 @@ do iy =1,ny
     !---------------
     !re1 = rPsfc1 *rqsfc1 /(rqsfc1 + 0.62185)
     !re2 = rPsfc2 *rqsfc2 /(rqsfc2 + 0.62185)
-    re1 = r2Psfc_est1(ix,iy) *rqsfc1 /(rqsfc1 + 0.62185)
-    re2 = r2Psfc_est2(ix,iy) *rqsfc2 /(rqsfc2 + 0.62185)
+    re1 = r2Psfc_est1(ix,iy) *rqsfc1 /(rqsfc1 + 0.62185d0)
+    re2 = r2Psfc_est2(ix,iy) *rqsfc2 /(rqsfc2 + 0.62185d0)
     res1 = cal_es(rTsfc1)
     res2 = cal_es(rTsfc2)
-    r2RHsfc_est1(ix,iy) = re1 / res1 *100
-    r2RHsfc_est2(ix,iy) = re2 / res2 *100
+    r2RHsfc_est1(ix,iy) = re1 / res1 *100d0
+    r2RHsfc_est2(ix,iy) = re2 / res2 *100d0
     r2absdRHsfc(ix,iy) = rRHsfc2 - rRHsfc1
     r2dRHsfc(ix,iy) = (rRHsfc2 - rRHsfc1)/rRHsfc1
     !
-    rqsatsfc1 = 0.62185*res1 / (rPsfc1 - res1)
-    rqsatsfc2 = 0.62185*res2 / (rPsfc2 - res2)
-    r2dqsatsfc(ix,iy) = (rqsatsfc2 - rqsatsfc1) / rqsatsfc1 *100
+    rqsatsfc1 = 0.62185d0*res1 / (rPsfc1 - res1)
+    rqsatsfc2 = 0.62185d0*res2 / (rPsfc2 - res2)
+    r2dqsatsfc(ix,iy) = (rqsatsfc2 - rqsatsfc1) / rqsatsfc1 *100d0
     !---------------
     ! make Plcl difference map
     !---------------
     rPlcl1 = lcl(rPsfc1, rTsfc1, rqsfc1)
     rPlcl2 = lcl(rPsfc2, rTsfc2, rqsfc2)
     r2dPlcl(ix,iy) = rPlcl2 - rPlcl1
-    r2dPlcl(ix,iy) = r2dPlcl(ix,iy) / rPlcl1 *100
+    r2dPlcl(ix,iy) = r2dPlcl(ix,iy) / rPlcl1 *100d0
 
     !if (iy .lt. 10) then
     !print *,"**********************************************"
@@ -350,7 +421,7 @@ do iy =1,ny
     !------------------
     !* filter too small r2Prec1 and r2SWA
     !------------------
-    if ( (r2Prec1(ix,iy)*60*60*24 .lt. 1.0) .or. ( abs(rSWA*60*60*24) .lt. 1.0 )) then
+    if ( (r2Prec1(ix,iy)*60d0*60d0*24d0 .lt. 1.0d0) .or. ( abs(rSWA*60d0*60d0*24d0) .lt. 1.0d0 )) then
       r2SWA(ix,iy)     = rmiss 
       r2SdWA(ix,iy)    = rmiss   
       r2SWdA(ix,iy)    = rmiss 
@@ -361,16 +432,16 @@ do iy =1,ny
       r2dPrec(ix,iy)   = rmiss
       r2dPRC(ix,iy)    = rmiss
       r2dPother(ix,iy) = rmiss
-      r2NaN(ix,iy)     = 1.0
+      r2NaN(ix,iy)     = 1.0d0
     else
       r2SWA(ix,iy)     = rSWA         
-      r2SdWA(ix,iy)    = rSdWA /abs(rSWA)      *100   
-      r2SWdA(ix,iy)    = rSWdA /abs(rSWA)      *100 
-      r2SWAdlcl(ix,iy) = rSWAdlcl /abs(rSWA)   *100
-      r2dSWA(ix,iy)    = rdSWA /abs(rSWA)      *100
+      r2SdWA(ix,iy)    = rSdWA /abs(rSWA)      *100d0   
+      r2SWdA(ix,iy)    = rSWdA /abs(rSWA)      *100d0 
+      r2SWAdlcl(ix,iy) = rSWAdlcl /abs(rSWA)   *100d0
+      r2dSWA(ix,iy)    = rdSWA /abs(rSWA)      *100d0
       !
       r2full(ix,iy)    = r2SdWA(ix,iy) + r2SWdA(ix,iy) + r2SWAdlcl(ix,iy)
-      r2NaN(ix,iy)     = 0.0
+      r2NaN(ix,iy)     = 0.0d0
     end if
     !------------------
     ! make r2SWAdlcl / r2full
@@ -386,24 +457,26 @@ end do
 !rtemp = integral_WdA_seg(100000.0, 99000.0, 5.0, -5.0, 293.15, 298.15, dP)
 !print *,rtemp
 
+print *,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
 !** make zonal average **-----------
 do iy = 1,ny
-  !r1Prec1(iy)   = 0.0
-  r1dPrec(iy)   = 0.0
-  r1dPRC(iy)    = 0.0
-  r1dPother(iy) = 0.0
-  r1dTsfc(iy)   = 0.0
-  r1dqsfc(iy)   = 0.0
-  r1dRHsfc(iy)  = 0.0
-  r1dPlcl(iy)   = 0.0
-  r1absdRHsfc(iy)=0.0
-  r1dqsatsfc(iy)= 0.0
+  !r1Prec1(iy)   = 0.0d0
+  r1dPrec(iy)   = 0.0d0
+  r1dPRC(iy)    = 0.0d0
+  r1dPother(iy) = 0.0d0
+  r1dTsfc(iy)   = 0.0d0
+  r1dqsfc(iy)   = 0.0d0
+  r1dRHsfc(iy)  = 0.0d0
+  r1dPlcl(iy)   = 0.0d0
+  r1absdRHsfc(iy)=0.0d0
+  r1dqsatsfc(iy)= 0.0d0
   !
-  r1SWA(iy)    = 0.0
-  r1SdWA(iy)   = 0.0
-  r1SWdA(iy)   = 0.0
-  r1SWAdlcl(iy)= 0.0
-  r1dSWA(iy)   = 0.0
+  r1SWA(iy)    = 0.0d0
+  r1SdWA(iy)   = 0.0d0
+  r1SWdA(iy)   = 0.0d0
+  r1SWAdlcl(iy)= 0.0d0
+  r1dSWA(iy)   = 0.0d0
   nnx = 0
   do ix = 1,nx
     if ( r2SWA(ix,iy) .ne. rmiss) then
@@ -443,14 +516,26 @@ do iy = 1,ny
   r1dSWA(iy)    = r1dSWA(iy) / nnx
 
 end do
-
 !------------------------------------------------
 !** write to file
 !------------------------------------------------
+
+rr1dPrec   = real(  r1dPrec    )
+rr1SdWA    = real(  r1SdWA     )
+rr1SWdA    = real(  r1SWdA     )
+rr1SWAdlcl = real(  r1SWAdlcl  )
+!rr1dSWA    = real(  r1dSWA     )
+rr1dSWA    = real(  r1dSWA     )
+rr1dPRC    = real(  r1dPRC     )
+rr1dPother = real(  r1dPother  )
+
+print *,"r1SdWA",r1SdWA
+print *,"rr1SdWA",rr1SdWA
+
 open(31, file=cofile1, status="replace")
 do iy = 1,ny
-  rlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
-  write(31, '(i4, f9.2, 9f10.2)') ,iy, rlat, r1dPrec(iy), r1SdWA(iy) +r1SWdA(iy)+r1SWAdlcl(iy), r1SdWA(iy), r1SWdA(iy), r1SWAdlcl(iy), r1dSWA(iy), r1dPRC(iy), r1dPother(iy)
+  rrlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
+  write(31, '(i4, (",",f9.2), 9(",",f10.2))') ,iy, rrlat, rr1dPrec(iy), rr1SdWA(iy) +rr1SWdA(iy)+rr1SWAdlcl(iy), rr1SdWA(iy), rr1SWdA(iy), rr1SWAdlcl(iy), rr1dSWA(iy), rr1dPRC(iy), rr1dPother(iy)
 
 end do
 close(31) 
@@ -459,10 +544,18 @@ print *,cofile1
 !** write other list file
 !------------------------------------------------
 
+rr1dTsfc     = real(  r1dTsfc    )
+rr1absdRHsfc = real(  r1absdRHsfc)
+rr1dPlcl     = real(  r1dPlcl    )
+rr1dqsfc     = real(  r1dqsfc    )
+rr1dqsatsfc  = real(  r1dqsatsfc )
+rr1dRHsfc    = real(  r1dRHsfc   )
+
 open(32, file=cofile2, status="replace")
 do iy = 1,ny
-  rlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
-  write(32,'(i4, f9.2, 6f10.2)' ), iy, rlat, r1dTsfc(iy),r1absdRHsfc(iy), r1dPlcl(iy), r1dqsfc(iy), r1dqsatsfc(iy), r1dRHsfc(iy)
+  rrlat = -90.0 + 180.0 / ny *iy - (180.0/ny)/2.0
+  !write(32,'(i4, f9.2, 6f10.2)' ), iy, rlat, r1dTsfc(iy),r1absdRHsfc(iy), r1dPlcl(iy), r1dqsfc(iy), r1dqsatsfc(iy), r1dRHsfc(iy)
+  write(32,'(i4, (",",f9.2), 6(",",f10.2))' ), iy, rrlat, rr1dTsfc(iy),rr1absdRHsfc(iy), rr1dPlcl(iy), rr1dqsfc(iy), rr1dqsatsfc(iy), rr1dRHsfc(iy)
 
 end do
 close(32)
@@ -470,6 +563,17 @@ print *,cofile2
 !------------------------------------------------
 !** write r2dPrec (map) to file 
 !------------------------------------------------
+rr2dPrec     = real(  r2dPrec    )
+rr2SdWA      = real(  r2SdWA     )
+rr2SWdA      = real(  r2SWdA     )
+rr2SWAdlcl   = real(  r2SWAdlcl  )
+rr2full      = real(  r2full     )
+rr2lcl_full  = real(  r2lcl_full )
+rr2NaN       = real(  r2NaN      )
+rr2dPlcl     = real(  r2dPlcl    )
+rr2dRHsfc    = real(  r2dRHsfc   )
+rr2dPsfc     = real(  r2dPsfc    )
+
 open(33, file=codPrec,  access="direct", recl=nx)
 open(34, file=coDdynam, access="direct", recl=nx)
 open(35, file=coDlapse, access="direct", recl=nx)
@@ -483,18 +587,18 @@ open(42, file=coFracChngPsfc,access="direct", recl=nx)
 open(43, file=coChngRH,access="direct", recl=nx)
 open(44, file=coChngPsfc,access="direct", recl=nx)
 do iy = 1,ny
-  write(33, rec=iy) (r2dPrec(ix,iy)     , ix=1,nx)
-  write(34, rec=iy) (r2SdWA(ix,iy)      , ix=1,nx)
-  write(35, rec=iy) (r2SWdA(ix,iy)      , ix=1,nx)
-  write(36, rec=iy) (r2SWAdlcl(ix,iy)   , ix=1,nx)
-  write(37, rec=iy) (r2full(ix,iy)      , ix=1,nx)
-  write(38, rec=iy) (r2lcl_full(ix,iy)  , ix=1,nx)
-  write(39, rec=iy) (r2NaN(ix,iy)       , ix=1,nx)
-  write(40, rec=iy) (r2dPlcl(ix,iy)     , ix=1,nx)
-  write(41, rec=iy) (r2dRHsfc(ix,iy)    , ix=1,nx)
-  write(42, rec=iy) (r2dPsfc(ix,iy)    , ix=1,nx)
-  write(43, rec=iy) (r2absdRHsfc(ix,iy) , ix=1,nx)
-  write(44, rec=iy) (r2absdPsfc(ix,iy) , ix=1,nx)
+  write(33, rec=iy) (rr2dPrec(ix,iy)     , ix=1,nx)
+  write(34, rec=iy) (rr2SdWA(ix,iy)      , ix=1,nx)
+  write(35, rec=iy) (rr2SWdA(ix,iy)      , ix=1,nx)
+  write(36, rec=iy) (rr2SWAdlcl(ix,iy)   , ix=1,nx)
+  write(37, rec=iy) (rr2full(ix,iy)      , ix=1,nx)
+  write(38, rec=iy) (rr2lcl_full(ix,iy)  , ix=1,nx)
+  write(39, rec=iy) (rr2NaN(ix,iy)       , ix=1,nx)
+  write(40, rec=iy) (rr2dPlcl(ix,iy)     , ix=1,nx)
+  write(41, rec=iy) (rr2dRHsfc(ix,iy)    , ix=1,nx)
+  write(42, rec=iy) (rr2dPsfc(ix,iy)    , ix=1,nx)
+  write(43, rec=iy) (rr2absdRHsfc(ix,iy) , ix=1,nx)
+  write(44, rec=iy) (rr2absdPsfc(ix,iy) , ix=1,nx)
 end do
 close(33)
 close(34)
@@ -511,39 +615,53 @@ close(44)
 !-----------------------------------------
 ! wirte estimated Psfc to file
 !-----------------------------------------
+rr2Psfc_est1 = real( r2Psfc_est1 )
+rr2Psfc_est2 = real( r2Psfc_est2 )
+
 open(50, file = "/media/disk2/out/CMIP5/day/NorESM1-M/scales/r1i1p1/map/Psfc_est1.bn", access="direct", recl=nx)
 open(51, file = "/media/disk2/out/CMIP5/day/NorESM1-M/scales/r1i1p1/map/Psfc_est2.bn", access="direct", recl=nx)
 open(52, file = "/media/disk2/out/CMIP5/day/NorESM1-M/scales/r1i1p1/map/chng.Psfc_est.bn", access="direct", recl=nx)
 do iy = 1,ny
-  write(50, rec=iy) (r2Psfc_est1(ix,iy)           , ix=1,nx)
-  write(51, rec=iy) (r2Psfc_est2(ix,iy)           , ix=1,nx)
-  write(52, rec=iy) (r2Psfc_est2(ix,iy) - r2Psfc_est1(ix,iy) , ix=1,nx)
+  write(50, rec=iy) (rr2Psfc_est1(ix,iy)           , ix=1,nx)
+  write(51, rec=iy) (rr2Psfc_est2(ix,iy)           , ix=1,nx)
+  write(52, rec=iy) (rr2Psfc_est2(ix,iy) - rr2Psfc_est1(ix,iy) , ix=1,nx)
 end do
 close(50)
 close(51)
 close(52)
+print *,"bbbbbbbbbbbbbbbb"
 !-----------------------------------------
 ! write Psfc to file
 !-----------------------------------------
+rr2Psfc1= real(r2Psfc1)
+rr2Psfc2= real(r2Psfc2)
+
 open(53, file = coPsfc1, access="direct", recl=nx)
 open(54, file = coPsfc2, access="direct", recl=nx)
 do iy = 1,ny
-  write(53, rec=iy) (r2Psfc1(ix,iy),   ix=1,nx)
-  write(54, rec=iy) (r2Psfc2(ix,iy),   ix=1,nx)
+  write(53, rec=iy) (rr2Psfc1(ix,iy),   ix=1,nx)
+  write(54, rec=iy) (rr2Psfc2(ix,iy),   ix=1,nx)
 enddo
 close(53)
 close(54)
+print *,"cccccccccccccccc"
 !-----------------------------------------
 ! write RHsfc to file
 !-----------------------------------------
+
+rr2RHsfc_est1 = real ( r2RHsfc_est1 )
+rr2RHsfc_est2 = real ( r2RHsfc_est2 )
+
+
 open(55, file = "/media/disk2/out/CMIP5/day/NorESM1-M/scales/r1i1p1/map/RHsfc_est1.bn", access="direct", recl=nx)
 open(56, file = "/media/disk2/out/CMIP5/day/NorESM1-M/scales/r1i1p1/map/RHsfc_est2.bn", access="direct", recl=nx)
 do iy = 1,ny
-  write(55, rec=iy) (r2RHsfc_est1(ix,iy),   ix=1,nx)
-  write(56, rec=iy) (r2RHsfc_est2(ix,iy),   ix=1,nx)
+  write(55, rec=iy) (rr2RHsfc_est1(ix,iy),   ix=1,nx)
+  write(56, rec=iy) (rr2RHsfc_est2(ix,iy),   ix=1,nx)
 end do
 close(55)
 close(56)
+print *,"ddddddddddddddddddddddddddddddd"
 !-----------------------------------------
 print *,trim(codPrec)
 !************************************
@@ -558,42 +676,42 @@ SUBROUTINE calc_scales(nz, r1lev, dP &
 !-----------------------------------------------------
   implicit none
   integer                       nz
-  real,dimension(nz)         :: r1lev
-  real                          dP
+  double precision,dimension(nz)         :: r1lev
+  double precision                          dP
 !
-  real                          rTsfc, rqsfc, rPsfc, rzsfc
-  real,dimension(nz)         :: r1wap
-  real                          rTsfc1, rqsfc1, rPsfc1, rzsfc1
-  real,dimension(nz)         :: r1wap1, r1zg1
-  real                          rTsfc2, rqsfc2, rPsfc2, rzsfc2
-  real,dimension(nz)         :: r1wap2, r1zg2
+  double precision                          rTsfc, rqsfc, rPsfc, rzsfc
+  double precision,dimension(nz)         :: r1wap
+  double precision                          rTsfc1, rqsfc1, rPsfc1, rzsfc1
+  double precision,dimension(nz)         :: r1wap1, r1zg1
+  double precision                          rTsfc2, rqsfc2, rPsfc2, rzsfc2
+  double precision,dimension(nz)         :: r1wap2, r1zg2
 !
 !--- for calculation ----------------
-  real                       :: rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA
-  real                       :: rSWA1, rSWA2
+  double precision                       :: rSWA, rSdWA, rSWdA, rSWAdlcl, rdSWA
+  double precision                       :: rSWA1, rSWA2
 !--
-  real,dimension(nz)         :: r1wap_fz1, r1wap_fz2
-  real,dimension(nz)         :: r1T1,      r1T2
+  double precision,dimension(nz)         :: r1wap_fz1, r1wap_fz2
+  double precision,dimension(nz)         :: r1T1,      r1T2
 !--
   integer                       iz, iz_btm, iz_scnd
   integer                       iz_btm1, iz_btm2
   integer                       iz_scnd_lcl1, iz_scnd_lcl2
-  real,dimension(nz)         :: r1zg
-  real                          rPlcl1, rPlcl2
-  real                          rW1_lcl1, rW1_lcl2
-  real                          rW2_lcl1, rW2_lcl2
-  real                          rW1_Psfc2
-  real                          rT1_lcl1,   rT1_lcl2
-  real                          rT2_lcl1,   rT2_lcl2
-  real                          rdqdP1_lcl1, rdqdP1_lcl2
-  real                          rdqdP2_lcl1, rdqdP2_lcl2
+  double precision,dimension(nz)         :: r1zg
+  double precision                          rPlcl1, rPlcl2
+  double precision                          rW1_lcl1, rW1_lcl2
+  double precision                          rW2_lcl1, rW2_lcl2
+  double precision                          rW1_Psfc2
+  double precision                          rT1_lcl1,   rT1_lcl2
+  double precision                          rT2_lcl1,   rT2_lcl2
+  double precision                          rdqdP1_lcl1, rdqdP1_lcl2
+  double precision                          rdqdP2_lcl1, rdqdP2_lcl2
 !--- for check ----------------------
-  real                       :: rSWAbtm1, rSWAbtm2, rSdWAbtm, rSWdAbtm
-  real,dimension(nz)         :: r1SWA1,r1SWA2, r1SdWA, r1SWdA, r1SWAdlcl, r1full
-  real,dimension(nz)         :: r1dqdp1, r1dqdp2, r1ddqdp
+  double precision                       :: rSWAbtm1, rSWAbtm2, rSdWAbtm, rSWdAbtm
+  double precision,dimension(nz)         :: r1SWA1,r1SWA2, r1SdWA, r1SWdA, r1SWAdlcl, r1full
+  double precision,dimension(nz)         :: r1dqdp1, r1dqdp2, r1ddqdp
 
 !-------------
-  real,parameter             :: rmiss = -9999.0
+  double precision,parameter             :: rmiss = -9999.0d0
   ! this missing value doesn't affect the calculation
 !-------------
 !rPsfc1 = Psea2Psfc(rTsfc1, rqsfc1, rzsfc1, rPsea1)
@@ -665,13 +783,13 @@ else if ( (-rPsfc2 .gt. -rPlcl1).and.(-rPsfc2 .lt. -r1lev(iz_scnd_lcl1)) )then
   rSdWA  =  integral_dWA_seg(&
             rPlcl1, rPsfc2 &                             ! rPb, rPt
            , rW1_lcl1, rW1_Psfc2  &                      ! rWb_i, rWt_i
-           , 0.0, 0.0 &                                  ! rWb_e, rWt_e
+           , 0.0d0, 0.0d0 &                                  ! rWb_e, rWt_e
            , rT1_lcl1, dP ) &                            ! rTb, dP
 
           + integral_dWA_seg(&
             rPsfc2, r1lev(iz_scnd_lcl1) &                ! rPb, rPt
            , rW1_Psfc2, r1wap_fz1(iz_scnd_lcl1) &        ! rWb_i, rWt_i
-           , 0.0, r1wap_fz2(iz_scnd_lcl1)  &             ! rWb_e, rWt_e
+           , 0.0d0, r1wap_fz2(iz_scnd_lcl1)  &             ! rWb_e, rWt_e
            , rT1_lcl1, dP )                              ! rTb, dP
 else
   rSdWA  =  integral_dWA_seg(&
@@ -757,27 +875,27 @@ end do
 ! for 1D SWA
 !----------------
 do iz = 1,iz_scnd_lcl1 -1
-  r1SWA1(iz) = 0.0
-  r1SWA2(iz) = 0.0
-  r1SdWA(iz) = 0.0
-  r1SWdA(iz) = 0.0
-  r1dqdp1(iz)= 0.0
-  r1dqdp2(iz)= 0.0
+  r1SWA1(iz) = 0.0d0
+  r1SWA2(iz) = 0.0d0
+  r1SdWA(iz) = 0.0d0
+  r1SWdA(iz) = 0.0d0
+  r1dqdp1(iz)= 0.0d0
+  r1dqdp2(iz)= 0.0d0
 enddo
-r1SWA1(nz) = 0.0
-r1SWA2(nz) = 0.0
-r1SdWA(nz) = 0.0
-r1SWdA(nz) = 0.0
-r1dqdp1(nz)= 0.0
-r1dqdp2(nz)= 0.0
+r1SWA1(nz) = 0.0d0
+r1SWA2(nz) = 0.0d0
+r1SdWA(nz) = 0.0d0
+r1SWdA(nz) = 0.0d0
+r1dqdp1(nz)= 0.0d0
+r1dqdp2(nz)= 0.0d0
 
 !************************
 !** effect of LCL change ( from rPlcl1 to rPlcl2 )
 !************************
-if (rW1_lcl1 .lt. 0.0) then
+if (rW1_lcl1 .lt. 0.0d0) then
   rSWAdlcl = -rW1_lcl1 * cal_rdqdP(rPlcl1, rT1_lcl1, dP) * (rPlcl2 - rPlcl1)
 else
-  rSWAdlcl = 0.0
+  rSWAdlcl = 0.0d0
 end if
 !************************
 !** dSWA
@@ -820,17 +938,17 @@ END SUBROUTINE
 !***********************************************************
 FUNCTION P_from_T_RH_q(rT, rRH, rq)
   implicit none
-  real                      rT, rq, rRH
-  real                      res
-  real                      P_from_T_RH_q
-  real,parameter         :: epsi = 0.62185
+  double precision                      rT, rq, rRH
+  double precision                      res
+  double precision                      P_from_T_RH_q
+  double precision,parameter         :: epsi = 0.62185d0
   !---------------------------------------
   !!!  P = e * ( q + epsi) / q
   !!!  e = RH/100 * es
   !!!  then, P = RH/100 * es * (q + epsi) /q
   !---------------------------------------
 res = cal_es(rT)
-P_from_T_RH_q = rRH / 100.0 * res * (rq + epsi)/rq
+P_from_T_RH_q = rRH / 100.0d0 * res * (rq + epsi)/rq
 RETURN
 END FUNCTION P_from_T_RH_q
 !***********************************************************
@@ -838,16 +956,16 @@ END FUNCTION P_from_T_RH_q
 !***********************************************************
 FUNCTION Psea2Psfc(Tsfc, qsfc, zsfc, Psea)
   implicit none
-  real              Tsfc, qsfc, zsfc, Psea
-  real              Psea2Psfc, Psfc
-  real              Tvsfc  ! virtual temperature
-  real              Tvm    ! mean virtual temperature
-  real,parameter :: lapse_e = 0.0065   ! [K/m]
-  real,parameter :: g       = 9.80665  ! [m/s^2]
-  real,parameter :: Rd      = 287.04   !(J kg^-1 K^-1)
+  double precision              Tsfc, qsfc, zsfc, Psea
+  double precision              Psea2Psfc, Psfc
+  double precision              Tvsfc  ! virtual temperature
+  double precision              Tvm    ! mean virtual temperature
+  double precision,parameter :: lapse_e = 0.0065d0   ! [K/m]
+  double precision,parameter :: g       = 9.80665d0  ! [m/s^2]
+  double precision,parameter :: Rd      = 287.04d0   !(J kg^-1 K^-1)
 !
-Tvsfc = Tsfc * (1.0 + 0.61*qsfc)
-Tvm   =  Tvsfc + 1.0/2.0 *(1.0 + 0.61*qsfc)*lapse_e * zsfc
+Tvsfc = Tsfc * (1.0d0 + 0.61d0*qsfc)
+Tvm   =  Tvsfc + 1.0d0/2.0d0 *(1.0d0 + 0.61d0*qsfc)*lapse_e * zsfc
 !
 Psfc  = Psea * exp(-g*zsfc/(Rd*Tvm))
 Psea2Psfc = Psfc
@@ -864,8 +982,8 @@ FUNCTION lcl(rPsfc, rTsfc, rqsfc)
 ! f(x)=x**3+6*x**2+21*x+32
 !###########################################################
 implicit none
-real                  rPsfc, rTsfc, rqsfc   ! rPsfc:[Pa]
-real                  lcl
+double precision                  rPsfc, rTsfc, rqsfc   ! rPsfc:[Pa]
+double precision                  lcl
 double precision      dPsfc_hPa, dTsfc, dq
 double precision      x, xk, fx
 double precision      delta
@@ -905,7 +1023,7 @@ print *,"rPsfc, rTsfc, rqsfc=",rPsfc, rTsfc, rqsfc
 STOP
 100 CONTINUE
 !
-lcl = real(x) *100.0  ! [hPa] -> [Pa]
+lcl = dble(x) *100.0d0  ! [hPa] -> [Pa]
 !--------------------
 ! for the case : lcl is lower than surface (RH > 100%)
 !--------------------
@@ -931,15 +1049,15 @@ FUNCTION func(P, Psfc, Tsfc, q)
   double precision      f1, f2, func
   double precision      L
 !
-  double precision :: T0    = 273.16  !(K)
-  double precision :: e0    = 6.1173  !(hPa)
-  double precision :: Rv    = 461.7   !(J kg^-1 K^-1)
+  double precision :: T0    = 273.16d0  !(K)
+  double precision :: e0    = 6.1173d0  !(hPa)
+  double precision :: Rv    = 461.7d0   !(J kg^-1 K^-1)
   !double precision :: Lv    = 2.500d6 !(J kg^-1)
-  double precision :: epsi  = 0.62185 !(-)
-  double precision :: Rd    = 287.04  !(J kg^-1 K^-1)
-  double precision :: Cpd   = 1004.67 !(J kg^-1 K^-1)
+  double precision :: epsi  = 0.62185d0 !(-)
+  double precision :: Rd    = 287.04d0  !(J kg^-1 K^-1)
+  double precision :: Cpd   = 1004.67d0 !(J kg^-1 K^-1)
 !
-L = dble(cal_latentheat( real(Tsfc) ))
+L = dble(cal_latentheat( dble(Tsfc) ))
 f1 = (1/T0 - Rv/L *log( q * P /( e0*(epsi + q) ) ) )**-1
 f2 = Tsfc * ( P / Psfc )**(Rd/Cpd)
 func = f1 - f2
@@ -963,21 +1081,21 @@ FUNCTION fnewton(P, Psfc, Tsfc, q)
 
 !
   double precision    L
-  double precision :: T0    = 273.16  !(K)
-  double precision :: e0    = 6.1173  !(hPa)
-  double precision :: Rv    = 461.7   !(J kg^-1 K^-1)
+  double precision :: T0    = 273.16d0  !(K)
+  double precision :: e0    = 6.1173d0  !(hPa)
+  double precision :: Rv    = 461.7d0   !(J kg^-1 K^-1)
   !double precision :: Lv    = 2.500d6 !(J kg^-1)
-  double precision :: epsi  = 0.62185 !(-)
-  double precision :: Rd    = 287.04  !(J kg^-1 K^-1)
-  double precision :: Cpd   = 1004.67 !(J kg^-1 K^-1)
+  double precision :: epsi  = 0.62185d0 !(-)
+  double precision :: Rd    = 287.04d0  !(J kg^-1 K^-1)
+  double precision :: Cpd   = 1004.67d0 !(J kg^-1 K^-1)
 !
-L = dble(cal_latentheat( real(Tsfc) ))
+L = dble(cal_latentheat( dble(Tsfc) ))
 f1 = (1/T0 - Rv/L *log( q * P /( e0*(epsi + q) ) ) )**-1
 f2 = Tsfc * ( P / Psfc )**(Rd/Cpd)
 func = f1 - f2
 !
-df1_P = 1/P * Rv/L *(1/T0 - Rv/L*log( q*P /(e0*(epsi + q)) ) )**-2
-df2_P = Tsfc* (1/Psfc)**(Rd/Cpd) * Rd/Cpd * (P **(Rd/Cpd -1))
+df1_P = 1d0/P * Rv/L *(1d0/T0 - Rv/L*log( q*P /(e0*(epsi + q)) ) )**-2d0
+df2_P = Tsfc* (1d0/Psfc)**(Rd/Cpd) * Rd/Cpd * (P **(Rd/Cpd -1d0))
 df_P  = df1_P - df2_P
 !
 fnewton = P - func / df_P
@@ -986,10 +1104,10 @@ END FUNCTION fnewton
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION T1toT2dry(rT1, rP1, rP2)
   implicit none
-  real              rT1, rP1, rP2
-  real              T1toT2dry, rT2
-  real           :: Rd    = 287.04  !(J kg^-1 K^-1)
-  real           :: Cpd   = 1004.67 !(J kg^-1 K^-1)
+  double precision              rT1, rP1, rP2
+  double precision              T1toT2dry, rT2
+  double precision           :: Rd    = 287.04d0  !(J kg^-1 K^-1)
+  double precision           :: Cpd   = 1004.67d0 !(J kg^-1 K^-1)
 !
 rT2 = rT1 * (rP2/rP1)**(Rd/Cpd)
 T1toT2dry = rT2
@@ -997,9 +1115,9 @@ END FUNCTION T1toT2dry
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION findiz_btm( rzsfc, r1zg, nz)
   implicit none
-  real                              rzsfc
-  real,dimension(nz)             :: r1zg
-  real                              findiz_btm
+  double precision                              rzsfc
+  double precision,dimension(nz)             :: r1zg
+  double precision                              findiz_btm
   integer                           iz,nz
 !
 do iz = 1, nz
@@ -1017,8 +1135,8 @@ END FUNCTION findiz_btm
 FUNCTION findiz_scnd( nz, r1lev, rPlcl )
   implicit none
   integer                          nz
-  real,dimension(nz)           ::  r1lev
-  real                             rPlcl
+  double precision,dimension(nz)           ::  r1lev
+  double precision                             rPlcl
   integer                          iz, findiz_scnd
 !
 do iz =1,nz
@@ -1026,7 +1144,7 @@ do iz =1,nz
     findiz_scnd = iz
     exit
   elseif (iz .eq. nz) then
-    findiz_scnd = -9999
+    findiz_scnd = -9999d0
   end if
 end do
 RETURN
@@ -1035,16 +1153,16 @@ END FUNCTION findiz_scnd
 FUNCTION omega_atP(nz, iz_btm, r1wap, r1lev, rPsfc, rP, rmiss)
   implicit none
   integer                           nz, iz_btm
-  real,dimension(nz)             :: r1wap, r1lev
-  real                              rPsfc, rP, rmiss
+  double precision,dimension(nz)             :: r1wap, r1lev
+  double precision                              rPsfc, rP, rmiss
   integer                           iz_scnd
-  real                              omega_atP
+  double precision                              omega_atP
 !
 if ( -rP .lt. -rPsfc ) then
   omega_atP = rmiss
 else if ( -rP .lt. -r1lev(iz_btm) ) then
   omega_atP = r1wap(iz_btm) + ( rP - r1lev(iz_btm) )&
-                  *(0.0 - r1wap(iz_btm))/(rPsfc - r1lev(iz_btm))
+                  *(0.0d0 - r1wap(iz_btm))/(rPsfc - r1lev(iz_btm))
 else
   iz_scnd = findiz_scnd( nz, r1lev, rP )
   omega_atP =r1wap(iz_scnd)&
@@ -1060,12 +1178,12 @@ FUNCTION omega_lcl( nz, iz_btm, iz_scnd, r1wap, r1lev, rPsfc, rPlcl)
   implicit none
   integer                           nz
   integer                           iz_btm, iz_scnd
-  real,dimension(nz)             :: r1wap, r1lev
-  real                              rPsfc, rPlcl
-  real                              omega_lcl
+  double precision,dimension(nz)             :: r1wap, r1lev
+  double precision                              rPsfc, rPlcl
+  double precision                              omega_lcl
 !
 if (-rPlcl .lt. -rPsfc) then
-  omega_lcl = 0.0
+  omega_lcl = 0.0d0
 else if (-rPlcl .lt. -r1lev(iz_btm) )then 
   omega_lcl = -r1wap(iz_btm) &
             / (rPsfc - r1lev(iz_btm)) &
@@ -1081,14 +1199,14 @@ END FUNCTION OMEGA_LCL
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION moistadiabat(rP1,rT1, rP2, dP)
   implicit none
-  real                       rP1, rP2, rT1, dP
-  real                       rP, rT
-  real                       rsign
-  real                       rTnext, rT2, dT_dP
-  real                       moistadiabat
+  double precision                       rP1, rP2, rT1, dP
+  double precision                       rP, rT
+  double precision                       rsign
+  double precision                       rTnext, rT2, dT_dP
+  double precision                       moistadiabat
   integer                    ip, np
 !
-  real                       rtemp
+  double precision                       rtemp
 !
 if (rP1 .ge. rP2) then
   rsign = 1.0
@@ -1110,50 +1228,50 @@ END FUNCTION moistadiabat
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION dT_dP_moist(rP, rT)
   implicit none
-  real                        rP, rT
-  real                        res, rqs        ! rP:[Pa], not [hPa]
-  real                        dT_dP_moist     ! [K/Pa], not [K/hPa]
+  double precision                        rP, rT
+  double precision                        res, rqs        ! rP:[Pa], not [hPa]
+  double precision                        dT_dP_moist     ! [K/Pa], not [K/hPa]
 !** parameters ******
-  real                          L, a, b, c
-  real,parameter            ::  epsi = 0.62185
-  real,parameter            ::  cp   = 1004.67
-  real,parameter            ::  Rd   = 287.04
-  !real,parameter            ::  a0 = 0.28571
-  !real,parameter            ::  b0 = 1.347e7
-  !real,parameter            ::  c0 = 2488.4
-  real                          rtemp
+  double precision                          L, a, b, c
+  double precision,parameter            ::  epsi = 0.62185d0
+  double precision,parameter            ::  cp   = 1004.67d0
+  double precision,parameter            ::  Rd   = 287.04d0
+  !double precision,parameter            ::  a0 = 0.28571d0
+  !double precision,parameter            ::  b0 = 1.347e7d0
+  !double precision,parameter            ::  c0 = 2488.4d0
+  double precision                          rtemp
 !********************
 L = cal_latentheat(rT)
 a = Rd / cp
-b = epsi *(L**2)/(cp*Rd)
+b = epsi *(L**2d0)/(cp*Rd)
 c = L/cp
 rqs = cal_qs(rT, rP)
-dT_dP_moist = (a * rT + c *rqs)/( rP *(1 + b*rqs/(rT**2) ) )
+dT_dP_moist = (a * rT + c *rqs)/( rP *(1d0 + b*rqs/(rT**2d0) ) )
 !
 RETURN
 END FUNCTION dT_dP_moist
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION cal_es(rT)
-  real rT
-  real cal_es
+  double precision rT
+  double precision cal_es
 !
-  real                          L
-  real,parameter            ::  rT0 = 273.16
-  real,parameter            ::  res0= 611.73 ![Pa]
-  !real,parameter            ::  Lv  = 2.5e6  ![J kg-1]
-  real,parameter            ::  Rv  = 461.7 ![J K-1 kg -1]
+  double precision                          L
+  double precision,parameter            ::  rT0 = 273.16d0
+  double precision,parameter            ::  res0= 611.73d0 ![Pa]
+  !double precision,parameter            ::  Lv  = 2.5d6  ![J kg-1]
+  double precision,parameter            ::  Rv  = 461.7d0 ![J K-1 kg -1]
 !
 L = cal_latentheat(rT)
-cal_es = res0 * exp( L/Rv *(1.0/rT0 - 1.0/rT))
+cal_es = res0 * exp( L/Rv *(1.0d0/rT0 - 1.0d0/rT))
 RETURN
 END FUNCTION cal_es
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION cal_qs(rT, rP)
   implicit none
-  real                 rT, rP
-  real                 res
-  real                 cal_qs
-  real,parameter    :: repsi = 0.62185
+  double precision                 rT, rP
+  double precision                 res
+  double precision                 cal_qs
+  double precision,parameter    :: repsi = 0.62185d0
 !
 res = cal_es(rT)
 cal_qs = repsi * res / (rP - res)
@@ -1162,24 +1280,24 @@ END FUNCTION cal_qs
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION cal_RH(rP, rT, rq)
   implicit none
-  real                 rT, rP, rq
+  double precision                 rT, rP, rq
   !
-  real                 res, re
-  real,parameter    :: repsi = 0.62185
-  real                 cal_RH
+  double precision                 res, re
+  double precision,parameter    :: repsi = 0.62185d0
+  double precision                 cal_RH
 !
 res = cal_es(rT)
 re  = rP *  rq /(rq + repsi)
-cal_RH = re / res *100.0
+cal_RH = re / res *100.0d0
 RETURN
 END FUNCTION cal_RH
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION cal_rdqdP(rP, rT, dP)
   implicit none
-  real                   rP, rT, dP
+  double precision                   rP, rT, dP
 !--------
-  real                   rP1, rP2, rT1, rT2, rqs1, rqs2
-  real                   cal_rdqdP
+  double precision                   rP1, rP2, rT1, rT2, rqs1, rqs2
+  double precision                   cal_rdqdP
 !-------------------
 rP1 = rP
 rP2 = rP - dP
@@ -1195,13 +1313,13 @@ END FUNCTION cal_rdqdP
 FUNCTION mk_r1dqdP(r1lev, r1T, nz, dP, rmiss)
   implicit none
   integer                       nz
-  real,dimension(nz)         :: r1lev, r1T
-  real                          dP, rmiss
+  double precision,dimension(nz)         :: r1lev, r1T
+  double precision                          dP, rmiss
 !----------
   integer                       iz
-  real,dimension(nz)         :: mk_r1dqdP
-  real                          rP, rT
-  real                          rtemp
+  double precision,dimension(nz)         :: mk_r1dqdP
+  double precision                          rP, rT
+  double precision                          rtemp
 !--------------
 do iz = 1, nz -1
   if ( r1T(iz) .eq. rmiss) then
@@ -1212,19 +1330,21 @@ do iz = 1, nz -1
     mk_r1dqdP(iz) = cal_rdqdP(rP, rT, dP)
   end if
 end do
-mk_r1dqdP(nz) = 0.0
+mk_r1dqdP(nz) = 0.0d0
 !
 RETURN
 END FUNCTION mk_r1dqdP
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 FUNCTION cal_latentheat(rT)
   implicit none
-  real                  rT
-  real,parameter     :: Lv = 2.5e6  ! for vaporization
-  real,parameter     :: Ld = 2.834e6 ! for sublimation
-  real,parameter     :: rTliq = 273.15  !   0 deg.C
-  real,parameter     :: rTice = 250.15   ! -23 deg.C
-  real               cal_latentheat
+  double precision                  rT
+  double precision,parameter     :: Lv = 2.5d6  ! for vaporization
+  double precision,parameter     :: Ld = 2.834d6 ! for sublimation
+  double precision,parameter     :: rTliq = 273.15d0  !   0 deg.C
+  double precision,parameter     :: rTice = 250.15d0   ! -23 deg.C
+  !double precision,parameter     :: rTliq = -273.15d0   ! all on the water surface
+  !double precision,parameter     :: rTice = -273.15d0   ! all on the water surface
+  double precision               cal_latentheat
 !
 if ( rT .ge. rTliq) then
   cal_latentheat = Lv
@@ -1239,12 +1359,12 @@ END FUNCTION cal_latentheat
 !FUNCTION mk_r1wap_fillzero(nz, rTsfc, rqsfc, rzsfc, rPsea, r1wap, r1lev)
 !  implicit none
 !  integer                          nz
-!  real                             rTsfc, rqsfc, rzsfc, rPsea
-!  real,dimension(nz)            :: r1wap,r1lev
+!  double precision                             rTsfc, rqsfc, rzsfc, rPsea
+!  double precision,dimension(nz)            :: r1wap,r1lev
 !!-----
 !  integer                          iz
-!  real                             rPsfc
-!  real,dimension(nz)            :: mk_r1wap_fillzero
+!  double precision                             rPsfc
+!  double precision,dimension(nz)            :: mk_r1wap_fillzero
 !!-----------------
 !rPsfc = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
 !do iz =1,nz
@@ -1260,15 +1380,15 @@ END FUNCTION cal_latentheat
 FUNCTION mk_r1wap_fillzero(nz, rPsfc, r1wap, r1lev)
   implicit none
   integer                          nz
-  real                             rPsfc
-  real,dimension(nz)            :: r1wap,r1lev
+  double precision                             rPsfc
+  double precision,dimension(nz)            :: r1wap,r1lev
 !-----
   integer                          iz
-  real,dimension(nz)            :: mk_r1wap_fillzero
+  double precision,dimension(nz)            :: mk_r1wap_fillzero
 !-----------------
 do iz =1,nz
   if (-r1lev(iz) .le. -rPsfc) then
-    mk_r1wap_fillzero(iz) = 0.0
+    mk_r1wap_fillzero(iz) = 0.0d0
   else
     mk_r1wap_fillzero(iz) = r1wap(iz)
   endif
@@ -1280,15 +1400,15 @@ END FUNCTION mk_r1wap_fillzero
 !FUNCTION mk_r1T_extend(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP)
 !  implicit none
 !  integer                   nz
-!  real                      rTsfc, rqsfc, rzsfc, rPsea
-!  real,dimension(nz)     :: r1lev
-!  real                      dP
+!  double precision                      rTsfc, rqsfc, rzsfc, rPsea
+!  double precision,dimension(nz)     :: r1lev
+!  double precision                      dP
 !!-------------
 !  integer                   iz, iz_scnd
-!  real                      rPsfc
-!  real                      rPlcl, rTlcl
-!  real                      rT1, rT2, rP1, rP2
-!  real,dimension(nz)     :: mk_r1T_extend
+!  double precision                      rPsfc
+!  double precision                      rPlcl, rTlcl
+!  double precision                      rT1, rT2, rP1, rP2
+!  double precision,dimension(nz)     :: mk_r1T_extend
 !!------------------------------------------
 !! Extend the moist adiabatic temperature profile
 !! to the layers below LCL.
@@ -1327,14 +1447,14 @@ END FUNCTION mk_r1wap_fillzero
 FUNCTION mk_r1T_extend(nz, rPsfc, rTsfc, rqsfc, r1lev, dP)
   implicit none
   integer                   nz
-  real                      rPsfc, rTsfc, rqsfc
-  real,dimension(nz)     :: r1lev
-  real                      dP
+  double precision                      rPsfc, rTsfc, rqsfc
+  double precision,dimension(nz)     :: r1lev
+  double precision                      dP
 !-------------
   integer                   iz, iz_scnd
-  real                      rPlcl, rTlcl
-  real                      rT1, rT2, rP1, rP2
-  real,dimension(nz)     :: mk_r1T_extend
+  double precision                      rPlcl, rTlcl
+  double precision                      rT1, rT2, rP1, rP2
+  double precision,dimension(nz)     :: mk_r1T_extend
 !------------------------------------------
 ! Extend the moist adiabatic temperature profile
 ! to the layers below LCL.
@@ -1373,15 +1493,15 @@ END FUNCTION mk_r1T_extend
 !FUNCTION mk_r1T(nz, rTsfc, rqsfc, rzsfc, rPsea, r1lev, dP, rmiss)
 !  implicit none
 !  integer                   nz
-!  real                      rTsfc, rqsfc, rzsfc, rPsea
-!  real,dimension(nz)     :: r1lev
-!  real                      dP, rmiss
+!  double precision                      rTsfc, rqsfc, rzsfc, rPsea
+!  double precision,dimension(nz)     :: r1lev
+!  double precision                      dP, rmiss
 !!-------------
 !  integer                   iz, iz_scnd
-!  real                      rPsfc
-!  real                      rPlcl, rTlcl
-!  real                      rT1, rT2, rP1, rP2
-!  real,dimension(nz)     :: mk_r1T
+!  double precision                      rPsfc
+!  double precision                      rPlcl, rTlcl
+!  double precision                      rT1, rT2, rP1, rP2
+!  double precision,dimension(nz)     :: mk_r1T
 !!
 !!-------------------------
 !rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
@@ -1418,14 +1538,14 @@ END FUNCTION mk_r1T_extend
 FUNCTION mk_r1T(nz, rPsfc, rTsfc, rqsfc, r1lev, dP, rmiss)
   implicit none
   integer                   nz
-  real                      rPsfc, rTsfc, rqsfc
-  real,dimension(nz)     :: r1lev
-  real                      dP, rmiss
+  double precision                      rPsfc, rTsfc, rqsfc
+  double precision,dimension(nz)     :: r1lev
+  double precision                      dP, rmiss
 !-------------
   integer                   iz, iz_scnd
-  real                      rPlcl, rTlcl
-  real                      rT1, rT2, rP1, rP2
-  real,dimension(nz)     :: mk_r1T
+  double precision                      rPlcl, rTlcl
+  double precision                      rT1, rT2, rP1, rP2
+  double precision,dimension(nz)     :: mk_r1T
 !
 !-------------------------
 !rPsfc   = Psea2Psfc(rTsfc, rqsfc, rzsfc, rPsea)
@@ -1465,14 +1585,14 @@ END FUNCTION mk_r1T
 FUNCTION integral_fromP(nz, rVlcl, rPlcl, r1V, r1lev)
   implicit none
   integer                     nz
-  real                        rVlcl   ! Value at lcl
-  real                        rPlcl       
-  real,dimension(nz)       :: r1V     ! array of Values at each level
-  real,dimension(nz)       :: r1lev
+  double precision                        rVlcl   ! Value at lcl
+  double precision                        rPlcl       
+  double precision,dimension(nz)       :: r1V     ! array of Values at each level
+  double precision,dimension(nz)       :: r1lev
 !
   integer                     iz_scnd, iz
-  real                        rP1, rP2, rV1, rV2
-  real                        integral_fromP
+  double precision                        rP1, rP2, rV1, rV2
+  double precision                        integral_fromP
 !------------------------
 iz_scnd = findiz_scnd( nz, r1lev, rPlcl )
 !
@@ -1483,7 +1603,7 @@ rP1 = rPlcl
 rP2 = r1lev(iz_scnd)
 rV1 = rVlcl
 rV2 = r1V(iz_scnd)
-integral_fromP = 1.0/2.0*(rV1 + rV2) * (rP1 - rP2)
+integral_fromP = 1.0d0/2.0d0*(rV1 + rV2) * (rP1 - rP2)
 !-------
 ! from P_scnd to P_top
 !-------
@@ -1492,7 +1612,7 @@ do iz = iz_scnd, nz -3  !  integral to top-2 layer
   rP2 = r1lev(iz+1)
   rV1 = r1V(iz)
   rV2 = r1V(iz+1)
-  integral_fromP = integral_fromP + 1.0/2.0*(rV1 + rV2) * (rP1 - rP2)
+  integral_fromP = integral_fromP + 1.0d0/2.0d0*(rV1 + rV2) * (rP1 - rP2)
 end do
 RETURN
 END FUNCTION integral_fromP
@@ -1500,17 +1620,17 @@ END FUNCTION integral_fromP
 FUNCTION integral_WA_seg(rP1, rP2, rW1, rW2, rT1, dP)
   implicit none
 !-----------------------------------
-real                            rP1, rP2
-real                            rW1, rW2
-real                            rT1
-real                            dP
+double precision                            rP1, rP2
+double precision                            rW1, rW2
+double precision                            rT1
+double precision                            dP
 !
-real                            rP, rT, rW, rdqdP, rV
-real                            rTnew, rWnew, rPnew
-real                            rdWdP
+double precision                            rP, rT, rW, rdqdP, rV
+double precision                            rTnew, rWnew, rPnew
+double precision                            rdWdP
 integer                         ip, np
 !
-real                             integral_WA_seg
+double precision                             integral_WA_seg
 !-----------------------------------
 np = int( (rP1-rP2)/dP )
 !--- initialize -------
@@ -1529,8 +1649,8 @@ do ip = 1, np
   rTnew = moistadiabat(rP, rT, rP-dP, dP)
   rWnew = rW - rdWdP * dP
   !
-  if (rW .ge. 0.0) then
-    rV = 0.0
+  if (rW .ge. 0.0d0) then
+    rV = 0.0d0
   else
     rV = rW * rdqdP
   endif
@@ -1541,8 +1661,8 @@ rP = rPnew
 rT = rTnew
 rW = rWnew
 rdqdP = cal_rdqdP(rP, rT, dP)
-if (rW .ge. 0.0) then
-  rV = 0.0
+if (rW .ge. 0.0d0) then
+  rV = 0.0d0
 else
   rV = rW * rdqdP
 endif
@@ -1557,17 +1677,17 @@ END FUNCTION integral_WA_seg
 FUNCTION integral_dWA_seg(rP1, rP2, rW1_i, rW2_i, rW1_e, rW2_e, rT1, dP)
   implicit none
 !-----------------------------------
-real                            rP1, rP2
-real                            rW1_i, rW2_i, rW1_e, rW2_e
-real                            rT1
-real                            dP
+double precision                            rP1, rP2
+double precision                            rW1_i, rW2_i, rW1_e, rW2_e
+double precision                            rT1
+double precision                            dP
 !-----------
-real                            rP, rT, rW_i, rW_e, rdqdP, rV
-real                            rTnew, rWnew_i, rWnew_e, rPnew
-real                            rdWdP_i, rdWdP_e
+double precision                            rP, rT, rW_i, rW_e, rdqdP, rV
+double precision                            rTnew, rWnew_i, rWnew_e, rPnew
+double precision                            rdWdP_i, rdWdP_e
 integer                        ip, np
 !
-real                             integral_dWA_seg
+double precision                             integral_dWA_seg
 !-----------------------------------
 np = int( (rP1-rP2)/dP )
 !--- initialize -------
@@ -1590,11 +1710,11 @@ do ip = 1, np
   rWnew_i = rW_i - rdWdP_i * dP
   rWnew_e = rW_e - rdWdP_e * dP
   !
-  if (rW_i .gt. 0.0) then
-    rW_i = 0.0
+  if (rW_i .gt. 0.0d0) then
+    rW_i = 0.0d0
   end if
-  if (rW_e .gt. 0.0) then
-    rW_e = 0.0
+  if (rW_e .gt. 0.0d0) then
+    rW_e = 0.0d0
   end if
   rV = (dble(rW_e) - dble(rW_i)) * rdqdP
   integral_dWA_seg = integral_dWA_seg + rV * dP
@@ -1607,16 +1727,16 @@ rW_i = rWnew_i
 rW_e = rWnew_e
 rdqdP = cal_rdqdP(rP, rT, dP)
 !
-if (rW_i .gt. 0.0) then
+if (rW_i .gt. 0.0d0) then
   rW_i = 0.0d0
 end if
-if (rW_e .gt. 0.0) then
+if (rW_e .gt. 0.0d0) then
   rW_e = 0.0d0
 end if
 rV = (dble(rW_e) - dble(rW_i)) * rdqdP
 integral_dWA_seg = integral_dWA_seg + rV * ( (rP1 - rP2) -  dP*np )
-!*** double --> real ******
-integral_dWA_seg = real(integral_dWA_seg)
+!*** double --> double precision ******
+integral_dWA_seg = dble(integral_dWA_seg)
 !------------------------------------
 integral_dWA_seg = -integral_dWA_seg
 RETURN
@@ -1625,17 +1745,17 @@ END FUNCTION integral_dWA_seg
 FUNCTION integral_WdA_seg(rP1, rP2, rW1, rW2, rT1_i, rT1_e, dP)
   implicit none
 !-----------------------------------
-real                            rP1, rP2
-real                            rW1, rW2
-real                            rT1_i, rT1_e
-real                            dP
+double precision                            rP1, rP2
+double precision                            rW1, rW2
+double precision                            rT1_i, rT1_e
+double precision                            dP
 !
-real                            rT_i, rT_e, rW, rP, rdqdP_i, rdqdP_e, rV
-real                            rTnew_i, rTnew_e, rWnew, rPnew
-real                            rdWdP
+double precision                            rT_i, rT_e, rW, rP, rdqdP_i, rdqdP_e, rV
+double precision                            rTnew_i, rTnew_e, rWnew, rPnew
+double precision                            rdWdP
 integer                         ip, np
 !
-real                            integral_WdA_seg
+double precision                            integral_WdA_seg
 !-----------------------------------
 np = int( (rP1-rP2)/dP )
 !--- initialize -------
@@ -1658,8 +1778,8 @@ do ip = 1, np
   rTnew_e = moistadiabat(rP, rT_e, rP-dP, dP)
   rWnew = rW - rdWdP * dP
   !
-  if (rW .ge. 0.0) then
-    rV = 0.0
+  if (rW .ge. 0.0d0) then
+    rV = 0.0d0
   else
     rV = rW * (rdqdP_e - rdqdP_i)
   endif
@@ -1678,8 +1798,8 @@ end do
   rTnew_e = moistadiabat(rP, rT_e, rP-dP, dP)
   rWnew = rW - rdWdP * dP
   !
-  if (rW .ge. 0.0) then
-    rV = 0.0
+  if (rW .ge. 0.0d0) then
+    rV = 0.0d0
   else
     rV = rW * (rdqdP_e - rdqdP_i)
   endif
@@ -1692,14 +1812,14 @@ END FUNCTION integral_WdA_seg
 FUNCTION cal_q(rT, rP, rRH)
   implicit none
   !--------------
-  real                  rT, rP, rRH
+  double precision                  rT, rP, rRH
   !----
-  real,parameter     :: repsi = 0.62185
-  real                  res, re
-  real                  cal_q
+  double precision,parameter     :: repsi = 0.62185d0
+  double precision                  res, re
+  double precision                  cal_q
   !---------------
 res = cal_es(rT)
-re  = rRH * res *0.01
+re  = rRH * res *0.01d0
 cal_q = repsi * re / (rP - re)
 !
 RETURN
