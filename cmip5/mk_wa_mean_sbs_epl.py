@@ -18,11 +18,10 @@ flag_fill = 1
 #------------------------------
 tstp = "day"
 #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
-lmodel = ["NorESM1-M"]
+#lmodel = ["NorESM1-M", "CanESM2"]
 #lmodel = ["MIROC5"]
-#lmodel = ["CanESM2"]
-#lexpr  = ["his", "fut"]
-lexpr  = ["fut"]
+lmodel = ["NorESM1-M"]
+lexpr  = ["his", "fut"]
 dexpr ={}
 dexpr["his"] = "historical" #historical, rcp85
 dexpr["fut"] = "rcp85" #historical, rcp85
@@ -59,7 +58,6 @@ dyrange["fut"] = [2086,2095]
 imon = 1
 emon = 12
 #xth =99.0
-#xth =50.0
 xth =0.0
 #------------------------------------------------------
 idir_root = "/media/disk2/data/CMIP5/bn"
@@ -156,23 +154,22 @@ for model in lmodel:
     #----------------------------------------------------
     # make prxth_lw & prxth_up name
     #----------------------------------------------------
-    if (xth != 0.0):
-      dir_prxth = "/media/disk2/out/CMIP5/%s/%s/%s/%s/prxth/%04d-%04d/%02d-%02d"\
-                  %(tstp, model, dexpr[expr], ens, iyear, eyear, imon, emon)
-    
-      sname_lw = "prxth_%s_%s_%s_%s_%06.2f_lw.bn"%(tstp, model, dexpr[expr], ens, xth)
-      sname_up = "prxth_%s_%s_%s_%s_%06.2f_up.bn"%(tstp, model, dexpr[expr], ens, xth)
-      #
-      spr_lw = dir_prxth +"/%s"%(sname_lw)
-      spr_up = dir_prxth +"/%s"%(sname_up)
-      check_file(spr_lw)
-      check_file(spr_up)
-      #----
-      apr_lw = fromfile(spr_lw, float32).reshape(ny,nx)
-      apr_up = fromfile(spr_up, float32).reshape(ny,nx)
-      #** convert from float32 to float64 ***
-      apr_lw = array(apr_lw , float64)
-      apr_up = array(apr_up , float64)
+    dir_prxth = "/media/disk2/out/CMIP5/%s/%s/%s/%s/prxth/%04d-%04d/%02d-%02d"\
+                %(tstp, model, dexpr[expr], ens, iyear, eyear, imon, emon)
+  
+    sname_lw = "prxth_%s_%s_%s_%s_%06.2f_lw.bn"%(tstp, model, dexpr[expr], ens, xth)
+    sname_up = "prxth_%s_%s_%s_%s_%06.2f_up.bn"%(tstp, model, dexpr[expr], ens, xth)
+    #
+    spr_lw = dir_prxth +"/%s"%(sname_lw)
+    spr_up = dir_prxth +"/%s"%(sname_up)
+    check_file(spr_lw)
+    check_file(spr_up)
+    #----
+    apr_lw = fromfile(spr_lw, float32).reshape(ny,nx)
+    apr_up = fromfile(spr_up, float32).reshape(ny,nx)
+    #** convert from float32 to float64 ***
+    apr_lw = array(apr_lw , float64)
+    apr_up = array(apr_up , float64)
     #----------------------------------------------------
     for year in range(iyear, eyear+1):
     #for year in range(1991, 1991+1):
@@ -182,13 +179,14 @@ for model in lmodel:
       dir_Psea = idir_root + "/%s/%04d"%(mk_dir_tail("psl", tstp, model, dexpr[expr],ens), year)
       dir_zg   = idir_root + "/%s/%04d"%(mk_dir_tail("zg", tstp, model,dexpr[expr],ens), year)
       dir_wap  = idir_root + "/%s/%04d"%(mk_dir_tail("wap", tstp, model, dexpr[expr],ens), year)
+      dir_ta   = idir_root + "/%s/%04d"%(mk_dir_tail("ta", tstp, model, dexpr[expr],ens), year)
       dir_rhs  = idir_root + "/%s/%04d"%(mk_dir_tail("rhs", tstp, model, dexpr[expr],ens), year)
       #*************
       # dummy sum
       #*************
       a3wap_sum   = zeros(nz_f*ny*nx, dtype=float64).reshape(nz_f,ny,nx)
       a3dqdp_sum  = zeros(nz_f*ny*nx, dtype=float64).reshape(nz_f,ny,nx)
-      a2Plcl_sum  = zeros(ny*nx, dtype=float64).reshape(ny,nx)
+      #a2Plcl_sum  = zeros(ny*nx, dtype=float64).reshape(ny,nx)
       a2count     = zeros(ny*nx, dtype=float64).reshape(ny,nx)
       #-------------
       for mon in range(imon, emon+1):
@@ -214,6 +212,7 @@ for model in lmodel:
           dname["psl"]  = dir_Psea + "/%s_%s.bn"%(mk_namehead("psl", tstp, model,dexpr[expr],ens), stime)
           dname["zg"]   = dir_zg   + "/%s_%s.bn"%(mk_namehead("zg", tstp, model,dexpr[expr],ens), stime)
           dname["wap"]  = dir_wap  + "/%s_%s.bn"%(mk_namehead("wap", tstp, model,dexpr[expr],ens), stime)
+          dname["ta"]   = dir_ta   + "/%s_%s.bn"%(mk_namehead("ta",  tstp, model,dexpr[expr],ens), stime)
           dname["rhs"]  = dir_rhs  + "/%s_%s.bn"%(mk_namehead("rhs", tstp, model,dexpr[expr],ens), stime)
           #-------------------------
           check_file(dname["pr"])
@@ -222,6 +221,7 @@ for model in lmodel:
           check_file(dname["psl"])
           check_file(dname["zg"])
           check_file(dname["wap"])
+          check_file(dname["ta"])
           check_file(dname["rhs"])
           #--------------------------------------------
           # open and read files
@@ -232,6 +232,7 @@ for model in lmodel:
           dadat["psl"]  = fromfile(dname["psl"], float32).reshape(ny,nx)
           dadat["zg"]   = fromfile(dname["zg"], float32).reshape(dnz[model,"zg"],ny,nx)
           dadat["wap"]  = fromfile(dname["wap"], float32).reshape(dnz[model,"wap"],ny,nx)
+          dadat["ta"]   = fromfile(dname["ta"], float32).reshape(dnz[model,"ta"],ny,nx)
           dadat["rhs"]  = fromfile(dname["rhs"], float32).reshape(ny,nx)
           #--------------------------------------------
           # convert from float32 to float64
@@ -241,21 +242,21 @@ for model in lmodel:
           dadat["huss"] = array( dadat["huss"] ,float64) 
           dadat["psl"]  = array( dadat["psl"]  ,float64) 
           dadat["zg"]   = array( dadat["zg"]   ,float64) 
-          dadat["wap"]  = array( dadat["wap"]  ,float64) 
+          dadat["wap"]  = array( dadat["wap"]  ,float64)
+          dadat["ta"]   = array( dadat["ta"]   ,float64)
           dadat["rhs"]  = array( dadat["rhs"]  ,float64) 
           #--------------------------------------------
           dval ={}
           for iy in range(0, ny):
             for ix in range(0, nx):
+              pr_lw    = apr_lw[iy,ix]
+              pr_up    = apr_up[iy,ix]
               pr       = dadat["pr"][iy,ix]
               #---------------------------------
               # check precip
               #---------------------------------
-              if (xth != 0.0): 
-                pr_lw    = apr_lw[iy,ix]
-                pr_up    = apr_up[iy,ix]
-                if ( (pr < pr_lw) or (pr_up < pr) ):
-                  continue
+              if ( (pr < pr_lw) or (pr_up < pr) ):
+                continue
               #---------------------------------
               # counter
               #---------------------------------
@@ -264,8 +265,9 @@ for model in lmodel:
               Tsfc     = dadat["tas"][iy,ix]
               qsfc     = dadat["huss"][iy,ix]
               Psea     = dadat["psl"][iy,ix]
-              a1zg     = dadat["zg"][:,iy,ix]
+              a1zg     = dadat["zg" ][:,iy,ix]
               a1wap_c  = dadat["wap"][:,iy,ix]
+              a1T_c   = dadat["ta" ][:,iy,ix]
               RHsfc    = dadat["rhs"][iy,ix]
               zsfc     = a2orog[iy,ix]
               #---------------------------------
@@ -273,18 +275,19 @@ for model in lmodel:
               #---------------------------------
               a1zg     = ma.filled(ma.masked_greater(a1zg, rmiss_cmip), 0.0)
               a1wap_c  = ma.filled(ma.masked_greater(a1wap_c, rmiss_cmip), 0.0)
+              a1T_c  = ma.filled(ma.masked_greater(a1T_c, rmiss_cmip), 0.0)
               #---------------------------------
               Psfc     = dtanl_cmip_sbs.psea2psfc(Tsfc, qsfc, zsfc, Psea)
-              Plcl     = dtanl_cmip_sbs.lcl(Psfc, Tsfc, qsfc)
+              #Plcl     = dtanl_cmip_sbs.lcl(Psfc, Tsfc, qsfc)
               #------------------------------------------
-              a1wap_f  = dtanl_cmip_sbs.omega_profile(0.0, Psfc, Plcl, llev_c, llev_f, a1wap_c)
-              a1dqdp_f = dtanl_cmip_sbs.dqdp_profile(flag_fill, rmiss, Psfc, Tsfc, qsfc, Plcl, llev_f)
+              a1wap_f  = dtanl_cmip_sbs.omega_profile(0.0, Psfc, Psfc, llev_c, llev_f, a1wap_c)
+              a1dqdp_f = dtanl_cmip_sbs.dqdp_profile_epl(Psfc, Tsfc, llev_c, llev_f, a1T_c)
               #------------------------------------------
               # make sum
               #------------------------------------------
               a3wap_sum[:,iy,ix]  = a3wap_sum[:,iy,ix]  + a1wap_f
               a3dqdp_sum[:,iy,ix] = a3dqdp_sum[:,iy,ix] + a1dqdp_f
-              a2Plcl_sum[iy,ix]   = a2Plcl_sum[iy,ix]   + Plcl
+              #a2Plcl_sum[iy,ix]   = a2Plcl_sum[iy,ix]   + Plcl
               #if ((iy == 30)&(ix == 135)):
               #  print year, mon, day
               #  #print a1wap_f
@@ -296,35 +299,33 @@ for model in lmodel:
       #----------------------------------------------
       odir_wap   = odir_root + "/wa.mean/%06.2f/wap"%(xth)
       odir_dqdp  = odir_root + "/wa.mean/%06.2f/dqdp"%(xth)
-      odir_Plcl  = odir_root + "/wa.mean/%06.2f/plcl"%(xth)
+      #odir_Plcl  = odir_root + "/wa.mean/%06.2f/plcl"%(xth)
       odir_count = odir_root + "/wa.mean/%06.2f/count"%(xth)
       mk_dir(odir_wap)
       mk_dir(odir_dqdp)
-      mk_dir(odir_Plcl)
+      #mk_dir(odir_Plcl)
       mk_dir(odir_count)
-      swap_sum  = odir_wap +  "/wap.sum.%04d.bn"%(year)
-      sdqdp_sum = odir_dqdp + "/dqdp.sum.%04d.bn"%(year)
-      sPlcl_sum = odir_Plcl + "/plcl.sum.%04d.bn"%(year)
-      scountfile = odir_count+ "/count.%04d.bn"%(year)
+      swap_sum  = odir_wap +  "/epl.wap.sum.%04d.bn"%(year)
+      sdqdp_sum = odir_dqdp + "/epl.dqdp.sum.%04d.bn"%(year)
+      #sPlcl_sum = odir_Plcl + "/epl.plcl.sum.%04d.bn"%(year)
+      scountfile = odir_count+ "/epl.count.%04d.bn"%(year)
       #----------------------------------------------
       # write to file
       #----------------------------------------------
       a3wap_sum  = array(a3wap_sum, float32)
       a3dqdp_sum = array(a3dqdp_sum, float32)
-      a2Plcl_sum = array(a2Plcl_sum, float32)
+      #a2Plcl_sum = array(a2Plcl_sum, float32)
       a2count    = array(a2count, float32)
       #----------------------------
       a3wap_sum.tofile(swap_sum)
       a3dqdp_sum.tofile(sdqdp_sum)
-      a2Plcl_sum.tofile(sPlcl_sum)
+      #a2Plcl_sum.tofile(sPlcl_sum)
       a2count.tofile(scountfile)
       #----------------------------------------------
-      print swap_sum
-      print sdqdp_sum
-      print sPlcl_sum
+      print "swap_sum",swap_sum
+      print "sdqdp_sum",sdqdp_sum
+      #print sPlcl_sum
       print scountfile
-  
-   
   #****************************************************************
   # make mean file
   #****************************************************************
@@ -350,42 +351,42 @@ for model in lmodel:
       #----------------------------------------------
       odir_wap   = odir_root + "/wa.mean/%06.2f/wap"%(xth)
       odir_dqdp  = odir_root + "/wa.mean/%06.2f/dqdp"%(xth)
-      odir_Plcl  = odir_root + "/wa.mean/%06.2f/plcl"%(xth)
+      #odir_Plcl  = odir_root + "/wa.mean/%06.2f/plcl"%(xth)
       odir_count = odir_root + "/wa.mean/%06.2f/count"%(xth)
-      swap_sum  = odir_wap +  "/wap.sum.%04d.bn"%(year)
-      sdqdp_sum = odir_dqdp + "/dqdp.sum.%04d.bn"%(year)
-      sPlcl_sum = odir_Plcl + "/plcl.sum.%04d.bn"%(year)
-      scountfile = odir_count+ "/count.%04d.bn"%(year)
+      swap_sum  = odir_wap   + "/epl.wap.sum.%04d.bn"%(year)
+      sdqdp_sum = odir_dqdp  + "/epl.dqdp.sum.%04d.bn"%(year)
+      #sPlcl_sum = odir_Plcl  + "/epl.plcl.sum.%04d.bn"%(year)
+      scountfile = odir_count+ "/epl.count.%04d.bn"%(year)
       #----------------------------------------------
       # read files
       #----------------------------------------------
       a3wap_seg  = fromfile(swap_sum,  float32).reshape(nz_f, ny, nx)
       a3dqdp_seg = fromfile(sdqdp_sum, float32).reshape(nz_f, ny, nx)
-      a2Plcl_seg = fromfile(sPlcl_sum, float32).reshape(ny, nx)
+      #a2Plcl_seg = fromfile(sPlcl_sum, float32).reshape(ny, nx)
       a2count_seg    = fromfile(scountfile,float32).reshape(ny,nx)
       #----------------------------------------------
       # calulation
       #----------------------------------------------
       a3wap_mean   = a3wap_mean + a3wap_seg
       a3dqdp_mean  = a3dqdp_mean + a3dqdp_seg
-      a2Plcl_mean  = a2Plcl_mean + a2Plcl_seg
+      #a2Plcl_mean  = a2Plcl_mean + a2Plcl_seg
       a2count      = a2count + a2count_seg
     #----------
     a3wap_mean   = a3wap_mean / a2count
     a3dqdp_mean  = a3dqdp_mean/ a2count
     #----------
-    a2Plcl_mean = a2Plcl_mean / a2count
+    #a2Plcl_mean = a2Plcl_mean / a2count
     #------------------------
-    swap_mean  = odir_wap +  "/wap.mean.%04d-%04d.bn"%(iyear, eyear)
-    sdqdp_mean = odir_dqdp + "/dqdp.mean.%04d-%04d.bn"%(iyear, eyear)
-    sPlcl_mean = odir_Plcl + "/plcl.mean.%04d-%04d.bn"%(iyear, eyear)
-    scount_all = odir_count+ "/count.all.%04d-%04d.bn"%(iyear, eyear)
+    swap_mean  = odir_wap +  "/epl.wap.mean.%04d-%04d.bn"%(iyear, eyear)
+    sdqdp_mean = odir_dqdp + "/epl.dqdp.mean.%04d-%04d.bn"%(iyear, eyear)
+    #sPlcl_mean = odir_Plcl + "/epl.plcl.mean.%04d-%04d.bn"%(iyear, eyear)
+    scount_all = odir_count+ "/epl.count.all.%04d-%04d.bn"%(iyear, eyear)
     #------------------------
     # write to file
     #------------------------
     a3wap_mean.tofile(swap_mean)
     a3dqdp_mean.tofile(sdqdp_mean)
-    a2Plcl_mean.tofile(sPlcl_mean)
+    #a2Plcl_mean.tofile(sPlcl_mean)
     a2count.tofile(scount_all)
     #-------------
     print swap_mean

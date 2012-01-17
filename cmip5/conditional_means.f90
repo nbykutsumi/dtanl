@@ -15,6 +15,7 @@ real                                 rtemp
 !** parameter ***
 real,parameter                    :: dP = 1000 ![Pa], not [hPa]
 real,parameter                    :: rmiss = -9999.0
+real,parameter                    :: rmiss_cmip = (1.0e+20) * 0.1
 !***********************************************************
 !--------------------------------------------------
 ! Get filenames
@@ -95,6 +96,11 @@ do
   do iy=1,ny
     do ix=1,nx
       if ((r2pr(ix,iy) .gt. r2pr_lw(ix,iy)) .and. (r2pr(ix,iy) .le. r2pr_up(ix,iy)) ) then
+        do iz = 1,nz
+          if ( r3in(ix, iy, iz) .gt. rmiss_cmip)then
+            r3in(ix, iy, iz) = 0.0
+          endif
+        end do
         r3stck(ix,iy,:) = r3stck(ix,iy,:) +r3in(ix,iy,:)
         r3count(ix,iy,:) = r3count(ix,iy,:) +1.0
       end if

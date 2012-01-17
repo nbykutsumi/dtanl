@@ -246,6 +246,146 @@ end if
 RETURN
 END SUBROUTINE dqdp_profile
 !*********************************************************************
+SUBROUTINE dpxdqdp_profile(rPlcl, r1dqdp, r1lev, nz, r1dpxdqdp)
+  implicit none
+  !-- input -------------------
+  integer                             nz
+  double precision                    rPlcl
+!f2py intent(in)                      rPlcl
+  double precision,dimension(nz)   :: r1dqdp, r1lev
+!f2py intent(iz)                      r1dqdp, r1lev
+  !-- output ------------------
+  double precision,dimension(nz)   :: r1dpxdqdp
+!f2py intent(out)                     r1dpxdqdp
+  !-- for calculation ---------
+  integer                             iz
+  double precision                    dp
+!------------------------------
+iz_scnd  = findiz_scnd( nz, r1lev, rPlcl)
+
+do iz = 1,iz_scnd-1 
+  r1dpxdqdp(iz) = r1dqdp(iz)
+end do
+!------------------
+! for iz_scnd
+!------------------
+if (iz_scnd .lt. nz)then
+  dp = (rPlcl - r1lev(iz_scnd)) + ( r1lev(iz_scnd) - r1lev(iz_scnd +1) )/2.0d0
+else
+  dp = (rPlcl - r1lev(iz_scnd))
+end if
+r1dpxdqdp(iz_scnd) = dp * r1dqdp(iz_scnd) 
+!------------------
+! from iz_scnd + 1 to nz
+!------------------
+if (iz_scnd .eq. nz)then
+  dp = ( r1lev(iz_scnd -1) - r1lev(iz_scnd) )/2.0d0
+  r1dpxdqdp(iz_scnd) = dp * r1dqdp(iz_scnd)
+else
+  do iz = iz_scnd + 1, nz
+    dp = ( r1lev(iz_scnd -1) - r1lev(iz_scnd +1) )/2.0d0
+    r1dpxdqdp(iz) = dp * r1dqdp(iz)
+  end do
+end if
+!------------------
+RETURN
+END SUBROUTINE
+!*********************************************************************
+SUBROUTINE dqdp_profile_epl(rPlcl, rPsfc, rTsfc, r1lev_c, r1lev_f, r1T_c, nzc, nzf, r1dqdp_f)
+
+  implicit none
+  !-- input -------------------
+  integer                             nzc, nzf
+  double precision                    rPlcl, rPsfc, rTsfc
+!f2py intent(in)                      rPlcl, rPsfc, rTsfc
+  double precision,dimension(nzc)  :: r1lev_c, r1T_c
+!f2py intent(in)                      r1lev_c, r1T_c
+  double precision,dimension(nzf)  :: r1lev_f
+!f2py intent(in)                      r1lev_f
+
+  !-- output ------------------
+  double precision,dimension(nzf)  :: r1dqdp_f
+!f2py intent(out)                     r1dqdp_f
+
+  !----------------------------
+  ! for calculation
+  !----------------------------
+  integer                             izc, izf, izc_btm, izf_btm, izc_scnd, izf_scnd
+  integer                             izf_acs   ! izf at Above izC_Scnd
+  double precision,dimension(nzc)  :: r1dqdp_c
+  double precision                    rdqdp_sfc, rdqdp_lw, rdqdp_up
+  double precision                    rTlcl, rdqdp_lcl
+  double precision                    p_up, p_lw
+  double precision,parameter       :: dP_cal = 100.0d0  ![Pa]
+!------------------------------
+!print *,"r1T_c", r1T_c
+izc_btm = findiz_btm(nzc, r1lev_c, rPsfc)
+!------------------------
+! izc = 1 to izc_btm
+!------------------------
+if (izc_btm .gt. 1)then
+  do izc = 1, izc_btm-1
+    r1dqdp_c(izc) = 0.0d0
+  end do
+end if
+!------------------------
+! at Psfc
+!------------------------
+rdqdp_sfc = cal_rdqdP( rPsfc, rTsfc, dP_cal)
+!------------------------
+do izc = 1,nzc
+  r1dqdp_c(izc) = cal_rdqdP( r1lev_c(izc), r1T_c(izc), dP_cal)
+  !print *,"lev, T, rdqdp",r1lev_c(izc), r1T_c(izc), r1dqdp_c(izc)
+enddo
+!-----------------------------
+!make r1dqdp_f
+!-----------------------------
+izc_scnd  = findiz_scnd( nzc, r1lev_c, rPlcl)
+izf_scnd  = findiz_scnd( nzf, r1lev_f, rPlcl)
+rTlcl     = T1toT2dry(rTsfc, rPsfc, rPlcl)
+rdqdp_lcl = cal_rdqdP( rPlcl, rTlcl, dP_cal )
+!------------------
+if (izf_scnd .gt. 1)then
+  do izf = 1,izf_scnd-1
+    r1dqdp_f(izf) = 0.0d0
+  enddo
+endif
+!-------------
+! from izf_scnd to the level below or equal to izc_scnd
+!-------------
+p_lw = rPlcl
+p_up = r1lev_c(izc_scnd)
+rdqdp_lw = rdqdp_lcl
+rdqdp_up = r1dqdp_c(izc_scnd)
+izf = izf_scnd - 1
+do while (-r1lev_f(izf) .le. -r1lev_c(izc_scnd) )
+   izf = izf + 1
+   r1dqdp_f(izf) = linear_interpolate( r1lev_f(izf), p_lw, p_up, rdqdp_lw, rdqdp_up )
+enddo
+!-------------
+izf_acs = izf + 1
+
+izc = izc_scnd
+p_lw = r1lev_c(izc)
+p_up = r1lev_c(izc+1)
+rdqdp_lw = r1dqdp_c(izc)
+rdqdp_up = r1dqdp_c(izc+1)
+!
+do izf = izf_acs, nzf
+   do while (-r1lev_f(izf) .gt. -p_up)
+     izc  = izc + 1
+     p_lw = r1lev_c(izc )
+     p_up = r1lev_c(izc + 1 )
+     rdqdp_lw = r1dqdp_c(izc)
+     rdqdp_up = r1dqdp_c(izc + 1 )
+   end do
+   r1dqdp_f(izf) = linear_interpolate( r1lev_f(izf), p_lw, p_up, rdqdp_lw, rdqdp_up )
+   
+enddo
+!-----------------------------
+RETURN
+END SUBROUTINE
+!*********************************************************************
 FUNCTION cal_swadlcl(rPlcl1, rPlcl2, r1lev, r1wap, r1dqdp, nz)
 !*********************************************************************
   implicit none

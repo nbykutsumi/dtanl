@@ -1,0 +1,15 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module temp ! in 
+    interface  ! in :temp
+        subroutine func1(n,x,y) ! in :temp:temp.f90
+            integer intent(in),optional,check(len(x)>=n),depend(x) :: n=len(x)
+            real intent(in),dimension(n) :: x
+            real intent(out),dimension(n),depend(n) :: y
+        end subroutine func1
+    end interface 
+end python module temp
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

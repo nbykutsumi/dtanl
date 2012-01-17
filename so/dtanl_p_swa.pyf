@@ -1,0 +1,126 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module dtanl_p_swa ! in 
+    interface  ! in :dtanl_p_swa
+        module dtanl_p_swa ! in :dtanl_p_swa:dtanl_p_swa.f90
+            subroutine calc_swa(dp,r1lev,rtsfc,rqsfc,rpsfc,r1wap,nz,rswa) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real intent(in) :: dp
+                real dimension(nz),intent(in) :: r1lev
+                real intent(in) :: rtsfc
+                real intent(in) :: rqsfc
+                real intent(in) :: rpsfc
+                real dimension(nz),intent(in),depend(nz) :: r1wap
+                integer optional,check(len(r1lev)>=nz),depend(r1lev) :: nz=len(r1lev)
+                real intent(out) :: rswa
+            end subroutine calc_swa
+            function integral_wa_seg(rpb,rpt,rwb,rwt,rtb,dp) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rpb
+                real :: rpt
+                real :: rwb
+                real :: rwt
+                real :: rtb
+                real :: dp
+                real :: integral_wa_seg
+            end function integral_wa_seg
+            function findiz_btm(nz,r1lev,rpsfc) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                integer optional,check(len(r1lev)>=nz),depend(r1lev) :: nz=len(r1lev)
+                real dimension(nz) :: r1lev
+                real :: rpsfc
+                real :: findiz_btm
+            end function findiz_btm
+            function findiz_scnd(nz,r1lev,rplcl) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                integer optional,check(len(r1lev)>=nz),depend(r1lev) :: nz=len(r1lev)
+                real dimension(nz) :: r1lev
+                real :: rplcl
+                integer :: findiz_scnd
+            end function findiz_scnd
+            function omega_lcl(nz,iz_btm,iz_scnd,r1wap,r1lev,rpsfc,rplcl) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                integer optional,check(len(r1wap)>=nz),depend(r1wap) :: nz=len(r1wap)
+                integer :: iz_btm
+                integer :: iz_scnd
+                real dimension(nz) :: r1wap
+                real dimension(nz),depend(nz) :: r1lev
+                real :: rpsfc
+                real :: rplcl
+                real :: omega_lcl
+            end function omega_lcl
+            function t1tot2dry(rt1,rp1,rp2) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rt1
+                real :: rp1
+                real :: rp2
+                real :: t1tot2dry
+            end function t1tot2dry
+            function mk_r1wap_fillzero(nz,r1wap,r1lev,rpsfc) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                integer optional,check(len(r1wap)>=nz),depend(r1wap) :: nz=len(r1wap)
+                real dimension(nz) :: r1wap
+                real dimension(nz),depend(nz) :: r1lev
+                real :: rpsfc
+                real dimension(nz) :: mk_r1wap_fillzero
+            end function mk_r1wap_fillzero
+            function lcl(rpsfc,rtsfc,rqsfc) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rpsfc
+                real :: rtsfc
+                real :: rqsfc
+                real :: lcl
+            end function lcl
+            function func(p,psfc,tsfc,q) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                double precision :: p
+                double precision :: psfc
+                double precision :: tsfc
+                double precision :: q
+                double precision :: func
+            end function func
+            function fnewton(p,psfc,tsfc,q) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                double precision :: p
+                double precision :: psfc
+                double precision :: tsfc
+                double precision :: q
+                double precision :: fnewton
+            end function fnewton
+            function cal_latentheat(rt) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rt
+                real :: cal_latentheat
+            end function cal_latentheat
+            function cal_rdqdp(rp,rt,dp) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rp
+                real :: rt
+                real :: dp
+                real :: cal_rdqdp
+            end function cal_rdqdp
+            function moistadiabat(rp1,rt1,rp2,dp) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rp1
+                real :: rt1
+                real :: rp2
+                real :: dp
+                real :: moistadiabat
+            end function moistadiabat
+            function dt_dp_moist(rp,rt) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rp
+                real :: rt
+                real :: dt_dp_moist
+            end function dt_dp_moist
+            function cal_qs(rt,rp) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rt
+                real :: rp
+                real :: cal_qs
+            end function cal_qs
+            function cal_es(rt) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                real :: rt
+                real :: cal_es
+            end function cal_es
+            function mk_r1t_extend(nz,rtsfc,rqsfc,r1lev,rpsfc,dp) ! in :dtanl_p_swa:dtanl_p_swa.f90:dtanl_p_swa
+                integer optional,check(len(r1lev)>=nz),depend(r1lev) :: nz=len(r1lev)
+                real :: rtsfc
+                real :: rqsfc
+                real dimension(nz) :: r1lev
+                real :: rpsfc
+                real :: dp
+                real dimension(nz) :: mk_r1t_extend
+            end function mk_r1t_extend
+        end module dtanl_p_swa
+    end interface 
+end python module dtanl_p_swa
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

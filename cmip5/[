@@ -1,8 +1,73 @@
-module check_dtanl
+module dtanl_cmip_sbs
 
 CONTAINS
 !*********************************************************************
-!* FUNCTION
+!* SUBROUTINE & FUNCTION
+!*********************************************************************
+SUBROUTINE dqdp_profile_fill(rmiss, rPsfc, rTsfc, rqsfc, llev_out, nz_out, rPlcl, r1dqdp)
+  implicit none
+  !
+  integer                                      nz_out
+!f2py intent(in)                               nz_out
+  double precision                             rmiss
+!f2py intent(in)                               rmiss
+  double precision                             rPsfc, rTsfc, rqsfc
+!f2py intent(in)                               rPsfc, rTsfc, rqsfc
+  double precision,dimension(nz_out)        :: llev_out
+!f2py intent(in)                               llev_out
+
+  !** for output
+  double precision                             rPlcl
+!f2py intent(out)                              rPlcl
+  double precision,dimension(nz_out)        :: r1dqdp
+!f2py intent(out)                              r1dqdp
+
+  !** for calculation
+  integer                                      iz, iz_scnd
+  double precision                             P
+!-----------------------------------------
+rPlcl = lcl(rPsfc, rTsfc, rqsfc)
+iz_scnd = findiz_scnd( nz_out, llev_out, rPlcl)
+print *,"iz_scnd=",iz_scnd
+
+!-----------------------------
+! from surface to iz_scnd -1
+!-----------------------------
+if (iz_scnd .ge. 2) then
+  do iz = 1, iz_scnd-1
+    r1dqdp(iz) = -9999.0d0
+  end do
+endif
+!-----------------------------
+! from iz_scnd to nz
+!-----------------------------
+do iz = iz_scnd, nz_out
+  P = llev_out(iz) 
+  print *,P
+end do
+!-----------------------------
+
+RETURN
+END SUBROUTINE dqdp_profile_fill
+!*********************************************************************
+FUNCTION findiz_scnd( nz, r1lev, rPlcl )
+  implicit none
+  integer                          nz
+  double precision,dimension(nz)           ::  r1lev
+  double precision                             rPlcl
+  integer                          iz, findiz_scnd
+!
+do iz =1,nz
+  if (r1lev(iz) .lt. rPlcl)then
+    findiz_scnd = iz
+    exit
+  elseif (iz .eq. nz) then
+    findiz_scnd = -9999d0
+  end if
+end do
+RETURN
+END FUNCTION findiz_scnd
+
 !*********************************************************************
 FUNCTION cal_rdqdP(rP, rT, dP)
   implicit none
@@ -299,4 +364,4 @@ END FUNCTION cal_latentheat
 
 
 
-end module check_dtanl
+end module dtanl_cmip_sbs

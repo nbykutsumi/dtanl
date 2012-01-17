@@ -57,8 +57,8 @@ somapdir   = "/media/disk2/out/CMIP5/%s/%s/scales/%s/map"%(tstp, model, ens)
 mk_dir(sozonaldir)
 mk_dir(somapdir)
 ####
-sofile1 = sozonaldir + "/scales.%s_%s_%s_%06.2f.txt"%(tstp, model, ens, xth)
-sofile2 = sozonaldir + "/others.%s_%s_%s_%06.2f.txt"%(tstp, model, ens, xth)
+sofile1 = sozonaldir + "/scales.%s_%s_%s_%06.2f.csv"%(tstp, model, ens, xth)
+sofile2 = sozonaldir + "/others.%s_%s_%s_%06.2f.csv"%(tstp, model, ens, xth)
 sodPrec  = somapdir + "/dP.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soDdynam = somapdir + "/dP.dynam.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soDlapse = somapdir + "/dP.lapse.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
@@ -69,6 +69,10 @@ sonan   = somapdir + "/nan.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soFracChngLCL = somapdir + "/frac.chng.LCL_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soFracChngRH = somapdir + "/frac.chng.RH_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 soChngRH = somapdir + "/chng.RH_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+soChngPsfc   = somapdir + "/chng.psfc_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+soFracChngPsfc = somapdir + "/frac.chng.psfc_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+soPsfc1 = somapdir + "/psfc1_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+soPsfc2 = somapdir + "/psfc2_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
 #---------------------------
 # set szgfile
 #---------------------------
@@ -126,7 +130,7 @@ for era in ["his", "fut"]:
 
    
 #----------------------------------------------------
-os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
+os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" \
           %(cmd \
           , smeanfile["his","prc"] \
           , smeanfile["his","tas"] \
@@ -158,7 +162,11 @@ os.system("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s 
           , sonan\
           , soFracChngLCL\
           , soFracChngRH\
+          , soFracChngPsfc\
           , soChngRH\
+          , soChngPsfc\
+          , soPsfc1\
+          , soPsfc2\
           , nx\
           , ny\
           , nz) )
