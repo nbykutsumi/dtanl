@@ -6,10 +6,14 @@ import calendar
 odir_root ="/media/disk2/data/CMIP5/bn"
 #####################################################
 #lvar = ["pr","psl","tas","rhs","huss"] #pr, psl, tas, rhs, huss
-lvar = ["pr", "psl", "tas", "rhs", "huss"]
-tstp = "day"
+lvar = ["psl"]
+#tstp = "day"
+tstp  = "6hr"
+tinc  = {"6hr":6}
+hlast = {"6hr":18}
+hdattype = "Plev"
 #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
-lmodel = ["MIROC5", "CanESM2"]
+lmodel = ["NorESM1-M"]
 #expr = "historical" #historical, rcp85
 #expr = "rcp85" #historical, rcp85
 lexpr =["historical","rcp85"]
@@ -21,8 +25,8 @@ ens  = "r1i1p1"
 #####################################################
 dlyrange     = {}
 #
-dlyrange["NorESM1-M", "historical"]  = [[1990,1999]]
-dlyrange["NorESM1-M", "rcp85"]       = [[2086,2095]]
+dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
+dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
 #
 dlyrange["MIROC5", "historical"]  = [[1990,1999]]
 dlyrange["MIROC5", "rcp85"]       = [[2080,2089], [2090,2099]]
@@ -40,9 +44,13 @@ for model in lmodel:
       #####################################################
       incdir = "/media/disk2/data/CMIP5/nc/%s/%s"%(tstp, model)
       #####################################################
-      ihead = var + "_" + tstp + "_" +model + "_" + expr +"_"\
-             +ens
-      ohead = ihead
+      if (tstp == "day"):        
+        ihead = var + "_" + tstp + "_" +model + "_" + expr +"_" +ens
+        ohead = ihead
+      else:
+        ihead = var + "_" + tstp + hdattype + "_" +model + "_" + expr +"_" +ens
+        ohead = ihead
+      #################
       odir_tail = var + "/" + tstp + "/" +model + "/" + expr +"/"\
              +ens
       #####################################################
@@ -89,7 +97,11 @@ for model in lmodel:
         y0 = yrange[0]
         y1 = yrange[1]
         ######
-        itimerange="%04d0101-%04d1231"%(y0,y1)
+        if (tstp == "day"):
+          itimerange="%04d0101-%04d1231"%(y0,y1)
+        else:
+          itimerange="%04d010100-%04d1231%02d"%(y0,y1,hlast[tstp])
+        ######  
         iname = "%s/%s_%s.nc"%(incdir, ihead, itimerange)
         #####
         print os.access(iname, os.F_OK)
@@ -120,13 +132,26 @@ for model in lmodel:
               ed = calendar.monthrange(y,m)[1]
             ##############
             for d in range(1, ed + 1):
-              istep = istep +1
-              stime = "%04d%02d%02d%02d"%(y,m,d,0)
-              ########
-              data = nc.variables["%s"%(var)][istep]
-              ########
-              oname = odir + "/%s_%s.bn"%(ohead, stime)
-              ########
-              f = open(oname, "wb")
-              f.write(data)
-              f.close()
+              if (tstp == "day"):
+                istep = istep +1
+                stime = "%04d%02d%02d%02d"%(y,m,d,0)
+                ########
+                data = nc.variables["%s"%(var)][istep]
+                ########
+                oname = odir + "/%s_%s.bn"%(ohead, stime)
+                ########
+                f = open(oname, "wb")
+                f.write(data)
+                f.close()
+              else:
+                for h in range(0,23+1,tinc[tstp]):
+                  istep = istep +1
+                  stime = "%04d%02d%02d%02d"%(y,m,d,h)
+                  ########
+                  data = nc.variables["%s"%(var)][istep]
+                  ########
+                  oname = odir + "/%s_%s.bn"%(ohead, stime)
+                  ########
+                  f = open(oname, "wb")
+                  f.write(data)
+                  f.close()

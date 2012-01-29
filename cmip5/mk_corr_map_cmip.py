@@ -5,8 +5,6 @@ import os
 import sys
 #****************************************************
 flag_fill = 1
-#xth =99.0
-xth =90.0
 
 #------------------------------
 tstp = "day"
@@ -50,6 +48,8 @@ dyrange["his"] = [1990,1999]
 dyrange["fut"] = [2086,2095]
 imon = 1
 emon = 12
+#xth =99.0
+xth =50.0
 #------------------------------------------------------
 idir_root = "/media/disk2/data/CMIP5/bn"
 lvar = ["tas", "huss", "rhs","psl", "zg", "wap"]

@@ -40,7 +40,7 @@ dyrange["fut"] = [2086, 2095]
 imon = 1
 emon = 12
 #xth  = 99.0
-xth  = 0.0
+xth  = 90.0
 rmiss = -9999.0
 g = 9.8
 idir_root = "/media/disk2/data/CMIP5/bn"
@@ -138,68 +138,83 @@ for model in lmodel:
   #----------------------------------------------------
   #* read mean file
   #----------------------------------------------------
-  sdqdp_his = dir_his + "/dqdp/epl.dqdp.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
-  swap_his  = dir_his + "/wap/epl.wap.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
-  #splcl_his = dir_his + "/plcl/epl.plcl.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
-  sdqdp_fut = dir_fut + "/dqdp/epl.dqdp.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
-  swap_fut  = dir_fut + "/wap/epl.wap.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
-  #splcl_fut = dir_fut + "/plcl/epl.plcl.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
+  sdqdp_his    = dir_his + "/dqdp/epl.dqdp.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
+  swap_his     = dir_his + "/wap/epl.wap.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
+  splcl_his    = dir_his + "/plcl/epl.plcl.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
+  swaplcl_his  = dir_his + "/plcl/epl.waplcl.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
+  sdqdplcl_his = dir_his + "/plcl/epl.dqdplcl.mean.%04d-%04d.bn"%(iyear_his, eyear_his)
+  #
+  sdqdp_fut    = dir_fut + "/dqdp/epl.dqdp.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
+  swap_fut     = dir_fut + "/wap/epl.wap.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
+  splcl_fut    = dir_fut + "/plcl/epl.plcl.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
+  #swaplcl_fut  = dir_fut + "/plcl/epl.waplcl.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
+  #sdqdplcl_fut = dir_fut + "/plcl/epl.dqdplcl.mean.%04d-%04d.bn"%(iyear_fut, eyear_fut)
   #-----
   print model
   print nz_f, ny, nx
   print sdqdp_his
-  a3dqdp_his = array( fromfile(sdqdp_his, float32), float64).reshape(nz_f, ny, nx)
-  a3wap_his  = array( fromfile(swap_his,  float32), float64).reshape(nz_f, ny, nx)
-  #a2plcl_his = array( fromfile(splcl_his,  float32), float64).reshape(ny, nx)
-  a3dqdp_fut = array( fromfile(sdqdp_fut, float32), float64).reshape(nz_f, ny, nx)
-  a3wap_fut  = array( fromfile(swap_fut,  float32), float64).reshape(nz_f, ny, nx)
-  #a2plcl_fut = array( fromfile(splcl_fut,  float32), float64).reshape(ny, nx)
+  a3dqdp_his    = array( fromfile(sdqdp_his, float32), float64).reshape(nz_f, ny, nx)
+  a3wap_his     = array( fromfile(swap_his,  float32), float64).reshape(nz_f, ny, nx)
+  a2plcl_his    = array( fromfile(splcl_his,  float32), float64).reshape(ny, nx)
+  a2waplcl_his  = array( fromfile(swaplcl_his,  float32), float64).reshape(ny, nx)
+  a2dqdplcl_his = array( fromfile(sdqdplcl_his,  float32), float64).reshape(ny, nx)
+  #
+  a3dqdp_fut    = array( fromfile(sdqdp_fut, float32), float64).reshape(nz_f, ny, nx)
+  a3wap_fut     = array( fromfile(swap_fut,  float32), float64).reshape(nz_f, ny, nx)
+  a2plcl_fut    = array( fromfile(splcl_fut,  float32), float64).reshape(ny, nx)
+  #a2waplcl_fut  = array( fromfile(swaplcl_fut,  float32), float64).reshape(ny, nx)
+  #a2dqdplcl_fut = array( fromfile(sdqdplcl_fut,  float32), float64).reshape(ny, nx)
   #----------------------------------------------------
   # dummy
   #----------------------------------------------------
   a3swa    = zeros(nz_f*ny*nx, dtype=float64).reshape(nz_f, ny, nx)
   a3sdwa   = zeros(nz_f*ny*nx, dtype=float64).reshape(nz_f, ny, nx)
   a3swda   = zeros(nz_f*ny*nx, dtype=float64).reshape(nz_f, ny, nx)
-  #a2swadlcl= zeros(ny*nx, dtype=float64).reshape(ny, nx) 
+  a2swadlcl= zeros(ny*nx, dtype=float64).reshape(ny, nx) 
   #------------------------------------------
   # calc scales
   #------------------------------------------
   for iy in range(0,ny):
     for ix in range(0,nx):
-      a1dqdp1 = a3dqdp_his[:,iy,ix]
-      a1wap1  = a3wap_his[:,iy,ix]
-      #Plcl1   = a2plcl_his[iy,ix]
-      Plcl1   = llev_f[0]
-      a1dqdp2 = a3dqdp_fut[:,iy,ix]
-      a1wap2  = a3wap_fut[:,iy,ix]
-      #Plcl2   = a2plcl_fut[iy,ix]
+      a1dqdp1  = a3dqdp_his[:,iy,ix]
+      a1wap1   = a3wap_his[:,iy,ix]
+      Plcl1    = a2plcl_his[iy,ix]
+      waplcl1  = a2waplcl_his[iy,ix]
+      dqdplcl1 = a2dqdplcl_his[iy,ix]
+      #
+      a1dqdp2  = a3dqdp_fut[:,iy,ix]
+      a1wap2   = a3wap_fut[:,iy,ix]
+      Plcl2    = a2plcl_fut[iy,ix]
+      #waplcl2  = a2waplcl_fut[iy,ix]
+      #dqdplcl2 = a2dqdplcl_fut[iy,ix]
       #------------------------------------------
       a3swa[:,iy,ix]   = dtanl_cmip_sbs.swa_profile(Plcl1, llev_f, a1wap1, a1dqdp1)
       scales           = dtanl_cmip_sbs.scale_profile(Plcl1, llev_f, a1wap1, a1wap2, a1dqdp1, a1dqdp2,)
       a3sdwa[:,iy,ix]  = scales[0]
       a3swda[:,iy,ix]  = scales[1]
-      #a2swadlcl[iy,ix] = dtanl_cmip_sbs.cal_swadlcl(Plcl1, Plcl2, llev_f, a1wap1, a1dqdp1)
+      a2swadlcl[iy,ix] = (Plcl2 - Plcl1) * waplcl1 * dqdplcl1
+  
   #****************************************************
   # make mean scales (abs)
   #****************************************************
   a3swa     = array(a3swa,    float32)
   a3sdwa    = array(a3sdwa,   float32)
   a3swda    = array(a3swda,   float32)
-  #a2swadlcl = array(a2swadlcl,float32)
+  a2swadlcl = array(a2swadlcl,float32)
   #****************************************************
   # output name
   #----------------------------------------------------
   sswa_abs      = mapdir + "/epl.abs.swa_%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   ssdwa_abs     = mapdir + "/epl.abs.dP.dynam.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   sswda_abs     = mapdir + "/epl.abs.dP.lapse.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
-  #sswadlcl_abs  = mapdir + "/epl.abs.dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+  sswadlcl_abs  = mapdir + "/epl.abs.dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   #----------------------------------------------------
   # write to file
   #----------------------------------------------------
   a3swa.tofile(sswa_abs)
   a3sdwa.tofile(ssdwa_abs)
   a3swda.tofile(sswda_abs)
-  #a2swadlcl.tofile(sswadlcl_abs)
+  a2swadlcl.tofile(sswadlcl_abs)
   print sswa_abs
   #****************************************************
   # make mean scales (frac)
@@ -208,17 +223,29 @@ for model in lmodel:
   a2swa      = array(sum(ma.masked_equal(a3swa,   rmiss), axis=0) , float32)
   a2sdwa     = array(sum(ma.masked_equal(a3sdwa,  rmiss), axis=0) , float32)
   a2swda     = array(sum(ma.masked_equal(a3swda,  rmiss), axis=0) , float32)
-  #
+  #****************************************************
+  # make mask
+  #****************************************************
+  thres = 1.0 / 24.0 / 60.0 /60.0
+  a2swa    = ma.masked_less( a2swa, thres)
+  #----------------------------------------------------
   a2sdwa_frac    = a2sdwa / a2swa  * 100.0
   a2swda_frac    = a2swda / a2swa  * 100.0
-  #a2swadlcl_frac = a2swadlcl / a2swa *100.0
-  #a2full_frac    = a2sdwa_frac + a2swda_frac + a2swadlcl_frac
-  a2full_frac    = a2sdwa_frac + a2swda_frac
+  a2swadlcl_frac = a2swadlcl / a2swa *100.0
+  a2full_frac    = a2sdwa_frac + a2swda_frac + a2swadlcl_frac
+  #a2full_frac    = a2sdwa_frac + a2swda_frac
+  #----------------------------------------------------
+  a2sdwa_frac    =  ma.masked_where( a2swa.mask, a2sdwa_frac)
+  a2swda_frac    =  ma.masked_where( a2swa.mask, a2swda_frac)
+  a2swadlcl_frac =  ma.masked_where( a2swa.mask, a2swadlcl_frac)
+  a2full_frac    =  ma.masked_where( a2swa.mask, a2full_frac)
+  #----------------------------------------------------
   #
-  a2sdwa_frac    =  ma.filled(a2sdwa_frac     , rmiss)
-  a2swda_frac    =  ma.filled(a2swda_frac     , rmiss)
-  #a2swadlcl_frac =  ma.filled(a2swadlcl_frac  , rmiss)
-  a2full_frac    =  ma.filled(a2full_frac     , rmiss)
+  a2swa          =  ma.filled(a2swa           , nan)
+  a2sdwa_frac    =  ma.filled(a2sdwa_frac     , nan)
+  a2swda_frac    =  ma.filled(a2swda_frac     , nan)
+  a2swadlcl_frac =  ma.filled(a2swadlcl_frac  , nan)
+  a2full_frac    =  ma.filled(a2full_frac     , nan)
   #
   #----------------------------------------------------
   # output name
@@ -226,14 +253,14 @@ for model in lmodel:
   sswa_his       = mapdir + "/epl.swa.his.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   ssdwa_frac     = mapdir + "/epl.dP.dynam.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   sswda_frac     = mapdir + "/epl.dP.lapse.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
-  #sswadlcl_frac  = mapdir + "/epl.dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+  sswadlcl_frac  = mapdir + "/epl.dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   sfull_frac     = mapdir + "/epl.dP.full.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   sdprec_frac    = mapdir + "/epl.dP.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   #----------------------------------------------------
   a2swa.tofile(sswa_his)
   a2sdwa_frac.tofile(ssdwa_frac)   
   a2swda_frac.tofile(sswda_frac)
-  #a2swadlcl_frac.tofile(sswadlcl_frac)
+  a2swadlcl_frac.tofile(sswadlcl_frac)
   a2full_frac.tofile(sfull_frac)
   a2dprec_frac.tofile(sdprec_frac)
   #
@@ -248,19 +275,24 @@ for model in lmodel:
   #-------------------
   ssdwa_frac     = mapdir + "/epl.dP.dynam.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   sswda_frac     = mapdir + "/epl.dP.lapse.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
-  #sswadlcl_frac  = mapdir + "/epl.dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
+  sswadlcl_frac  = mapdir + "/epl.dP.humid.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   sfull_frac     = mapdir + "/epl.dP.full.%s_%s_%s_%06.2f.bn"%(tstp, model, ens, xth)
   #---
   a2sdwa_frac     = fromfile(ssdwa_frac,   float32).reshape(ny, nx)
   a2sdwa_frac     = fromfile(ssdwa_frac,   float32).reshape(ny, nx)
   a2swda_frac     = fromfile(sswda_frac,   float32).reshape(ny, nx)
-  #a2swadlcl_frac  = fromfile(sswadlcl_frac, float32).reshape(ny, nx)
+  a2swadlcl_frac  = fromfile(sswadlcl_frac, float32).reshape(ny, nx)
   a2full_frac     = fromfile(sfull_frac,   float32).reshape(ny, nx)
   #---
   a2sdwa_frac     = ma.masked_where(a2swa.mask, a2sdwa_frac)
   a2swda_frac     = ma.masked_where(a2swa.mask, a2swda_frac)
-  #a2swadlcl_frac  = ma.masked_where(a2swa.mask, a2swadlcl_frac)
+  a2swadlcl_frac  = ma.masked_where(a2swa.mask, a2swadlcl_frac)
   a2full_frac     = ma.masked_where(a2swa.mask, a2full_frac)
+  #---
+  a2sdwa_frac     = ma.masked_invalid( a2sdwa_frac)
+  a2swda_frac     = ma.masked_invalid( a2swda_frac)
+  a2swadlcl_frac  = ma.masked_invalid( a2swadlcl_frac)
+  a2full_frac     = ma.masked_invalid( a2full_frac)
   #----------------------------------------------------
   # make values
   #----------------------------------------------------
@@ -276,9 +308,9 @@ for model in lmodel:
     full     = mean(a2full_frac[i,:])
     sdwa     = mean(a2sdwa_frac[i,:])
     swda     = mean(a2swda_frac[i,:])
-    #swadlcl  = mean(a2swadlcl_frac[i,:])
-    #sout_seg = "%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f\n"%(i, llat[i], dprec, full, sdwa, swda, swadlcl)
-    sout_seg = "%s,%s,%.2f,%.2f,%.2f,%.2f\n"%(i, llat[i], dprec, full, sdwa, swda)
+    swadlcl  = mean(a2swadlcl_frac[i,:])
+    sout_seg = "%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f\n"%(i, llat[i], dprec, full, sdwa, swda, swadlcl)
+    #sout_seg = "%s,%s,%.2f,%.2f,%.2f,%.2f\n"%(i, llat[i], dprec, full, sdwa, swda)
     sout     = sout + sout_seg
   #----------------------------------------------------
   # output name

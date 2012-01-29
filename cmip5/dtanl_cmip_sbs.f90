@@ -258,7 +258,7 @@ SUBROUTINE dpxdqdp_profile(rPlcl, r1dqdp, r1lev, nz, r1dpxdqdp)
   double precision,dimension(nz)   :: r1dpxdqdp
 !f2py intent(out)                     r1dpxdqdp
   !-- for calculation ---------
-  integer                             iz
+  integer                             iz, iz_scnd
   double precision                    dp
 !------------------------------
 iz_scnd  = findiz_scnd( nz, r1lev, rPlcl)
@@ -289,7 +289,7 @@ else
 end if
 !------------------
 RETURN
-END SUBROUTINE
+END SUBROUTINE dpxdqdp_profile
 !*********************************************************************
 SUBROUTINE dqdp_profile_epl(rPlcl, rPsfc, rTsfc, r1lev_c, r1lev_f, r1T_c, nzc, nzf, r1dqdp_f)
 
@@ -384,7 +384,7 @@ do izf = izf_acs, nzf
 enddo
 !-----------------------------
 RETURN
-END SUBROUTINE
+END SUBROUTINE dqdp_profile_epl
 !*********************************************************************
 FUNCTION cal_swadlcl(rPlcl1, rPlcl2, r1lev, r1wap, r1dqdp, nz)
 !*********************************************************************
@@ -727,12 +727,18 @@ END FUNCTION integral_x_a_x_b
 !*********************************************************************
 FUNCTION omega_atP(nz, iz_btm, r1wap, r1lev, rPsfc, rP, rmiss)
   implicit none
-  integer                           nz, iz_btm
-  double precision,dimension(nz)             :: r1wap, r1lev
-  double precision                              rPsfc, rP, rmiss
+  integer                           nz
+  integer                           iz_btm
+!f2py intent(in)                    iz_btm
+  double precision,dimension(nz) :: r1wap, r1lev
+!f2py intent(in)                    r1wap, r1lev
+  double precision                  rPsfc, rP, rmiss
+!f2py intent(in)                    rPsfc, rP, rmiss
+  !---- for calculation -----------
   integer                           iz_scnd
-  double precision                              omega_atP
-!
+  !---- for output ----------------
+  double precision                  omega_atP
+!----------------------------------
 if ( -rP .lt. -rPsfc ) then
   omega_atP = rmiss
 else if ( -rP .lt. -r1lev(iz_btm) ) then
@@ -751,10 +757,17 @@ END FUNCTION omega_atP
 !*********************************************************************
 FUNCTION findiz_btm(nz, r1lev, rPsfc)
   implicit none
+  !--- for input -------
   integer                                       nz
   double precision,dimension(nz)             :: r1lev
+!f2py intent(in)                                r1lev
   double precision                              rPsfc
-  integer                                       iz, findiz_btm
+!f2py intent(in)                                rPsfc
+  !--- for calc  -------
+  integer                                       iz
+  !--- for output ------
+  integer                                       findiz_btm
+!f2py intent(out)                               findiz_btm
 !
 do iz = 1, nz
   if( -rPsfc .le. -r1lev(iz) ) then
@@ -796,7 +809,6 @@ FUNCTION cal_rdqdP(rP, rT, dP)
   double precision                   cal_rdqdP          ! [(g/g)/Pa], not in [(g/g)/hPa]   
 !f2py intent(out)        cal_rdqdP 
 !-------------------
-cal_rdqdP = rP*2d0
 rP1 = rP
 rP2 = rP - dP
 rT1 = rT

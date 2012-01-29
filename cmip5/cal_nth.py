@@ -30,7 +30,7 @@ dny["CanESM2"] = 64
 dnx["CanESM2"] = 128
 ###################
 #percent = 99.0
-percent = 50.0
+percent = 90.0
 ##
 freq = "day"
 ens  = "r1i1p1"

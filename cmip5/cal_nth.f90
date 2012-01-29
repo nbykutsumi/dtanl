@@ -136,8 +136,13 @@ allocate( r2stck(ntimes, nx) )
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! set rpercent_up, rpercent_low
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-rpercent_low = (100. - 3./2.*(100. - rpercent))
-rpercent_up  = (100. - 1./2.*(100. - rpercent))
+if ( rpercent .ge. 99.0) then
+  rpercent_low = (100. - 3./2.*(100. - rpercent))
+  rpercent_up  = (100. - 1./2.*(100. - rpercent))
+else
+  rpercent_low  =  rpercent - 1.0
+  rpercent_up  =  rpercent + 1.0
+endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 do iy = 1, ny    ! latitude loop
   !********************************************************
