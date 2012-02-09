@@ -87,52 +87,5 @@ for model in lmodel:
     iyear   = lyrange[0]
     eyear   = lyrange[1]
     #**************************************************
-    #  orog data
-    #--------------
-    orogdir  = orogdir_root  + "/%s/%s/r0i0p0"%(model, expr)
-    orogname = orogdir       + "/orog_fx_%s_%s_r0i0p0.bn"%(model, expr)
-    a2orog   = fromfile(orogname, float32).reshape(ny, nx)
-    #**************************************************
     for year in range(iyear, eyear+1):
-      #---------
-      # dirs
-      #---------
-      psldir   = psldir_root   + "/%s/%s/%s/%04d"%(model,expr,ens, year)
-      pmeandir = pmeandir_root + "/%s/%s/%s/pmean/%04d"%(model, expr, ens, year)
-      mk_dir(pmeandir)
-      print pmeandir
-      #---------
-      for mon in range(imon, emon+1):
-        ##############
-        # no leap
-        ##############
-        if (mon==2)&(calendar.isleap(year)):
-          ed = calendar.monthrange(year,mon)[1] -1
-        else:
-          ed = calendar.monthrange(year,mon)[1]
-        ##############
-        for day in range(1, ed+1):
-          for hour in range(0, 23+1, hinc):
-            stimeh  = "%04d%02d%02d%02d"%(year,mon,day,hour)
-            #***************************************
-            #* names
-            #---------------------------------------
-            pslname   = psldir + "/psl_%sPlev_%s_%s_%s_%s.bn"%(tstp, model, expr, ens, stimeh)
-            check_file(pslname)
-            pmeanname = pmeandir + "/pmean_%s_%s_%s_%s_%s.bn"%(tstp, model, expr, ens, stimeh)
-            #***************************************
-            #***************************************
-            # make pmean
-            #***************************************
-          
-            apsl   = fromfile(pslname,   float32).reshape(ny, nx)
-            apsl   = ma.masked_where(a2orog > thorog , apsl).filled(miss_out)
-            apmean = array(ctrack.findcyclone(apsl.T, -9999.0, miss_out), float32)
-            apmean = apmean.T
-            apmean.tofile(pmeanname)
 
-
-
-
-
- 

@@ -6,11 +6,12 @@ import calendar
 odir_root ="/media/disk2/data/CMIP5/bn"
 #####################################################
 #lvar = ["pr","psl","tas","rhs","huss"] #pr, psl, tas, rhs, huss
-lvar = ["psl"]
+lvar = ["pr"]
 #tstp = "day"
-tstp  = "6hr"
-tinc  = {"6hr":6}
-hlast = {"6hr":18}
+#tstp  = "6hr"
+tstp  = "3hr"
+tinc  = {"6hr":6, "3hr":3}
+hlast = {"6hr":18,"3hr":21}
 hdattype = "Plev"
 #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
 lmodel = ["NorESM1-M"]
@@ -33,18 +34,22 @@ dlyrange["MIROC5", "rcp85"]       = [[2080,2089], [2090,2099]]
 #
 dlyrange["CanESM2", "historical"]  = [[1979,2005]]
 dlyrange["CanESM2", "rcp85"]       = [[2006,2100]]
+
 #####################################################
 for model in lmodel:
   for expr in lexpr:
-    lyrange = dlyrange[model, expr]
     print expr, lyrange
     for var in lvar:
+      lyrange = dlyrange[model, expr]
       #####################################################
       # set ncdir
       #####################################################
       incdir = "/media/disk2/data/CMIP5/nc/%s/%s"%(tstp, model)
       #####################################################
       if (tstp == "day"):        
+        ihead = var + "_" + tstp + "_" +model + "_" + expr +"_" +ens
+        ohead = ihead
+      elif ( (tstp == "3hr") and (var in ["pr"]) ):
         ihead = var + "_" + tstp + "_" +model + "_" + expr +"_" +ens
         ohead = ihead
       else:
@@ -99,6 +104,8 @@ for model in lmodel:
         ######
         if (tstp == "day"):
           itimerange="%04d0101-%04d1231"%(y0,y1)
+        elif (tstp == "3hr"):
+          itimerange="%04d01010130-%04d12312230"%(y0,y1)
         else:
           itimerange="%04d010100-%04d1231%02d"%(y0,y1,hlast[tstp])
         ######  
@@ -143,6 +150,20 @@ for model in lmodel:
                 f = open(oname, "wb")
                 f.write(data)
                 f.close()
+              #------------
+              elif (tstp == "3hr"):
+                for h in range(1, 22+1, tinc[tstp]):
+                  istep = istep + 1
+                  stime = "%04d%02d%02d%02d30"%(y,m,d,h)
+                  ########
+                  data = nc.variables["%s"%(var)][istep]
+                  ########
+                  oname = odir + "/%s_%s.bn"%(ohead, stime)
+                  ########
+                  f = open(oname, "wb")
+                  f.write(data)
+                  f.close()
+              #------------
               else:
                 for h in range(0,23+1,tinc[tstp]):
                   istep = istep +1

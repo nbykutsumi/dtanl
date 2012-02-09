@@ -4,6 +4,42 @@ CONTAINS
 !*****************************************************************
 !* SUBROUTINE & FUNCTION
 !*****************************************************************
+SUBROUTINE solvelife(a2life, miss_int, nx, ny, a2pmin, a2dura)
+  implicit none
+  !**************************************
+  !** for input 
+  !**************************************
+  integer                                         nx, ny
+  integer,dimension(nx, ny)                    :: a2life
+!f2py intent(in)                                  a2life
+  integer                                         miss_int
+!f2py intent(in)                                  miss_int
+  !**************************************
+  !** for output
+  !**************************************
+  integer,dimension(nx, ny)                    :: a2pmin, a2dura
+!f2py intent(out)                                 a2pmin, a2dura
+  !**************************************
+  !** for calc
+  !**************************************
+  integer                                         ix, iy
+  integer                                         life
+  !**************************************
+do iy = 1, ny
+  do ix = 1, nx
+    life = a2life(ix, iy)
+    if (life .eq. miss_int) then
+      a2pmin(ix,iy) = miss_int
+      a2dura(ix,iy) = miss_int
+    else
+      a2pmin(ix,iy) = int(life / 10000)
+      a2dura(ix,iy) = life - a2pmin(ix,iy) *10000
+    end if
+  end do
+end do 
+
+RETURN
+END SUBROUTINE solvelife
 !*****************************************************************
 SUBROUTINE connectc(&
         &  a2pmean0, a2pmean1, a2psl0, a2psl1, a2ua0, a2va0&
@@ -155,10 +191,12 @@ do iy0 = 1, ny
         !-----
         if (cflag .eq. 1) then
           a2lastpos1(xx, yy) = nx * (iy0-1) + ix0
-          if ( a2psl1(xx, yy) .lt. a2pmin0(xx, yy)) then
+          if ( a2pmin0(ix0, iy0) .eq. miss_dbl )then
+            a2pmin1(xx,yy)     = a2psl1(xx, yy)
+          else if ( a2psl1(xx, yy) .lt. a2pmin0(ix0, iy0)) then
             a2pmin1(xx,yy)     = a2psl1(xx, yy)
           else
-            a2pmin1(xx,yy)     = a2pmin0(xx, yy)
+            a2pmin1(xx,yy)     = a2pmin0(ix0, iy0)
           end if
           a2ipos1(xx,yy)     = a2ipos0(ix0,iy0)
           a2idate1(xx,yy)    = a2idate0(ix0,iy0)
@@ -324,56 +362,63 @@ SUBROUTINE findcyclone(a2psl, miss_in, miss_out, nx, ny, a2pmean)
   !** for calc  ---------------------------------------------
   integer                                           ix, iy, ik
   integer                                           iix, iiy, iiix, iiiy
-  integer                                           icount, flag
+  integer                                           icount, validnum, flag
   double precision                                  pmean, psl
   double precision,dimension(8)                  :: a1ambi
   !----------------------------------------------------------
 do iy = 1, ny
   do ix = 1, nx
     psl = a2psl(ix, iy)
-    !---------------
-    ! ambient data
-    !---------------
-    ik = 0
-    do iiy = iy-1, iy+1, 2
-      do iix = ix -1, ix+1
+    if (psl .eq. miss_in)then
+      a2pmean(ix,iy) = miss_out
+    else
+      !---------------
+      ! ambient data
+      !---------------
+      ik = 0
+      do iiy = iy-1, iy+1, 2
+        do iix = ix -1, ix+1
+          ik = ik +1
+          call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
+          a1ambi(ik) = a2psl(iiix, iiiy)
+        end do
+      end do
+      iiy = iy
+      do iix = ix-1, ix+1, 2
         ik = ik +1
         call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
         a1ambi(ik) = a2psl(iiix, iiiy)
       end do
-    end do
-    iiy = iy
-    do iix = ix-1, ix+1, 2
-      ik = ik +1
-      call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
-      a1ambi(ik) = a2psl(iiix, iiiy)
-    end do
-    !----------------
-    ! compare to the ambient grids
-    !----------------
-    flag = 0
-    do ik = 1, 8
-      if ( psl .ge. a1ambi(ik) )  then
-        flag = 1
-        exit
-      end if
-    end do
-    !----------------
-    if (flag .eq. 1) then
-      a2pmean(ix, iy) = miss_out
-    else if (flag .eq. 0) then
-      pmean  = 0.0d0
-      icount = 0
+      !----------------
+      ! compare to the ambient grids
+      !----------------
+      flag = 0
       do ik = 1, 8
-        icount = icount + 1
-        pmean = pmean + a1ambi(ik)
+        if ( psl .ge. a1ambi(ik) )  then
+          flag = 1
+          exit
+        end if
       end do
-      pmean = pmean /icount
-      !---------------
-      if (a2psl(ix, iy) .lt. pmean) then
-        a2pmean(ix, iy) = pmean
-      else
+      !----------------
+      if (flag .eq. 1) then
         a2pmean(ix, iy) = miss_out
+      else if (flag .eq. 0) then
+        pmean  = 0.0d0
+        icount = 0
+        validnum= 0
+        do ik = 1, 8
+          icount = icount + 1
+          if ( a1ambi(ik) .ne. miss_in)then
+            validnum = validnum + 1
+            pmean = pmean + a1ambi(ik)
+          end if
+        end do
+        if (validnum .eq. 0)then
+          pmean = miss_out
+        else
+          pmean = pmean /validnum
+        end if
+        a2pmean(ix, iy) = pmean
       end if
     end if
     !---------------
@@ -382,7 +427,7 @@ end do
 
 
 RETURN
-END SUBROUTINE
+END SUBROUTINE findcyclone
 !!*****************************************************************
 SUBROUTINE ixy2iixy(ix,iy, nx, ny, iix, iiy)
   implicit none

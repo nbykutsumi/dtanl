@@ -7,9 +7,9 @@ odir_root ="/media/disk2/data/CMIP5/bn"
 #####################################################
 #var = "wap" #wap, zg, hur, hus
 #lvar = ["wap", "zg"]
-lvar = ["ua","va"]
-tstp = "day"
-#tstp  = "6hr"
+lvar = ["va"]
+#tstp = "day"
+tstp  = "6hr"
 tinc  = {"6hr":6}
 hlast = {"6hr":18}
 hdattype = "Plev"
@@ -20,20 +20,6 @@ lmodel = ["NorESM1-M"]
 lexpr = ["historical", "rcp85"]
 ens  = "r1i1p1"
 #lyrange= [ [1990,1999] ]
-#####################################################
-# set dlyrange
-#####################################################
-dlyrange     = {}
-#
-dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
-dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
-#
-dlyrange["MIROC5", "historical"]  = [[1990,1999]]
-dlyrange["MIROC5", "rcp85"]       = [[2080,2089], [2090,2099]]
-#
-dlyrange["CanESM2", "historical"]  = [[1979,2005]]
-dlyrange["CanESM2", "rcp85"]       = [[2081,2090], [2091,2100]]
-
 #####################################################
 #####################################################
 # Function
@@ -71,6 +57,29 @@ def dumpdata(iname, nc):
 for model in lmodel:
   for expr in lexpr:
     for var in lvar:
+      #####################################################
+      # set dlyrange
+      #####################################################
+      dlyrange     = {}
+      #
+      if ( (var in ["ua","va"]) and (tstp in ["6hr"])):
+        dlyrange["NorESM1-M", "historical"]  = [[1980,1984],[1985,1989],[1990,1994],[1995,1999]]
+        dlyrange["NorESM1-M", "rcp85"]       = [[2076,2080],[2081,2085],[2086,2090],[2091,2095]]
+      else:
+        dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
+        dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
+        #
+        dlyrange["MIROC5", "historical"]  = [[1990,1999]]
+        dlyrange["MIROC5", "rcp85"]       = [[2080,2089], [2090,2099]]
+        #
+        dlyrange["CanESM2", "historical"]  = [[1979,2005]]
+        dlyrange["CanESM2", "rcp85"]       = [[2081,2090], [2091,2100]]
+      #----------------------------------------------------
+      #####################################################
+
+
+
+
       #------------------------------
       # make heads and tails
       #------------------------------
@@ -117,6 +126,8 @@ for model in lmodel:
         ######
         if (tstp == "day"):
           itimerange="%04d0101-%04d1231"%(y0,y1)
+        elif (tstp == "3hr"):
+          itimerange="%04d01010130-%04d12312230"%(y0,y1, hlast[tstp])
         else:
           itimerange="%04d010100-%04d1231%02d"%(y0,y1, hlast[tstp])
         ######
@@ -162,6 +173,19 @@ for model in lmodel:
                 f.write(data)
                 f.close()
               #-------------
+              elif (tstp == "3hr"):
+                for h in range(1, 22+1, tinc[tstp]):
+                  istep = istep + 1
+                  stime = "%04d%02d%02d%02d30"%(y,m,d,h)
+                  ########
+                  data = nc.variables["%s"%(var)][istep]
+                  ########
+                  oname = odir + "/%s_%s.bn"%(ohead, stime)
+                  ########
+                  f = open(oname, "wb")
+                  f.write(data)
+                  f.close()
+              #-------------- 
               else:
                 for h in range(0, 23+1, tinc[tstp]):
                   istep = istep + 1
