@@ -1,0 +1,137 @@
+#!/bin/sh
+############################################################
+#ex   make ps file from .bin0.5x0.5 file
+#on    31/May/2002
+#by    nhanasaki
+#at    IIS,UT
+#modified by s_wata on 28/Jul/2008
+# !! Use this file with bin2xyz !!
+############################################################
+#
+######################
+#INPUT
+######################
+#
+INPUTFILE=$1
+CPTFILE=$2
+TITLE=$3
+PSFILE=${TITLE}.ps
+PNGFILE=${TITLE}.png
+TITLE=$4
+SCALESTEP=$5
+OVERSCALE=$6   # 1:"yes" or 0:"no"
+#
+##################################################
+# make .xyz file
+##################################################
+#
+#./bn2xyz.out $INPUTFILE > xyztemp.xyz
+/home/utsumi/oekaki/dtanl/cmip/bn2xyz.out $INPUTFILE > xyztemp.xyz
+#
+############################################################
+# Define File Names
+############################################################
+DATFILE=./xyztemp.xyz
+#DATFILE=./mirh_test.xyz      #data file (input)
+#DATAFILE=./cmap_mon_v0203_79.txt
+#PSFILE=./image.ps       #image file (output)
+GRDFILE=./grd           #temporary file
+#CPTFILE=./grad.cpt      #color paltette table file
+#
+############################################################
+# Define Mapping Area
+############################################################
+#XMIN=0.00               #Horizontal minimum [degree]
+#XMAX=360.00             #Horizontal maximum [degree]
+XMIN=-180               #Horizontal minimum [degree]
+XMAX=180.00             #Horizontal maximum [degree]
+YMIN=-60.00             #Vertical minimum [degree]
+YMAX=80.00              #Vertical maximum [degree]
+XWID=21.0               #Width of image [cm]
+YWID=10.5               #Height of image [cm]
+DXa=90.0		#a:Horizontal Anotation Interval [degree]
+DXf=30.0		#f:Horizontal Frame Interval [degree]
+DXg=10.0		#G:Horizontal Grid Interval [degree]
+DYa=30.0		#a:Vertical Anotation Interval [degree]
+DYf=30.0		#f:Vertical Frame Interval [degree]
+DYg=10.0		#g:Vertical Grid Interval [degree]
+D=5.0                   #grid size
+############################################################
+# Short Cuts for Options
+############################################################
+RFLAG="-R${XMIN}/${XMAX}/${YMIN}/${YMAX}"
+JFLAG="-JX${XWID}d/${YWID}d"
+BFLAG="-Ba${DXa}f${DXf}g${DXg}:Longitude:/a${DYa}f${DYf}g${DYg}:Latitude:neWS"
+############################################################
+# Overscales  (sidebar)
+############################################################
+if test "$OVERSCALE" = 0
+then
+  EFLAG=""
+elif test "$OVERSCALE" = 1
+then
+  EFLAG="-E0.6"
+fi
+############################################################
+#---Jobs
+############################################################
+#awk '($2==1){print $4, $3, $5}' $DATAFILE | \
+#xyz2grd     $RFLAG -G$GRDFILE -I${D}/${D} -F
+#xyz2grd     $RFLAG -G$GRDFILE -I${D}/${D} -F $DATFILE
+xyz2grd    -fg $RFLAG -G$GRDFILE -I2.5/1.895 $DATFILE
+#
+psbasemap   $RFLAG $JFLAG $BFLAG -X3.5 -Y4.0         -K  > $PSFILE 
+grdimage -O $RFLAG $JFLAG $GRDFILE -C$CPTFILE        -K >> $PSFILE 
+pscoast  -O $RFLAG $JFLAG -Dc -W5 -N1 -I1      -K >> $PSFILE
+#psscale  -O -C$CPTFILE -D11.0/-1.5/17/0.5h -E0.6 -B$SCALESTEP    -K >> $PSFILE
+psscale  -O -C$CPTFILE -D11.0/-1.5/17/0.5h $EFLAG -B$SCALESTEP    -K >> $PSFILE
+pstext   -O $RFLAG $JFLAG -N                     << EOF >> $PSFILE
+0 100 24 0.0 1 6 $TITLE
+EOF
+############################################################
+# ps2png
+############################################################
+convert -density 150 -rotate +90 -trim $PSFILE $PNGFILE
+rm -f $PSFILE
+############################################################
+# Comments for Options
+############################################################
+#-R: Option specifies region of interest
+#-J: Option for mapping projection (JX: projection type)
+#-B: Option for frame
+#-O: Option for "Omit Header" i.e. following GMT command
+#-K: Option for "Omit Trailer" i.e. GMT commands follow on
+#
+#--psbasemap
+#
+#draw basemap
+#-X: Shift plot origin x-direction [cm]
+#-Y: Shift plot origin y-direction [cm]
+#
+#--xyz2grd
+#
+#convert ASCII-xyz-data into binary-grid-data
+#
+#--gridimage
+#
+#conert binary-grid-data into colored mosaic image
+#
+#--pscoast
+#
+#draw coastline
+#-D: Resolution
+#-W: Boldness
+#-N: National Border
+#-I: Rivers
+#
+#--psscale
+#
+#draw color bar
+#-D: Place to put
+#-L: Give Equal size rectangular
+#
+#--pstext
+#
+#write text between EOFs
+#-N: Do not clip
+#{horizontal[degree]/vertical[degree]/Point/Angle/Font?/Place?/Text}

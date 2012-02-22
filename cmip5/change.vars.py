@@ -3,8 +3,9 @@ import os
 #######################################################################
 nx = 144
 ny = 96
-dnz ={"zg":8, "wap":8, "tas":1, "psl":1, "prc":1, "huss":1, "prxth":1}
-lvar = ["zg","wap","tas","psl","prc","huss", "prxth"]
+dnz ={"zg":8, "wap":8, "tas":1, "psl":1, "prc":1, "huss":1, "prxth":1, "rhs":1}
+#lvar = ["zg","wap","tas","psl","prc","huss", "prxth", "rhs"]
+lvar = ["rhs"]
 
 tstp  = "day"
 model = "NorESM1-M"

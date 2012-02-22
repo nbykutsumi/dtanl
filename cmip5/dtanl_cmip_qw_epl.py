@@ -39,8 +39,8 @@ dyrange["his"] = [1990, 1999]
 dyrange["fut"] = [2086, 2095]
 imon = 1
 emon = 12
-#xth  = 99.0
-xth  = 90.0
+xth  = 99.0
+#xth  = 90.0
 rmiss = -9999.0
 g = 9.8
 idir_root = "/media/disk2/data/CMIP5/bn"
@@ -192,7 +192,7 @@ for model in lmodel:
       scales           = dtanl_cmip_sbs.scale_profile(Plcl1, llev_f, a1wap1, a1wap2, a1dqdp1, a1dqdp2,)
       a3sdwa[:,iy,ix]  = scales[0]
       a3swda[:,iy,ix]  = scales[1]
-      a2swadlcl[iy,ix] = (Plcl2 - Plcl1) * waplcl1 * dqdplcl1
+      a2swadlcl[iy,ix] = -(Plcl2 - Plcl1) * waplcl1 * dqdplcl1
   
   #****************************************************
   # make mean scales (abs)
