@@ -5,14 +5,22 @@ from numpy import *
 # 
 #--------------
 def ret_lcrad():
-  #lcrad =  [500.0*1000.0, 1000.0*1000.0, 1500.0*1000.0, 2000.0*1000.0]
-  lcrad =  [1000.0*1000.0, 1500.0*1000.0]
+  lcrad =  [500.0*1000.0, 1000.0*1000.0, 1500.0*1000.0, 2000.0*1000.0]
+  #lcrad =  [1000.0*1000.0, 1500.0*1000.0]
+  #lcrad =  [2000.0*1000.0]
+  #lcrad =  [1000.0*1000.0]
   return lcrad
 #-----------------------------------
 def ret_dpgradrange():
   #dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,250.0],2:[250.0,500.0],3:[500.0,750.0],4:[750.0, 1000.0], 5:[1000.0, 1250.0], 6:[1250.0, 1500.0], 7:[2500.0, 3000.0], 8:[3000.0, 10.0e+10]}
   #dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,250.0],2:[250.0,500.0],3:[500.0,750.0],4:[750.0, 1000.0], 5:[1000.0, 1250.0], 6:[1250.0, 1500.0], 7:[1500, 10.0e+10]}
   dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,500.0],2:[500.0, 1000.0],3:[1000.0, 1500.0],4:[1500.0, 10.0e+10]}
+  #---------------------
+  #dpgradrange  = {0:[1.0, 10.0e+10], 1:[1.0, 100.0]}
+  #for i in arange(2, 15+1):
+  #  dpgradrange[i] = [i*100.0 - 100.0, i*100.0]
+  #dpgradrange[16] = [1500.0, 10.0e+10]
+  ##---------------------
   return dpgradrange
 #-----------------------------------
 def ret_lseason():
@@ -33,9 +41,11 @@ def ret_im_em(season):
   return im_em
 #-----------------------------------
 def ret_lxth():
-  lxth = [0.0]
-  #lxth = [0.0, 50.0, 60.0, 70.0, 80.0, 90.0, 99.0]
-  #lxth = [50.0, 70.0, 90.0, 99.0]
+  #lxth = [0.0]
+  #lxth = [0.0, 99.0]
+  #lxth  = [90.0, 99.0]
+  lxth = [0.0, 50.0, 60.0, 70.0, 80.0, 90.0, 99.0]
+  #lxth = [50.0, 60, 70.0, 80, 90.0, 99.0]
   #lxth = [60.0, 80.0]
   return lxth
 #-----------------------------------
@@ -61,3 +71,38 @@ def ret_dlwbin():
   #-----
   return dlwbin
 #-----------------------------------
+def ret_dbound():
+  lreg     = ["alljapan", "scjapan", "njapan"]
+  dbound   = {}
+  
+  reg      = "alljapan"
+  lat_min  = 22.0
+  lat_max  = 46.0
+  lon_min  = 122.0
+  lon_max  = 150.0
+  dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
+  
+  
+  reg      = "scjapan"
+  lat_min  = 22.0
+  lat_max  = 41.0
+  lon_min  = 122.0
+  lon_max  = 150.0
+  dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
+  
+  reg      = "njapan"
+  lat_min  = 41.0
+  lat_max  = 46.0
+  lon_min  = 125.0
+  lon_max  = 150.0
+  dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
+  return dbound
+#-----------------------------------
+def ret_lonlatinfo(model):
+  if model == "NorESM1-M":
+    lon_first   = 0.0
+    lat_first   = -90.0
+    dlon        = 2.5
+    dlat        = 1.8947368
+    lonlatinfo = [lon_first, lat_first, dlon, dlat]
+    return lonlatinfo

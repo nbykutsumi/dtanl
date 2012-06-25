@@ -5,7 +5,7 @@ import sys
 ###########################################################
 cmd   = "/home/utsumi/bin/dtanl/cmip5/conditional_means"
 #lvar = ["hur", "ta", "rhs", "wap", "zg", "huss", "psl", "tas", "pr"]
-lvar = ["hur"]
+lvar = ["ta", "rhs"]
 lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
 #lmodel = ["MIROC5"]
 ###################

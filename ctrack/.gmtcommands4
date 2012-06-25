@@ -1,5 +1,5 @@
 # GMT common arguments shelf
--B0.2
+-B1.0
 -JX21.0d/10.5d
 -R0.0/360.0/-80.0/80.0
 -X3.5

@@ -4,7 +4,7 @@ from numpy import *
 import calendar
 import os
 #--------------------------------------------------
-thorog  = 1500.0 #[m]
+thorog  = 1000.0 #[m]
 thdp    = 30.0           #[Pa]
 thdist  = 300.0*1000.0   #[m]
 thdura  = 24             #[h]
@@ -13,7 +13,7 @@ thpgmax = 0*100          #[Pa/1000km], integer
 #lcrad   = [500.0*1000.0, 1000.0*1000.0, 1500.0*1000.0, 2000.0*1000.0]
 #lcrad   = [500.0*1000.0]
 lcrad    = ctrack_para.ret_lcrad()
-
+lxth     = ctrack_para.ret_lxth()
 miss_cmip  = 1.0e+20
 miss_dbl = -9999.0
 miss_int = -9999
@@ -59,8 +59,10 @@ dexpr["his"] = "historical"
 dexpr["fut"] = "rcp85"
 ens = "r1i1p1"
 dyrange={}
-dyrange["his"] = [1990, 1999]
-dyrange["fut"] = [2086, 2095]
+#dyrange["his"] = [1990, 1999]
+#dyrange["fut"] = [2086, 2095]
+dyrange["his"] = ctrack_para.ret_iy_ey(dexpr["his"])
+dyrange["fut"] = ctrack_para.ret_iy_ey(dexpr["fut"])
 imon = 1
 emon = 12
 #lseason = ["DJF", "JJA","ALL"]
@@ -222,27 +224,27 @@ for model in lmodel:
     #  call cdens.py
     #------------------
     for season in lseason:
-      ###-----------------
-      cmd = bindir + "/cdens.py"
-      os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
-        %(cmd           \
-        ,model          \
-        ,expr           \
-        ,ens            \
-        ,tstp           \
-        ,hinc           \
-        ,iyear          \
-        ,eyear          \
-        ,season         \
-        ,nx             \
-        ,ny             \
-        ,miss_dbl       \
-        ,miss_int       \
-        ,endh           \
-        ,thdura         \
-        ,thpgmax        \
-        ,thorog         \
-        ))
+    #  ####-----------------
+    #  cmd = bindir + "/cdens.py"
+    #  os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
+    #    %(cmd           \
+    #    ,model          \
+    #    ,expr           \
+    #    ,ens            \
+    #    ,tstp           \
+    #    ,hinc           \
+    #    ,iyear          \
+    #    ,eyear          \
+    #    ,season         \
+    #    ,nx             \
+    #    ,ny             \
+    #    ,miss_dbl       \
+    #    ,miss_int       \
+    #    ,endh           \
+    #    ,thdura         \
+    #    ,thpgmax        \
+    #    ,thorog         \
+    #    ))
       #**************************************************
       # names
       #*****************
@@ -276,119 +278,119 @@ for model in lmodel:
           ddens_area_u_name[year, iclass]        = doutdir[year]    + "/u.dens.area.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.bn"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
 
 
-      #************************************
-      # track pict
-      #------------------------------------
-      for iclass in lclass:
-        print "---------------------"
-        print "track pict"
-        #-------
-        # names
-        #-------
-        cptfile   = oekakidir + "/cpt/polar.-1.1.cpt"
-        pngname   = dtrack_name[iclass][:-3] + ".png"
-        psfile    = dtrack_name[iclass][:-3] + ".ps"
-        title     = "track"
-        scalestep = 0.5
-        overscale = 0
-        #-------
-        cmd = oekakidir + "/track.gmt.py"
-        os.system("python %s %s %s %s %s %s %s"%(\
-           cmd                  \
-          ,dtrack_name[iclass]  \
-          ,cptfile              \
-          ,pngname              \
-          ,title                \
-          ,scalestep            \
-          ,overscale            \
-          ))
-        print pngname
-      #************************************
-      # track upper side pict
-      #------------------------------------
-      for iclass in lclass[1:]:
-        print "---------------------"
-        print "track upper side pict"
-        #-------
-        # names
-        #-------
-        cptfile   = oekakidir + "/cpt/polar.-1.1.cpt"
-        pngname   = dtrack_u_name[iclass][:-3] + ".png"
-        psfile    = dtrack_u_name[iclass][:-3] + ".ps"
-        title     = "track"
-        scalestep = 0.5
-        overscale = 0
-        #-------
-        cmd = oekakidir + "/track.gmt.py"
-        os.system("python %s %s %s %s %s %s %s"%(\
-           cmd                  \
-          ,dtrack_u_name[iclass]  \
-          ,cptfile              \
-          ,pngname              \
-          ,title                \
-          ,scalestep            \
-          ,overscale            \
-          ))
-        print pngname
-      #************************************
-      # dens pict
-      #------------------------------------
-      for year in range(iyear, eyear+1) + [0]:
-        for iclass in lclass:
-          print "---------------------"
-          print "dens pict"
-          #-------
-          # names
-          #-------
-          cptfile   = oekakidir + "/cpt/rainbow.0.5.cpt"
-          pngname   = ddens_area_name[year, iclass][:-3] + ".png"
-          psfile    = ddens_area_name[year, iclass][:-3] + ".ps"
-          title     = "density"
-          scalestep = 1.0
-          overscale = 0
-          #-------
-          cmd = oekakidir + "/dens.gmt.py"
-          os.system("python %s %s %s %s %s %s %s"%(\
-             cmd                           \
-            ,ddens_area_name[year, iclass] \
-            ,cptfile                       \
-            ,pngname                       \
-            ,title                         \
-            ,scalestep                     \
-            ,overscale                     \
-            ))
-          print pngname
+      ##************************************
+      ## track pict
+      ##------------------------------------
+      #for iclass in lclass:
+      #  print "---------------------"
+      #  print "track pict"
+      #  #-------
+      #  # names
+      #  #-------
+      #  cptfile   = oekakidir + "/cpt/polar.-1.1.cpt"
+      #  pngname   = dtrack_name[iclass][:-3] + ".png"
+      #  psfile    = dtrack_name[iclass][:-3] + ".ps"
+      #  title     = "track"
+      #  scalestep = 0.5
+      #  overscale = 0
+      #  #-------
+      #  cmd = oekakidir + "/track.gmt.py"
+      #  os.system("python %s %s %s %s %s %s %s"%(\
+      #     cmd                  \
+      #    ,dtrack_name[iclass]  \
+      #    ,cptfile              \
+      #    ,pngname              \
+      #    ,title                \
+      #    ,scalestep            \
+      #    ,overscale            \
+      #    ))
+      #  print pngname
+      ##************************************
+      ## track upper side pict
+      ##------------------------------------
+      #for iclass in lclass[1:]:
+      #  print "---------------------"
+      #  print "track upper side pict"
+      #  #-------
+      #  # names
+      #  #-------
+      #  cptfile   = oekakidir + "/cpt/polar.-1.1.cpt"
+      #  pngname   = dtrack_u_name[iclass][:-3] + ".png"
+      #  psfile    = dtrack_u_name[iclass][:-3] + ".ps"
+      #  title     = "track"
+      #  scalestep = 0.5
+      #  overscale = 0
+      #  #-------
+      #  cmd = oekakidir + "/track.gmt.py"
+      #  os.system("python %s %s %s %s %s %s %s"%(\
+      #     cmd                  \
+      #    ,dtrack_u_name[iclass]  \
+      #    ,cptfile              \
+      #    ,pngname              \
+      #    ,title                \
+      #    ,scalestep            \
+      #    ,overscale            \
+      #    ))
+      #  print pngname
+      ##************************************
+      ## dens pict
+      ##------------------------------------
+      #for year in range(iyear, eyear+1) + [0]:
+      #  for iclass in lclass:
+      #    print "---------------------"
+      #    print "dens pict"
+      #    #-------
+      #    # names
+      #    #-------
+      #    cptfile   = oekakidir + "/cpt/sealand.0.3.ov.cpt"
+      #    pngname   = ddens_area_name[year, iclass][:-3] + ".png"
+      #    psfile    = ddens_area_name[year, iclass][:-3] + ".ps"
+      #    title     = "density"
+      #    scalestep = 1.0
+      #    overscale = 0
+      #    #-------
+      #    cmd = oekakidir + "/dens.gmt.py"
+      #    os.system("python %s %s %s %s %s %s %s"%(\
+      #       cmd                           \
+      #      ,ddens_area_name[year, iclass] \
+      #      ,cptfile                       \
+      #      ,pngname                       \
+      #      ,title                         \
+      #      ,scalestep                     \
+      #      ,overscale                     \
+      #      ))
+      #    print pngname
 
 
 
-      #************************************
-      # dens pict upper side
-      #------------------------------------
-      for year in range(iyear, eyear+1) + [0]:
-        for iclass in lclass[1:]:
-          print "---------------------"
-          print "dens upperside pict"
-          #-------
-          # names
-          #-------
-          cptfile   = oekakidir + "/cpt/rainbow.0.5.cpt"
-          pngname   = ddens_area_u_name[year, iclass][:-3] + ".png"
-          psfile    = ddens_area_u_name[year, iclass][:-3] + ".ps"
-          title     = "density"
-          scalestep = 1.0
-          overscale = 0
-          #-------
-          cmd = oekakidir + "/dens.gmt.py"
-          os.system("python %s %s %s %s %s %s %s"%(\
-             cmd                             \
-            ,ddens_area_u_name[year, iclass] \
-            ,cptfile                         \
-            ,pngname                         \
-            ,title                           \
-            ,scalestep                       \
-            ,overscale                       \
-            ))
-          print pngname
+      ##************************************
+      ## dens pict upper side
+      ##------------------------------------
+      #for year in range(iyear, eyear+1) + [0]:
+      #  for iclass in lclass[1:]:
+      #    print "---------------------"
+      #    print "dens upperside pict"
+      #    #-------
+      #    # names
+      #    #-------
+      #    cptfile   = oekakidir + "/cpt/sealand.0.3.ov.cpt"
+      #    pngname   = ddens_area_u_name[year, iclass][:-3] + ".png"
+      #    psfile    = ddens_area_u_name[year, iclass][:-3] + ".ps"
+      #    title     = "density"
+      #    scalestep = 1.0
+      #    overscale = 0
+      #    #-------
+      #    cmd = oekakidir + "/dens.gmt.py"
+      #    os.system("python %s %s %s %s %s %s %s"%(\
+      #       cmd                             \
+      #      ,ddens_area_u_name[year, iclass] \
+      #      ,cptfile                         \
+      #      ,pngname                         \
+      #      ,title                           \
+      #      ,scalestep                       \
+      #      ,overscale                       \
+      #      ))
+      #    print pngname
 
     #**********************************************************
     dpgradrange = ctrack_para.ret_dpgradrange()
@@ -475,11 +477,11 @@ for model in lmodel:
     #           ,daggname_allkey\
     #           )
     ##**************************************************
-    ##**************************************************
-    ##
-    ##  call aggr_pr.py   # daily
-    ##
-    ##--------------------------------------------------
+    #**************************************************
+    #
+    #  call aggr_pr.py   # daily
+    #
+    #--------------------------------------------------
     #cmd = bindir + "/aggr_pr_day.py"
     #for crad in lcrad:
     #  for season in lseason:
@@ -503,35 +505,38 @@ for model in lmodel:
     #      , thorog\
     #      , iz500\
     #      ))
-    ##**************************************************
-    ##  call aggr_wfpr_day.py  # make num, sp, sp2  
-    ##**************************************************
-    #cmd  = bindir + "/aggr_wfpr_day.py"
-    #for crad in lcrad:
-    #  for season in lseason:
-    #    lxth = ctrack_para.ret_lxth()
-    #    for xth in lxth:
-    #      os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"%(\
-    #           cmd\
-    #          ,model   \
-    #          ,expr    \
-    #          ,ens     \
-    #          ,tstp    \
-    #          ,hinc    \
-    #          ,iyear   \
-    #          ,eyear   \
-    #          ,season  \
-    #          ,nx      \
-    #          ,ny      \
-    #          ,nz      \
-    #          ,miss_dbl\
-    #          ,miss_int\
-    #          ,crad    \
-    #          ,thdura  \
-    #          ,thorog  \
-    #          ,iz500   \
-    #          ,xth     \
-    #          ))
+    #**************************************************
+    #  call aggr_wfpr_day.py  # make num, sp, sp2  
+    #**************************************************
+    cmd  = bindir + "/aggr_wfpr_day.py"
+    print "cmd=", cmd
+    print "lcrad=",lcrad
+    print "lxth=",lxth
+    for crad in lcrad:
+      for season in lseason:
+        for xth in lxth:
+          print "xth=",xth, "crad=",crad
+          os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"%(\
+               cmd\
+              ,model   \
+              ,expr    \
+              ,ens     \
+              ,tstp    \
+              ,hinc    \
+              ,iyear   \
+              ,eyear   \
+              ,season  \
+              ,nx      \
+              ,ny      \
+              ,nz      \
+              ,miss_dbl\
+              ,miss_int\
+              ,crad    \
+              ,thdura  \
+              ,thorog  \
+              ,iz500   \
+              ,xth     \
+              ))
 
 
 

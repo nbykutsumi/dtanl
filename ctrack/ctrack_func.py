@@ -161,7 +161,12 @@ def ret_ubvar(l):
   ubvar  = sum( (a-m)*(a-m) )/ (n-1)
   return ubvar 
 #****************************************************
-
+def mul_a2(a2, n):
+  (ny, nx) = shape(a2)
+  #----
+  l  = a2.flatten().tolist() * n
+  a3 = array(l).reshape(n, ny, nx)
+  return a3 
 
 
 

@@ -48,7 +48,7 @@ ddir_root        = {}
 ddir_root["fut"] = "/media/disk2/out/CMIP5/6hr/%s/rcp85/%s/tracks/map"%(model, ens)
 ddir_root["his"] = "/media/disk2/out/CMIP5/6hr/%s/historical/%s/tracks/map"%(model, ens)
 ddir_root["dif"] = "/media/disk2/out/CMIP5/6hr/%s/dif/%s/tracks/map"%(model, ens)
-csvdir_root      = "/media/disk2/out/CMIP5/6hr/%s/dif/%s/tracks/csv"
+csvdir_root      = "/media/disk2/out/CMIP5/6hr/%s/dif/%s/tracks/csv"%(model, ens)
 #-------------
 ddir  = {}
 for era in ["his", "fut"]:
@@ -125,43 +125,8 @@ for iclass in lclass:
 #****************************************
 # regional dif
 #----------------------------------------
-lreg     = ["alljapan", "scjapan", "njapan"]
-dbound   = {}
-
-reg      = "alljapan"
-lat_min  = 22.0
-lat_max  = 46.0
-lon_min  = 122.0
-lon_max  = 150.0
-dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
-
-
-reg      = "scjapan"
-lat_min  = 22.0
-lat_max  = 41.0
-lon_min  = 122.0
-lon_max  = 150.0
-dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
-
-reg      = "njapan"
-lat_min  = 41.0
-lat_max  = 46.0
-lon_min  = 125.0
-lon_max  = 150.0
-dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
-
-
-#lat_min  = 30.0
-#lat_max  = 40.0
-#lon_min  = 125.0
-#lon_max  = 150.0
-
-#lat_min  = 22.0
-#lat_max  = 30.0
-#lon_min  = 125.0
-#lon_max  = 150.0
-
-
+dbound   = ctrack_para.ret_dbound()
+lreg     = dbound.keys()
 #******************
 #
 #------------------
@@ -226,11 +191,11 @@ for reg in lreg:
   #--------
   # name
   #--------
-  statname = csvdir + "/stat.%s.csv"%(reg)
+  statname = csvdir + "/dens.stat.%s.csv"%(reg)
   #--------
-  sstat = ""
+  sstat = "class,his,fut,frac.chng,t\n"
   for iclass in lclass:
-    sstat = sstat + "%s,%s,%s,%s"%(dmv[reg, "his", iclass], dmv[reg, "fut", iclass], dfcm[reg, iclass], dtv[reg, iclass]) + "\n"
+    sstat = sstat + "%s,%s,%s,%s,%s"%( iclass, dmv[reg, "his", iclass], dmv[reg, "fut", iclass], dfcm[reg, iclass], dtv[reg, iclass]) + "\n"
   #--------
   # write
   #--------

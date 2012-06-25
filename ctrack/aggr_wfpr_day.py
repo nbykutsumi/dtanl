@@ -133,7 +133,7 @@ else:
   nz          = 8
   miss_dbl    = -9999.0
   miss_int    = -9999
-  crad        = 500.0*1000.0
+  crad        = 1000.0*1000.0
   thdura      = 24
   thorog      = 1500.0
   iz500       = 3
@@ -158,7 +158,7 @@ for i in dlwbin.keys():
   dlwbin[i] = abin
 #----------------------
 lclass      = dpgradrange.keys()
-nclass      = len(lclass)
+nclass      = len(lclass) -1
 #**********************
 dendh = {"6hr":18}
 endh  = dendh[tstp]
@@ -178,6 +178,14 @@ if (dnumname =={}):
   for iclass in [-1] +lclass:
     dnumname[iclass ] = outdir_num + "/num.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
+# number of events , annual data
+#-----------
+for year in range(iy, ey+1):
+  outdir_num_ann = outdir + "/num/%04d"%(year)
+  mk_dir(outdir_num_ann)
+  for iclass in [-1] +lclass:
+    dnumname[year, iclass ] = outdir_num_ann + "/num.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+#-----------
 # sum of precip
 #-----------
 outdir_sp = outdir + "/sp"
@@ -186,6 +194,15 @@ if (dspname =={}):
   dspname  = {}
   for iclass in [-1] +lclass:
     dspname[iclass ] = outdir_sp + "/sp.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+#-----------
+# sum of precip, annual data
+#-----------
+for year in range(iy, ey +1):
+  outdir_sp_ann = outdir + "/sp/%04d"%(year)
+  mk_dir(outdir_sp_ann)
+  for iclass in [-1] +lclass:
+    dspname[year, iclass ] = outdir_sp_ann + "/sp.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+
 #-----------
 # sum of precip**2
 #-----------
@@ -213,6 +230,8 @@ if (dsw2name =={}):
   dsw2name  = {}
   for iclass in [-1] +lclass:
     dsw2name[iclass ] = outdir_sw2 + "/sw2.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+#----------------------
+
 
 #**********************
 #  read orography
@@ -321,9 +340,39 @@ for iw in dlwbin.keys():
 a2ones = ones(nx*ny).reshape(ny, nx)
 #--------------
 for year in range(iyear, eyear+1):
+  #--------------
+  # dummy for da2num, annual data
+  #--------------
+  da2num_ann = {}
+  for iw in dlwbin.keys():
+    #for iclass in lclass:
+    for iclass in [-1]+lclass:
+      da2num_ann[iclass, iw] = zeros( nx*ny).reshape(ny,nx)
+  #**************
+  # dummy for da2sp, annual data
+  #--------------
+  da2sp_ann = {}
+  for iw in dlwbin.keys():
+    #for iclass in lclass:
+    for iclass in [-1]+lclass:
+      da2sp_ann[iclass, iw] = zeros( nx*ny).reshape(ny,nx)
   #---------
   # dirs
   #---------
+  dsp_test   = {}
+  dspc_test  = {}
+  dporg_test  = {}
+  dporgc_test = {}
+  dmask_test   = {}
+  dmaskc_test  = {}
+  drat_test    = {}
+  dsum_test    = {}
+  dsumc_test   = {}
+  dmask1  = {}
+  dmask2  = {}
+  dmaskc1 = {}
+  dmaskc2 = {}
+
   for mon in lmon:
     print year, mon
     ##############
@@ -430,30 +479,37 @@ for year in range(iyear, eyear+1):
           #-----------
           # mask outside of the cyclone class
           #-----------
-          a2mask  = ma.masked_outside(a2territory_day, pgrad_min, pgrad_max)
+          #a2mask  = ma.masked_outside(a2territory_day, pgrad_min, pgrad_max)
+          a2mask  = ma.masked_less(a2territory_day, pgrad_min)
+          a2mask  = ma.masked_greater_equal(a2mask, pgrad_max)
           da2mask[iclass, iw] = a2mask
           #-----------
           # mask outside of the wbin range
           #-----------
           a2mask  = ma.masked_where(a2wap< wmin,  a2mask)
-          a2mask  = ma.masked_where(wmax < a2wap, a2mask)
+          a2mask  = ma.masked_where(wmax <= a2wap, a2mask)
           da2mask[iclass, iw] = a2mask
+
           #-----------
-          # mask grids with pr <= xth
+          # mask grids with pr < xth
           #-----------
           if xth > 0.0:
-            a2mask  = ma.masked_where(a2pr <= a2prxth, a2mask)
+            a2mask  = ma.masked_where(a2pr < a2prxth, a2mask)
             da2mask[iclass, iw] = a2mask
           #-----
           # num
           #-----
           a2num_tmp   = ma.masked_where( a2mask.mask, a2ones ).filled(0.0)
           da2num[iclass, iw] = da2num[iclass, iw] + a2num_tmp
+          da2num_ann[iclass, iw] = da2num_ann[iclass, iw] + a2num_tmp
+
           #-----
           # sp
           #-----
           a2sp_tmp    = ma.masked_where( a2mask.mask, a2pr).filled(0.0)
           da2sp[iclass, iw]  = da2sp[iclass, iw] + a2sp_tmp
+          da2sp_ann[iclass, iw] = da2sp_ann[iclass, iw] + a2sp_tmp
+
           #-----
           # sp2
           #-----
@@ -469,6 +525,8 @@ for year in range(iyear, eyear+1):
           #-----
           a2sw2_tmp    = ma.masked_where( a2mask.mask, a2wap).filled(0.0)
           da2sw2[iclass, iw]  = da2sw2[iclass, iw] + a2sw2_tmp * a2sw2_tmp
+
+
       #***************************************
       # plain sp and num # without consideration of cyclone
       #---------------------------------------
@@ -486,22 +544,26 @@ for year in range(iyear, eyear+1):
         a2mask  = ma.masked_where(a2wap< wmin,  a2pr)
         a2mask  = ma.masked_where(wmax < a2wap, a2mask)
         da2mask[iclass, iw] = a2mask
+
         #-----------
         # mask grids with pr <= xth
         #-----------
         if xth > 0.0:
-          a2mask  = ma.masked_where(a2pr <= a2prxth, a2mask)
+          a2mask  = ma.masked_where(a2pr < a2prxth, a2mask)
           da2mask[iclass, iw] = a2mask
         #-----
         # num
         #-----
         a2num_tmp   = ma.masked_where( a2mask.mask, a2ones ).filled(0.0)
         da2num[iclass, iw] = da2num[iclass, iw] + a2num_tmp
+        da2num_ann[iclass, iw] = da2num_ann[iclass, iw] + a2num_tmp
         #-----
         # sp
         #-----
         a2sp_tmp    = ma.masked_where( a2mask.mask, a2pr).filled(0.0)
         da2sp[iclass, iw]  = da2sp[iclass, iw] + a2sp_tmp
+        da2sp_ann[iclass, iw] = da2sp_ann[iclass, iw] + a2sp_tmp
+
         #-----
         # sp2
         #-----
@@ -518,6 +580,38 @@ for year in range(iyear, eyear+1):
         a2sw2_tmp    = ma.masked_where( a2mask.mask, a2wap).filled(0.0)
         da2sw2[iclass, iw]  = da2sw2[iclass, iw] + a2sw2_tmp * a2sw2_tmp
 
+  #****************************
+  # combine all wbins to one array, annual data
+  #----------------------------
+  # num_ann
+  #---------
+  da2num_ann_comb ={}
+  #for iclass in lclass:
+  for iclass in [-1] + lclass:
+    da2num_ann_comb[iclass] = []
+    for iw in dlwbin.keys():
+      da2num_ann_comb[iclass] = da2num_ann_comb[iclass] + da2num_ann[iclass, iw].flatten().tolist()
+    #-
+    da2num_ann_comb[iclass] = array(da2num_ann_comb[iclass], float32).reshape(nwbin, ny, nx)
+  #---------
+  # sp_ann
+  #---------
+  da2sp_ann_comb ={}
+  #for iclass in lclass:
+  for iclass in [-1] + lclass:
+    da2sp_ann_comb[iclass] = []
+    for iw in dlwbin.keys():
+      da2sp_ann_comb[iclass] = da2sp_ann_comb[iclass] + da2sp_ann[iclass, iw].flatten().tolist()
+    #-
+    da2sp_ann_comb[iclass] = array(da2sp_ann_comb[iclass], float32).reshape(nwbin, ny, nx)
+  ##****************************
+  ## write annual map to files
+  ##----------------------------
+  for iclass in [-1]+lclass:
+    da2num_ann_comb[iclass].tofile(dnumname[year, iclass])
+    da2sp_ann_comb[iclass].tofile(dspname[year, iclass])
+  #
+  print dspname[year, iclass] 
 #****************************
 # combine all wbins to one array
 #----------------------------

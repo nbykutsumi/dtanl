@@ -107,9 +107,9 @@ os.system("psscale  -O -C%s -D11.0/-1.5/17/0.5h %s -B%s    -K >> %s"%(CPTFILE, E
 #0 100 24 0.0 1 6 $TITLE
 #EOF
 
-#os.system("pstext   -O %s %s -N                     << EOF >> %s\
-#\0 100 24 0.0 1 6 %s\
-#\EOF"%(RFLAG, JFLAG, PSFILE))
+#os.system("pstext   -O %s %s -N        << EOF >> %s"%(RFLAG, JFLAG, PSFILE))
+#os.system("0 100 24 0.0 1 6 %s"%(TITLE))
+#os.system("EOF")
 
 ############################################################
 # ps2png
