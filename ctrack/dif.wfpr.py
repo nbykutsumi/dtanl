@@ -21,7 +21,7 @@ lat_first   = -90.0
 dlon        = 2.5
 dlat        = 1.8947368
 
-xth         = 90.0
+xth         = 0.0
 crad        = 1000.0
 #***************************************
 mnum_min    = 1.0
@@ -35,7 +35,6 @@ lera    = ["fut", "his"]
 lvar    = ["num", "sp", "mnum"]
 ldifvar = ["drnum", "drtotnum", "dmp"]
 
-lvtype   = ["single", "acc"]
 #***************************************
 # class
 #-----------------------------
@@ -90,27 +89,25 @@ for difvar in ldifvar:
 # input names for each class
 #----------------------
 dname  = {}
-for era in lera:
-  expr = dexpr[era]
-  for var in lvar:
-    for iclass in lclass:
-      dname[era, var, iclass] =  ddir[era, var] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
-
-
+for class_lb in lclass[1:]:
+  for era in lera:
+    expr = dexpr[era]
+    for var in lvar:
+      for iclass in lclass:
+        if iclass == 0:
+          dname[class_lb, era, var, iclass] =  ddir[era, var] + "/acc.%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, class_lb, nclass, crad, nwbin, season, model, expr, ens )
+        else:
+          dname[class_lb, era, var, iclass] =  ddir[era, var] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
+            
 #**********************
 # dif names for each class
 #----------------------
 ddifname = {}
-for vtype in lvtype:
-  for iclass in lclass:
-    for difvar in ldifvar:
-      for iclass in lclass:
-        if vtype == "single":
-          ddifname[vtype, difvar, iclass] = ddifdir[difvar] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(difvar, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
-  
-        elif vtype == "acc":
-          ddifname[vtype, difvar, iclass] = ddifdir[difvar] + "/acc.%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(difvar, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
-    
+for class_lb in lclass[1:]:
+  for difvar in ldifvar:
+    for iclass in lclass:
+      ddifname[class_lb, difvar, iclass] = ddifdir[difvar] + "/up.%s.p%05.2f.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(difvar, xth, class_lb, iclass, nclass, crad, nwbin, season, model, expr, ens )
+
 #**********************
 dscalename = {}
 #----------------------
@@ -119,75 +116,54 @@ dscalename = {}
 xyzdir   = difdir_root + "/xyz"
 func.mk_dir(xyzdir)
 lscale1     = ["sxyz", "dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"]
-for vtype in lvtype:
-  for iclass in lclass:
-    for scale1 in lscale1:
-      if vtype == "single":
-        #----
-        dscalename[vtype, scale1, iclass] = xyzdir + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale1, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
-  
-      #----
-      if vtype == "acc":
-        for iclass in lclass[2:]:
-          dscalename[vtype, scale1, iclass] = xyzdir + "/acc.%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale1, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
-
+for class_lb in lclass[1:]:
+  for scale1 in lscale1:
+    dscalename[class_lb, scale1] = xyzdir + "/up.%s.p%05.2f.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale1, xth,class_lb, 0, nclass, crad, nwbin, season, model, expr, ens )
 #----------------------
 # nsxyz names for each class
 #----------------------
 nxyzdir   = difdir_root + "/nxyz"
 func.mk_dir(nxyzdir)
 lscale2     = ["nsxyz", "dnxyz", "ndpdf_c", "ndpdf_w", "ndp_w", "frac.dnxyz", "frac.ndpdf_c", "frac.ndpdf_w", "frac.ndp_w"]
-#---
-for vtype in lvtype:
-  for iclass in lclass:
-    for scale2 in lscale2:
-      #----
-      if vtype == "single":
-        dscalename[vtype, scale2, iclass] = nxyzdir + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale2, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
-      #----
-      if vtype == "acc":
-        for iclass in lclass[2:]:
-          dscalename[vtype, scale2, iclass] = nxyzdir + "/acc.%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale2, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
+for class_lb in lclass[1:]:
+  for scale2 in lscale2:
+    dscalename[class_lb, scale2] = nxyzdir + "/up.%s.p%05.2f.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale2, xth, class_lb, 0, nclass, crad, nwbin, season, model, expr, ens )
 #----------------------
+#*******************************************************
+# make num, sp, mnum for vtype=="up"
+#*******************************************************
+iclass = 0
+for era in lera:
+  for var in lvar:
+    for class_lb in lclass[1:]:
+      aup      = zeros([nwbin, ny, nx], float32)
+      #-- sumup ----
+      for iiclass in range(class_lb, lclass[-1]+1):
+        iname       = dname[class_lb, era, var, iiclass]
+        aup_temp    = fromfile(iname, float32).reshape(nwbin, ny, nx)
+        aup         = aup + aup_temp
 
-#*************************************
-# make a2totnum_his, a2totnum_fut
-# num for all cyclone (iclass = 0)
-#-------------------------------------
-da3totnum = {}
-for vtype in lvtype:
-  for iclass in lclass:
-    if (vtype == "single"):
-      #------------
-      if iclass in lclass[1:]:
-        continue
-      #------------
-      a2totnum_his = fromfile(dname["his", "num", 0], float32).reshape(nwbin, ny, nx)[0]
-      a2totnum_fut = fromfile(dname["fut", "num", 0], float32).reshape(nwbin, ny, nx)[0]
+      #-- write ----
+      aup.tofile(dname[class_lb, era, var, iclass])
+
+#*******************************************************
+
+for class_lb in lclass[1:]:
+  lclass_seg  = [0] + range(class_lb, lclass[-1]+1)
+  #*************************************
+  # make a2totnum_his, a2totnum_fut
+  # num for all cyclone (iclass = 0)
+  #-------------------------------------
+  a2totnum_his = fromfile(dname[class_lb, "his", "num", 0], float32).reshape(nwbin, ny, nx)[0]
+  a2totnum_fut = fromfile(dname[class_lb, "fut", "num", 0], float32).reshape(nwbin, ny, nx)[0]
   
-    elif (vtype == "acc"):    
-      a2totnum_his_temp = zeros([ny,nx], float32)
-      a2totnum_fut_temp = zeros([ny,nx], float32)
-      #-----
-      for iiclass in range(iclass, lclass[-1]+1):
-        a2totnum_his_temp = a2totnum_his_temp + fromfile(dname["his", "num", 0], float32).reshape(nwbin, ny, nx)[0]
-        a2totnum_fut_temp = a2totnum_fut_temp + fromfile(dname["fut", "num", 0], float32).reshape(nwbin, ny, nx)[0]
-      #-----
-      a2totnum_his = a2totnum_his_temp
-      a2totnum_fut = a2totnum_fut_temp
-    #-------------     
-    da3totnum[vtype, "his", iclass] = func.mul_a2(a2totnum_his, nwbin)
-    da3totnum[vtype, "fut", iclass] = func.mul_a2(a2totnum_fut, nwbin)
-
-#****************************************
-for vtype in lvtype:
-  for iclass in lclass:
-    #------------
-    if (vtype == "single")&(iclass in lclass[1:]):
-      continue
-    if (vtype == "acc")&(iclass in [0.1]):
-      continue
-    #------------
+  da3totnum = {}
+  da3totnum["his"] = func.mul_a2(a2totnum_his, nwbin)
+  da3totnum["fut"] = func.mul_a2(a2totnum_fut, nwbin)
+  #****************************************
+  #for iclass in lclass:
+  for iclass in lclass_seg:
+    #*************************************
     da3num  = {}
     da3sp   = {}
     da3snum = {}
@@ -200,24 +176,9 @@ for vtype in lvtype:
     # read 
     #----------------------
     for era in lera:
-      #================================================
-      if vtype == "single":
-        da3num[era]    = fromfile(dname[era, "num", iclass], float32).reshape(nwbin, ny, nx)
-        da3sp[era]     = fromfile(dname[era, "sp",  iclass], float32).reshape(nwbin, ny, nx)
-
-      if vtype == "acc":
-        num_temp    = zeros([nwbin, ny, nx], float32)
-        sp_temp     = zeros([nwbin, ny, nx], float32)
-        for iiclass in range(iclass, lclass[-1] +1):
-          num_temp    = num_temp + fromfile(dname[era, "num", iiclass], float32).reshape(nwbin, ny, nx)
-          sp_temp     = sp_temp  + fromfile(dname[era, "sp",  iiclass], float32).reshape(nwbin, ny, nx)
-
-        #------
-        da3num[era] = num_temp
-        da3sp[era]  = sp_temp
-
-      #================================================
-
+      da3num[era]    = fromfile(dname[class_lb, era, "num", iclass], float32).reshape(nwbin, ny, nx)
+      da3sp[era]     = fromfile(dname[class_lb, era, "sp",  iclass], float32).reshape(nwbin, ny, nx)
+      #----------------------
       da3snum[era]   = func.mul_a2( da3num[era][0], nwbin)
       da3snum[era]   = ma.masked_equal( da3snum[era], 0.0)
       #----------------------
@@ -228,7 +189,7 @@ for vtype in lvtype:
       #----------------------
       #  num(iclass, wbin) per num of all cyclone class, all wbin
       #---
-      da3rtotnum[era]= ma.masked_where(da3totnum[vtype, era, iclass]==0.0, da3num[era]) / da3totnum[vtype, era, iclass]
+      da3rtotnum[era]= ma.masked_where(da3totnum[era]==0.0, da3num[era]) / da3totnum[era]
       da3rtotnum[era]= da3rtotnum[era].filled(0.0)
       #----------------------
       da3mp[era]     = ma.masked_where(da3num[era]==0.0, da3sp[era]) / da3num[era]
@@ -236,9 +197,10 @@ for vtype in lvtype:
     #----------------------
     # make dif
     #----------------------
+    #
     a3drnum         = da3rnum["fut"]    - da3rnum["his"]
     a3drtotnum      = da3rtotnum["fut"] - da3rtotnum["his"]
-    a3dmp           = (da3mp["fut"]     - da3mp["his"]).filled(0.0)
+    a3dmp           = (da3mp["fut"]      - da3mp["his"]).filled(0.0)
     #
     a3drnum         = array(a3drnum,    float32)
     a3drtotnum      = array(a3drtotnum, float32)
@@ -247,357 +209,324 @@ for vtype in lvtype:
     #----------------------
     # write
     #----------------------
-    a3drnum.tofile(ddifname[vtype, "drnum", iclass])
-    a3drtotnum.tofile(ddifname[vtype, "drtotnum", iclass])
-    a3dmp.tofile(ddifname[vtype, "dmp", iclass])
-
-
-
-#***************************************************
-
-
-da2c_rn   = {}
-da3pdf_w  = {}
-da3w_p    = {}
-
-da2dc_rn  = {}
-da3dpdf_w = {}
-da3dw_p   = {}
-
-for vtype in lvtype:
-  for iclass in lclass:
-    #-----------
-    if (vtype == "acc") & (iclass in [0,1]):
-      continue
-    #-----------
-    if vtype == "single":
-      a2totnum_his   = da3totnum[vtype, "his", 0][0]
-      a2totnum_fut   = da3totnum[vtype, "fut", 0][0]
-    elif vtype == "acc":
-      a2totnum_his   = da3totnum[vtype, "his", iclass][0]
-      a2totnum_fut   = da3totnum[vtype, "fut", iclass][0]
-    #------------
-
-    if vtype == "single":
-      a3num  = fromfile(dname["his", "num", iclass], float32).reshape(nwbin, ny, nx)
-      a3sp   = fromfile(dname["his", "sp", iclass], float32).reshape(nwbin, ny, nx)
-      a3snum = func.mul_a2( a3num[0], nwbin )
-
-    if vtype == "acc":
-      num_temp  = zeros([nwbin, ny, nx], float32)
-      sp_temp   = zeros([nwbin, ny, nx], float32)
-      snum_temp = zeros([nwbin, ny, nx], float32)
-
-      for iiclass in range(iclass, lclass[-1]+1):
-        num_temp  = num_temp  + fromfile(dname["his", "num", iiclass], float32).reshape(nwbin, ny, nx)
-        sp_temp   = sp_temp   + fromfile(dname["his", "sp", iiclass], float32).reshape(nwbin, ny, nx)
-        snum_temp = snum_temp + func.mul_a2( a3num[0], nwbin )
-      #----
-      a3num  = num_temp
-      a3sp   = sp_temp
-      a3snum = snum_temp
+    a3drnum.tofile(   ddifname[class_lb, "drnum"   , iclass])
+    a3drtotnum.tofile(ddifname[class_lb, "drtotnum", iclass])
+    a3dmp.tofile(     ddifname[class_lb, "dmp"     , iclass])
+  
+  
+  
+  #***************************************************
+  
+  da2XYZ    = {}
+  da2dXYZ   = {}
+  da2XdYZ   = {}
+  da2XYdZ   = {}
+  
+  da2c_rn   = {}
+  da3pdf_w  = {}
+  da3w_p    = {}
+  
+  da2dc_rn  = {}
+  da3dpdf_w = {}
+  da3dw_p   = {}
+  
+  #for iclass in lclass:
+  for iclass in lclass_seg:
+    a3num  = fromfile(dname[class_lb, "his", "num", iclass], float32).reshape(nwbin, ny, nx)
+    a3sp   = fromfile(dname[class_lb, "his", "sp", iclass], float32).reshape(nwbin, ny, nx)
+    a3snum = func.mul_a2( a3num[0], nwbin )
+  
     #------------------
     # X= PDF(Ci)
     #------------------
-    da2c_rn[vtype, iclass]  = ma.masked_where(a2totnum_his==0.0, a3num[0]) / a2totnum_his
-    da2c_rn[vtype, iclass]  = da2c_rn[vtype, iclass].filled(0.0)
+    da2c_rn[iclass]  = ma.masked_where(a2totnum_his==0.0, a3num[0]) / a2totnum_his
+    da2c_rn[iclass]  = da2c_rn[iclass].filled(0.0)
   
     #------------------
     # Y= PDF(wi|Ci)
     #------------------
-    da3pdf_w[vtype, iclass] = ma.masked_where(a3snum==0.0, a3num) /  a3snum
-    da3pdf_w[vtype, iclass] = da3pdf_w[vtype, iclass].filled(0.0)
+    da3pdf_w[iclass] = ma.masked_where(a3snum==0.0, a3num) /  a3snum
+    da3pdf_w[iclass] = da3pdf_w[iclass].filled(0.0)
   
     #------------------
     # Z= P(wi|Ci)
     #------------------
-    da3w_p[vtype, iclass]   = ma.masked_where(a3num==0.0, a3sp) /  a3num  # devide by "a3num"
-    da3w_p[vtype, iclass]   = da3w_p[vtype, iclass].filled(0.0)
+    da3w_p[iclass]   = ma.masked_where(a3num==0.0, a3sp) /  a3num  # devide by "a3num"
+    da3w_p[iclass]   = da3w_p[iclass].filled(0.0)
   
     #------------------
     # dX=dPDF(Ci)
     #------------------
-    da2dc_rn[vtype, iclass]  = fromfile(ddifname[vtype, "drtotnum", iclass], float32).reshape(nwbin, ny, nx)[0]
+    da2dc_rn[iclass]  = fromfile(ddifname[class_lb, "drtotnum", iclass], float32).reshape(nwbin, ny, nx)[0]
   
   
     #------------------
     # dY = PDF(wi|Ci)
     #------------------
-    da3dpdf_w[vtype, iclass] = fromfile(ddifname[vtype, "drnum", iclass], float32).reshape(nwbin, ny, nx)
+    da3dpdf_w[iclass] = fromfile(ddifname[class_lb, "drnum", iclass], float32).reshape(nwbin, ny, nx)
   
     #------------------
     # dZ= dP(wi|Ci)
     #------------------
-    da3dw_p[vtype, iclass]   = fromfile(ddifname[vtype, "dmp", iclass], float32).reshape(nwbin, ny, nx)
-
-
-
-da2XYZ    = {}
-da2dXYZ   = {}
-da2XdYZ   = {}
-da2XYdZ   = {}
-
-for vtype in lvtype:
+    da3dw_p[iclass]   = fromfile(ddifname[class_lb, "dmp", iclass], float32).reshape(nwbin, ny, nx)
+  
   #***************************************************
-  if vtype == "single": 
-    da2XYZ[vtype,  0]       = zeros([ny,nx], float32)
-    da2dXYZ[vtype, 0]       = zeros([ny,nx], float32)
-    da2XdYZ[vtype, 0]       = zeros([ny,nx], float32)
-    da2XYdZ[vtype, 0]       = zeros([ny,nx], float32)
-
-  for iclass in lclass:
-    #-----------
-    if (vtype =="single")&(iclass in lclass[1:]):
-      continue
-    elif (vtype == "acc")&(iclass in [0,1]):
-      continue
-    #-----------
+  
+  da2XYZ[0]        = zeros([ny,nx], float32)
+  da2dXYZ[0]       = zeros([ny,nx], float32)
+  da2XdYZ[0]       = zeros([ny,nx], float32)
+  da2XYdZ[0]       = zeros([ny,nx], float32)
+  #for iclass in lclass[1:]:
+  for iclass in lclass_seg[1:]:
     #*************************************
     # a2XYZ , X=PDF(Ci), Y = PDF(wi|Ci), Z = P(wi|Ci)
-    #-------------------------------------
-    da2XYZ[vtype, iclass] = da2c_rn[vtype, iclass] * sum( (da3pdf_w[vtype, iclass] * da3w_p[vtype, iclass])[1:], axis = 0) 
-
-    if vtype == "single":
-      da2XYZ[vtype, 0]      = da2XYZ[vtype, 0] + da2XYZ[vtype, iclass]
+    #-------------------------------------    
+    da2XYZ[iclass] = da2c_rn[iclass] * sum( (da3pdf_w[iclass] * da3w_p[iclass])[1:], axis = 0) 
+    da2XYZ[0]      = da2XYZ[0] + da2XYZ[iclass]
   
     #*************************************
     # a2dXYZ, dX=dPDF(Ci), Y = PDF(wi|Ci), Z = P(wi|Ci)
     #-------------------------------------    
-    da2dXYZ[vtype, iclass] = da2dc_rn[vtype, iclass] * sum( (da3pdf_w[vtype, iclass] * da3w_p[vtype, iclass])[1:], axis =0 )
-    if vtype == "single":
-      da2dXYZ[vtype, 0]      = da2dXYZ[vtype, 0] + da2dXYZ[vtype, iclass]
+    da2dXYZ[iclass] = da2dc_rn[iclass] * sum( (da3pdf_w[iclass] * da3w_p[iclass])[1:], axis =0 )
+    da2dXYZ[0]      = da2dXYZ[0] + da2dXYZ[iclass]
   
     #*************************************
     # a2XdYZ, X=PDF(Ci), dY = dPDF(wi|Ci), Z = P(wi|Ci)
     #-------------------------------------    
-    da2XdYZ[vtype, iclass] = da2c_rn[vtype, iclass] * sum( (da3dpdf_w[vtype, iclass] * da3w_p[vtype, iclass])[1:], axis = 0) 
-    if vtype == "single":
-      da2XdYZ[vtype, 0]      = da2XdYZ[vtype, 0] + da2XdYZ[vtype, iclass]
+    da2XdYZ[iclass] = da2c_rn[iclass] * sum( (da3dpdf_w[iclass] * da3w_p[iclass])[1:], axis = 0) 
+    da2XdYZ[0]      = da2XdYZ[0] + da2XdYZ[iclass]
   
     #*************************************
     # a2XYdZ , X=PDF(Ci), Y = PDF(wi|Ci), dZ = dP(wi|Ci)
     #-------------------------------------    
-    da2XYdZ[vtype, iclass] = da2c_rn[vtype, iclass] * sum( (da3pdf_w[vtype, iclass] * da3dw_p[vtype, iclass])[1:], axis = 0)
-    if vtype == "single":
-      da2XYdZ[vtype, 0]      = da2XYdZ[vtype, 0] + da2XYdZ[vtype, iclass]
-
-
-  #*************************************************************** 
-  for iclass in lclass:
-    #-----------
-    if (vtype =="single")&(iclass in lclass[1:]):
-      continue
-    elif (vtype == "acc")&(iclass in [0,1]):
-      continue
-    #-----------
-    #***************************************************************
-    # a2n, a2dn
-    #-------------------------------------
-    a2dn = (a2totnum_fut - a2totnum_his)
-    a2dn = a2dn / (eyear_his - iyear_his +1)   # total -> diff of num per season
-    a2n  = a2totnum_his
-    a2n  = a2n  / (eyear_his - iyear_his +1)   # total -> num per season
-    
-    
-    #***************************************************************
-    # a2nXYZ
-    #--------------------------------------
-    a2SXYZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
-    for iiclass in lclass[1:]:
-      a2SXYZ = a2SXYZ +  da2XYZ[vtype, iiclass]
-    #
-    a2nXYZ   = a2n * a2SXYZ
-    #***************************************************************
-    # a2dnXYZ
-    #--------------------------------------
-    a2dnXYZ   = a2dn * a2SXYZ
-    #
-    frac_a2dnXYZ   = a2dnXYZ / a2nXYZ   # zero -> NaN
-    
-    #***************************************************************
-    # a2ndXYZ
-    #--------------------------------------
-    a2SdXYZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
-    for iiclass in lclass[1:]:
-      a2SdXYZ = a2SdXYZ + da2dXYZ[vtype, iiclass]
-    #
-    a2ndXYZ   = a2n * a2SdXYZ
-    #
-    frac_a2SdXYZ   = a2SdXYZ / a2SXYZ   # zero -> NaN
-    frac_a2ndXYZ   = a2ndXYZ / a2nXYZ   # zero -> NaN
-    #
-    #***************************************************************
-    # a2nXdYZ
-    #--------------------------------------
-    a2SXdYZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
-    for iiclass in lclass[1:]:
-      a2SXdYZ = a2SXdYZ + da2XdYZ[vtype, iiclass]
-    #
-    a2nXdYZ   = a2n * a2SXdYZ
-    #
-    frac_a2SXdYZ   = a2SXdYZ / a2SXYZ
-    frac_a2nXdYZ   = a2nXdYZ / a2nXYZ
-    
-    #***************************************************************
-    # a2nXYdZ
-    #--------------------------------------
-    a2SXYdZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
-    for iiclass in lclass[1:]:
-      a2SXYdZ = a2SXYdZ + da2XYdZ[vtype, iiclass]
-    #
-    a2nXYdZ   = a2n * a2SXYdZ
-    #
-    frac_a2SXYdZ   = a2SXYdZ / a2SXYZ
-    frac_a2nXYdZ   = a2nXYdZ / a2nXYZ
-    
-    #***************************************************************
-    # write to file
-    #--------------------------------------
-    # XYZ
-    #-----------
-    print xyzdir
-    array(a2SXYZ, float32).tofile(dscalename[ vtype, "sxyz"  , iclass])
-    array(a2SdXYZ, float32).tofile(dscalename[vtype, "dpdf_c", iclass])
-    array(a2SXdYZ, float32).tofile(dscalename[vtype, "dpdf_w", iclass])
-    array(a2SXYdZ, float32).tofile(dscalename[vtype, "dp_w"  , iclass])
-    #-----------
-    # frac_XYZ
-    #-----------
-    array(frac_a2SdXYZ, float32).tofile(dscalename[vtype, "frac.dpdf_c"], iclass)
-    array(frac_a2SXdYZ, float32).tofile(dscalename[vtype, "frac.dpdf_w" , iclass])
-    array(frac_a2SXYdZ, float32).tofile(dscalename[vtype, "frac.dp_w"   , iclass])
-    #-----------
-    # nXYZ
-    #-----------
-    print nxyzdir
-    array(a2nXYZ,  float32).tofile(dscalename[vtype, "nsxyz",   iclass])
-    array(a2dnXYZ, float32).tofile(dscalename[vtype, "dnxyz",   iclass])
-    array(a2ndXYZ, float32).tofile(dscalename[vtype, "ndpdf_c", iclass])
-    array(a2nXdYZ, float32).tofile(dscalename[vtype, "ndpdf_w", iclass])
-    array(a2nXYdZ, float32).tofile(dscalename[vtype, "ndp_w",   iclass])
-    ##-----------
-    ## frac_nXYZ
-    ##-----------
-    array(frac_a2dnXYZ, float32).tofile(dscalename[vtype, "frac.dnxyz",  iclass])
-    array(frac_a2ndXYZ, float32).tofile(dscalename[vtype, "frac.ndpdf_c",iclass])
-    array(frac_a2nXdYZ, float32).tofile(dscalename[vtype, "frac.ndpdf_w",iclass])
-    array(frac_a2nXYdZ, float32).tofile(dscalename[vtype, "frac.ndp_w",  iclass])
+    da2XYdZ[iclass] = da2c_rn[iclass] * sum( (da3pdf_w[iclass] * da3dw_p[iclass])[1:], axis = 0)
+    da2XYdZ[0]      = da2XYdZ[0] + da2XYdZ[iclass]
   
-  #** end iclass loop *********************************************** 
+  #***************************************************************
+  # a2n, a2dn
+  #-------------------------------------
+  a2dn = (a2totnum_fut - a2totnum_his)
+  a2dn = a2dn / (eyear_his - iyear_his +1)   # total -> diff of num per season
+  a2n  = a2totnum_his
+  a2n  = a2n  / (eyear_his - iyear_his +1)   # total -> num per season
   
-  for vtype in lvtype:
-    #*************************************
-    # make pict
-    #*************************************
-    # read mnum
-    #-------------------------------------
-    era    = "his"
-    var    = "mnum"
-    for iclass in lclass:
-      dname[era, var, iclass] =  ddir[era, "mnum"] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
-    #-------------------------------------
-    
-    da3mnum_his   = {}
-    for iclass in lclass:
-      da3mnum_his[iclass]  = fromfile(dname["his", "mnum", iclass], float32).reshape(nwbin, ny, nx)
-    #**************************************
-    for iclass in lclass:
-      #-------
-      if (vtype == "single")&(iclass in lclass[1:]):
-        continue
-      elif (vtype == "acc")&(iclass in [0,1]):
-        continue
-    
-      #*************************************
-      #----------------------
-      # basemap
-      #----------------------
-      M         = Basemap(resolution = "l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0)
-      #----------------------
-      # colormap
-      #----------------------
-      dcm  = {}
-      for scale in  ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"]:
-        #--------
-        dcm[scale] = "RdBu"
-      for scale in lscale2:
-        dcm[scale] = "RdBu"
+  
+  #***************************************************************
+  # a2nXYZ
+  #--------------------------------------
+  a2SXYZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
+  #for iclass in lclass[1:]:
+  for iclass in lclass_seg[1:]:
+    a2SXYZ = a2SXYZ +  da2XYZ[iclass]
+  #
+  a2nXYZ   = a2n * a2SXYZ
+  #***************************************************************
+  # a2dnXYZ
+  #--------------------------------------
+  a2dnXYZ   = a2dn * a2SXYZ
+  #
+  frac_a2dnXYZ   = a2dnXYZ / a2nXYZ   # zero -> NaN
+  
+  #***************************************************************
+  # a2ndXYZ
+  #--------------------------------------
+  a2SdXYZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
+  #for iclass in lclass[1:]:
+  for iclass in lclass_seg[1:]:
+    a2SdXYZ = a2SdXYZ + da2dXYZ[iclass]
+  #
+  a2ndXYZ   = a2n * a2SdXYZ
+  #
+  frac_a2SdXYZ   = a2SdXYZ / a2SXYZ   # zero -> NaN
+  frac_a2ndXYZ   = a2ndXYZ / a2nXYZ   # zero -> NaN
+  #
+  #***************************************************************
+  # a2nXdYZ
+  #--------------------------------------
+  a2SXdYZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
+  #for iclass in lclass[1:]:
+  for iclass in lclass_seg[1:]:
+    a2SXdYZ = a2SXdYZ + da2XdYZ[iclass]
+  #
+  a2nXdYZ   = a2n * a2SXdYZ
+  #
+  frac_a2SXdYZ   = a2SXdYZ / a2SXYZ
+  frac_a2nXdYZ   = a2nXdYZ / a2nXYZ
+  
+  #***************************************************************
+  # a2nXYdZ
+  #--------------------------------------
+  a2SXYdZ   = array(zeros(ny * nx).reshape(ny, nx), float32)
+  #for iclass in lclass[1:]:
+  for iclass in lclass_seg[1:]:
+    a2SXYdZ = a2SXYdZ + da2XYdZ[iclass]
+  #
+  a2nXYdZ   = a2n * a2SXYdZ
+  #
+  frac_a2SXYdZ   = a2SXYdZ / a2SXYZ
+  frac_a2nXYdZ   = a2nXYdZ / a2nXYZ
+  
+  #***************************************************************
+  # write to file
+  #--------------------------------------
+  # XYZ
+  #-----------
+  print xyzdir
+  array(a2SXYZ, float32).tofile(dscalename[ class_lb, "sxyz"])
+  array(a2SdXYZ, float32).tofile(dscalename[class_lb, "dpdf_c"])
+  array(a2SXdYZ, float32).tofile(dscalename[class_lb, "dpdf_w"])
+  array(a2SXYdZ, float32).tofile(dscalename[class_lb, "dp_w"])
+  #-----------
+  # frac_XYZ
+  #-----------
+  array(frac_a2SdXYZ, float32).tofile(dscalename[class_lb, "frac.dpdf_c"])
+  array(frac_a2SXdYZ, float32).tofile(dscalename[class_lb, "frac.dpdf_w"])
+  array(frac_a2SXYdZ, float32).tofile(dscalename[class_lb, "frac.dp_w"])
+  #-----------
+  # nXYZ
+  #-----------
+  print nxyzdir
+  array(a2nXYZ,  float32).tofile(dscalename[class_lb, "nsxyz"])
+  array(a2dnXYZ, float32).tofile(dscalename[class_lb, "dnxyz"])
+  array(a2ndXYZ, float32).tofile(dscalename[class_lb, "ndpdf_c"])
+  array(a2nXdYZ, float32).tofile(dscalename[class_lb, "ndpdf_w"])
+  array(a2nXYdZ, float32).tofile(dscalename[class_lb, "ndp_w"])
+  ##-----------
+  ## frac_nXYZ
+  ##-----------
+  array(frac_a2dnXYZ, float32).tofile(dscalename[class_lb, "frac.dnxyz"])
+  array(frac_a2ndXYZ, float32).tofile(dscalename[class_lb, "frac.ndpdf_c"])
+  array(frac_a2nXdYZ, float32).tofile(dscalename[class_lb, "frac.ndpdf_w"])
+  array(frac_a2nXYdZ, float32).tofile(dscalename[class_lb, "frac.ndp_w"])
+  #*************************************
+  # read mnum
+  #-------------------------------------
+  era    = "his"
+  var    = "mnum"
+  #for iclass in lclass:
+  #  dname[era, var, iclass] =  ddir[era, "mnum"] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
+  ##-------------------------------------
+  
+  da3mnum_his   = {}
+  #for iclass in lclass:
+  for iclass in lclass_seg:
+    da3mnum_his[iclass]  = fromfile(dname[class_lb, "his", "mnum", iclass], float32).reshape(nwbin, ny, nx)
+  
+  #*************************************
+  # make pict
+  #*************************************
+  cmd       = oekakidir + "/track.gmt.py"
+  #----------------------
+  # basemap
+  #----------------------
+  M         = Basemap(resolution = "l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0)
+  #----------------------
+  # colormap
+  #----------------------
+  dcm  = {}
+  for scale in  ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"]:
+    #--------
+    dcm[scale] = "RdBu"
+  for scale in lscale2:
+    dcm[scale] = "RdBu"
+  
+  #----------------------
+  # dmp
+  #----------------------
+  iname     = ddifname[class_lb, "dmp", 0]
+  stitle    = "%s up%02d"%("dmp", class_lb)
+  a2mask    = da3mnum_his[0][0]
+  a         = fromfile(iname, float32) * 60.0 * 60.0 * 24.0
+  a         = a.reshape(nwbin, ny, nx)
+  a         = a[0]
+  a         = ma.masked_where( a2mask < mnum_min, a)
+  pngname   = iname[:-3] + ".png"
+  
+  
+  bnd       = [-3.0, -2.0, -1.0, -0.5,  0.5 , 1.0, 2.0 , 3.0]
+  im        = M.imshow(a, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+  M.drawcoastlines()
+  plt.title(stitle)
+  savefig(pngname)
+  plt.clf()
+  print pngname
+
+  cbarname  = iname[:-3] + ".cbar.png"
+  bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
+  figcbar   = plt.figure(figsize=(1,5))
+  #axcbar    = figcbar.add_axes([0,0,0.9,1])
+  axcbar    = figcbar.add_axes([0,0,0.4,1.0])
+  plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
+  savefig(cbarname)
+  plt.clf()
+  #----------------------
+  # dxyz
+  #----------------------
+  a2mask    = da3mnum_his[0][0]
+  for scale in ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"] + lscale2:
+    #--------------
+    if scale[:4] == "frac":
+      coef  = 1.0
+    else:
+      coef  = 60.0 * 60.0 * 24.0
+    #--- prep for map -------
+    iname   = dscalename[class_lb, scale]
+    pngname = iname[:-3] + ".png"
+    a       = fromfile(iname, float32).reshape(ny, nx)
+    a       = a * coef
+    a       = ma.masked_where( a2mask < mnum_min, a)
+    a       = ma.masked_invalid(a)
+    figmap  = plt.figure()
+    axmap   = figmap.add_axes([0, 0, 1.0, 1.0])
+    M       = Basemap(resolution = "l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0, ax=axmap)
+
+    #--- prep for colorbar --
+    cbarname  = iname[:-3] + ".cbar.png"
+    bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
+    figcbar   = plt.figure(figsize=(1,5))
+    #axcbar    = figcbar.add_axes([0,0,0.9,1])
+    axcbar    = figcbar.add_axes([0,0,0.4,1.0])
+    #------------------------
+
+    if scale[:4] == "frac":
+      bnd     = [-0.6, -0.4, -0.2, -0.05, 0.05, 0.2 , 0.4 , 0.6]
       
-      #----------------------
-      # dmp
-      #----------------------
-      iname     = ddifname[vtype, "dmp", iclass]
-      
-      a2mask    = da3mnum_his[0][0]
-      a         = fromfile(iname, float32) * 60.0 * 60.0 * 24.0
-      a         = a.reshape(nwbin, ny, nx)
-      a         = a[0]
-      a         = ma.masked_where( a2mask < mnum_min, a)
-      pngname   = iname[:-3] + ".png"
-      
-      
-      bnd     = [-3.0, -2.0, -1.0, -0.5,  0.5 , 1.0, 2.0 , 3.0]
-      im      = M.imshow(a, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
-      M.drawcoastlines()
+      im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-      plt.colorbar(boundaries = bnd_cbar, extend="both")
-      savefig(pngname)
-      plt.clf()
-      print pngname
+      plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
+    elif (scale in lscale2) & (scale not in ["nsxyz"]):
+      #-----
+      #bnd     = [-200, -150.0, -100.0, -50.0, -10.0,  10.0 , 50.0 , 100.0, 150.0, 200]
+      #bnd     = [-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 90.0]
+      bnd     = [-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 90.0]
+      #-----
       
-      #----------------------
-      # dxyz
-      #----------------------
-      a2mask    = da3mnum_his[0][0]
-      for scale in ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"] + lscale2:
-        #--------------
-        if scale[:4] == "frac":
-          coef  = 1.0
-        else:
-          coef  = 60.0 * 60.0 * 24.0
-        #--------------
-        iname   = dscalename[vtype, scale, iclass]
-        pngname = iname[:-3] + ".png"
-        a       = fromfile(iname, float32).reshape(ny, nx)
-        a       = a * coef
-        a       = ma.masked_where( a2mask < mnum_min, a)
-        a       = ma.masked_invalid(a)
-        #--------------
-        if scale[:4] == "frac":
-          bnd     = [-0.6, -0.4, -0.2, -0.05, 0.05, 0.2 , 0.4 , 0.6]
-          
-          im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
-          bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-          plt.colorbar(boundaries = bnd_cbar, extend="both")
-        elif (scale in lscale2) & (scale not in ["nsxyz"]):
-          #-----
-          #bnd     = [-200, -150.0, -100.0, -50.0, -10.0,  10.0 , 50.0 , 100.0, 150.0, 200]
-          #bnd     = [-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 90.0]
-          bnd     = [-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 90.0]
-          #-----
-          
-          im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
-          bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-          plt.colorbar(boundaries = bnd_cbar, extend="both")
+      im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+      bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
+      plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
       
-          
-        elif scale in ["dpdf_c", "dpdf_w", "dp_w"]:
-          bnd     = [-3.0, -2.0, -1.0, -0.5, 0.5, 1.0, 2.0, 3.0]
-          im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
-          bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-          plt.colorbar(boundaries = bnd_cbar, extend="both")
-        else:
-          im      = M.imshow(a, origin ="lower",vmax=800.)
-          plt.colorbar()
-          
-        #-----
-        M.drawcoastlines()
-        savefig(pngname)
-        plt.clf()
-        print pngname
+    elif scale in ["dpdf_c", "dpdf_w", "dp_w"]:
+      bnd     = [-3.0, -2.0, -1.0, -0.5, 0.5, 1.0, 2.0, 3.0]
+      im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+      bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
+      plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
+
+    else:
+      im      = M.imshow(a, origin ="lower",vmax=800.)
+      plt.colorbar(im, cax=axcbar)
       
-      
-      #----------------------
+    #-----
+    stitle = "%s up%02d"%(scale, class_lb)
+    axmap.set_title(stitle)
+    M.drawcoastlines()
+    figmap.savefig(pngname)
+    print pngname
+
+
+    figcbar.savefig(cbarname)
+    plt.clf()
+ 
+  #----------------------
 
 
 ##*************************************

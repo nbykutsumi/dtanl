@@ -27,6 +27,7 @@ if (len(sys.argv) >1):
   #---
 else:
   model       = "NorESM1-M"
+  #expr        = "rcp85"
   expr        = "historical"
   ens         = "r1i1p1"
   tstp        = "6hr"
@@ -43,7 +44,7 @@ else:
   thdura      = 24
   thorog      = 1500.0
   iz500       = 3
-  xth         = 90.0
+  xth         = 00.0
 dnumname      = {}
 dmnumname     = {}
 daccmnumname  = {}
