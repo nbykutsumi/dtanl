@@ -4,7 +4,7 @@ import ctrack_func as func
 import matplotlib.pyplot as plt
 from numpy import *
 import os, sys
-
+from cf.plot import *
 #***************************************
 iyear_his   = 1990
 eyear_his   = 1999
@@ -128,13 +128,13 @@ for var in ldirvar + laccvar:
     #-------------
     a3dif            = da3in["fut"] - da3in["his"]
     #----
-    # ! frac = dif / abs( his )
-    a3frac           = a3dif / ma.masked_equal( map( abs, da3in["his"]), 0.0)
-    a3frac           = a3frac.filled(0.0)
+    ## ! frac = dif / abs( his )
+    #a3frac           = a3dif / ma.masked_equal( map( abs, da3in["his"]), 0.0)
+    #a3frac           = a3frac.filled(0.0)
     
     #-- write --------------
     a3dif.tofile( doname["dif", var, iclass])
-    a3frac.tofile(doname["frac", var, iclass])
+    #a3frac.tofile(doname["frac", var, iclass])
 
 #*************************************
 # draw picts
@@ -145,35 +145,59 @@ orogdir_root = "/media/disk2/data/CMIP5/bn/orog/fx/%s/%s/r0i0p0"%(model, expr)
 orogname     = orogdir_root + "/orog_fx_%s_%s_r0i0p0.bn"%(model, expr)
 a2orog         = fromfile(orogname, float32).reshape(ny,nx)
 #---------------
-# -- basemap
+# colormap
 #---------------
-M    = Basemap(resolution="l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0)
-#-------------------
+dcm  = {}
+for var in ["mw", "acc.mw"]:
+  dcm[var] = "RdBu"
+
+
 for var in ["mw", "acc.mw"]:
   for era in lera:
     for iclass in lclass + [-1]:
       if ( var in laccvar) &(iclass in [0,1,-1, lclass[-1]]):
         continue
       #--
-      for vartype in ["dif", "frac"]:
+      #for vartype in ["dif", "frac"]:
+      for vartype in ["dif"]:
+
+        #-- prep for map -----
         figname = doname[vartype, var, iclass][:-3] + ".png"
         adat    = fromfile(doname[vartype, var, iclass], float32).reshape(nwbin, ny, nx)[0]
-        #--------
         adat    = ma.masked_where( a2orog >= thorog, adat)
         adat    = ma.masked_equal(adat, 0.0)
-        #----
-        if vartype == "frac": 
-          im      = M.imshow(adat, origin="lower", vmin=-1.0, vmax=1.0)
-        else:
-          im      = M.imshow(adat, origin="lower", vmin=-0.01, vmax=0.01)
-          
-        #
-        M.drawcoastlines()
-        plt.colorbar()
-        plt.savefig(figname)
-        print figname
-        plt.clf()
-        
-        
+        # ! convert w -> -w
+        adat    = -adat
+        figmap  = plt.figure()
+        axmap   = figmap.add_axes([0, 0, 1.0, 1.0])
+        M       = Basemap(resolution="l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0, ax=axmap)
 
+        #-- prep for colorbar ---
+        cbarname= figname[:-4] + ".cbar.png"
+        figcbar = plt.figure(figsize=(1,5))
+        axcbar  = figcbar.add_axes([0, 0, 0.4, 1.0])
+
+        #------------------------
+        if vartype == "frac": 
+          im       = M.imshow(adat, origin="lower", vmin=-1.0, vmax=1.0)
+        else: 
+          bnd      = [-0.04, -0.03, -0.02, -0.01, 0.01, 0.02, 0.03, 0.04]
+          bnd_cbar = [-1.0e+40] + bnd + [1.0e+40]
+
+          im       = M.imshow(adat, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
+          stitle   = "%s (-1 x %s) c%02d, P:%s"%(vartype, var,iclass,  xth)
+          axmap.set_title(stitle)
+
+          figcbar.colorbar(im, boundaries = bnd_cbar, extend ="both", cax=axcbar)
+        #
+        #--------
+        M.drawcoastlines()
+        figmap.savefig(figname)
+        figmap.clf()
+        print figname
+        #-------- 
+        figcbar.savefig(cbarname)
+        #-------- 
+        figcbar.clf() 
+        
 

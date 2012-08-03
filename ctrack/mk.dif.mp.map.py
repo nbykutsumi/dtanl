@@ -31,7 +31,7 @@ deyear  = {"his": eyear_his, "fut": eyear_fut}
 dexpr   = {"his": "historical", "fut": "rcp85"}
 #***************************************
 lera    = ["fut", "his"]
-ldirvar = ["mp", "sp_season", "cfrac.sp", "cfrac.num","mnum"]
+ldirvar = ["mpgrad", "mp", "sp_season", "cfrac.sp", "cfrac.num","mnum"]
 laccvar = ["acc.mp", "acc.sp_season", "acc.cfrac.sp", "acc.cfrac.num","acc.mnum"]
 lfracvar= ["cfrac.sp", "cfrac.num", "acc.cfrac.sp","acc.cfrac.num"]
 lprvar  = ["mp", "sp_season", "acc.mp", "acc.sp_season"]
@@ -162,11 +162,14 @@ dcm  = {}
 for var in lvar:
   if var in lprvar:
     dcm[var] = "RdBu"
+  elif var in ["mpgrad"]:
+    dcm[var] = "RdBu"
   else:
     dcm[var] = "RdBu_r"
      
 #-------------------
-for var in ["mp", "sp_season", "acc.mp", "acc.sp_season","cfrac.sp","acc.cfrac.sp", "cfrac.num", "acc.cfrac.num","mnum","acc.mnum"]:
+#for var in ["mp", "sp_season", "acc.mp", "acc.sp_season","cfrac.sp","acc.cfrac.sp", "cfrac.num", "acc.cfrac.num","mnum","acc.mnum"]:
+for var in ldirvar + laccvar:
   for era in lera:
     for iclass in lclass + [-1]:
       if ( var in laccvar) &(iclass in [0,1,-1, lclass[-1]]):
@@ -180,7 +183,7 @@ for var in ["mp", "sp_season", "acc.mp", "acc.sp_season","cfrac.sp","acc.cfrac.s
         figname = doname[vartype, var, iclass][:-3] + ".png"
         adat    = fromfile(doname[vartype, var, iclass], float32).reshape(nwbin, ny, nx)[0]
         #--------
-        if ( (var not in lfracvar) & (var not in ["mnum","acc.mnum"])):
+        if ( (var not in lfracvar) & (var not in ["mnum","acc.mnum","mpgrad"])):
           if vartype in ["dif"]:
             adat    = adat*60*60*24.0
         #--------
@@ -210,7 +213,12 @@ for var in ["mp", "sp_season", "acc.mp", "acc.sp_season","cfrac.sp","acc.cfrac.s
           im      = M.imshow(adat, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
           bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
           plt.colorbar(boundaries = bnd_cbar, extend="both")
-          
+        elif var in ["mpgrad"]:
+          bnd       = range(-200, 200+1, 20)
+          bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
+          im      = M.imshow(adat, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
+          bnd_cbar  = bnd
+          plt.colorbar(im, boundaries = bnd_cbar, extend="both")
         else:
           im      = M.imshow(adat, origin="lower")
           plt.colorbar()

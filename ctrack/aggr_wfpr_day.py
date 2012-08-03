@@ -143,11 +143,13 @@ dspname = {}
 dsp2name = {}
 dswname = {}
 dsw2name = {}
+dmpgradname = {}
  
 #----------------------
 [iy, ey]    = ctrack_para.ret_iy_ey(expr)
 [im, em]    = ctrack_para.ret_im_em(season)
 dpgradrange = ctrack_para.ret_dpgradrange()
+cmin        = dpgradrange[0][0]
 #**********************
 # omega bin
 #----------------------
@@ -165,7 +167,7 @@ endh  = dendh[tstp]
 #***************************************
 #  names for OUTPUT
 #---------------------------------------
-outdir     = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, expr, ens, thdura)
+outdir     = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, expr, ens, thdura, im, em, nclass, cmin)
 #
 mk_dir(outdir)
 #-----------
@@ -176,7 +178,7 @@ mk_dir(outdir_num)
 if (dnumname =={}):
   dnumname  = {}
   for iclass in [-1] +lclass:
-    dnumname[iclass ] = outdir_num + "/num.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dnumname[iclass ] = outdir_num + "/num.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 # number of events , annual data
 #-----------
@@ -184,7 +186,7 @@ for year in range(iy, ey+1):
   outdir_num_ann = outdir + "/num/%04d"%(year)
   mk_dir(outdir_num_ann)
   for iclass in [-1] +lclass:
-    dnumname[year, iclass ] = outdir_num_ann + "/num.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dnumname[year, iclass ] = outdir_num_ann + "/num.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 # sum of precip
 #-----------
@@ -193,7 +195,7 @@ mk_dir(outdir_sp)
 if (dspname =={}):
   dspname  = {}
   for iclass in [-1] +lclass:
-    dspname[iclass ] = outdir_sp + "/sp.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dspname[iclass ] = outdir_sp + "/sp.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 # sum of precip, annual data
 #-----------
@@ -201,7 +203,7 @@ for year in range(iy, ey +1):
   outdir_sp_ann = outdir + "/sp/%04d"%(year)
   mk_dir(outdir_sp_ann)
   for iclass in [-1] +lclass:
-    dspname[year, iclass ] = outdir_sp_ann + "/sp.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dspname[year, iclass ] = outdir_sp_ann + "/sp.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 
 #-----------
 # sum of precip**2
@@ -211,7 +213,7 @@ mk_dir(outdir_sp2)
 if (dsp2name =={}):
   dsp2name  = {}
   for iclass in [-1] +lclass:
-    dsp2name[iclass ] = outdir_sp2 + "/sp2.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dsp2name[iclass ] = outdir_sp2 + "/sp2.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 # sum of w
 #-----------
@@ -220,7 +222,7 @@ mk_dir(outdir_sw)
 if (dswname =={}):
   dswname  = {}
   for iclass in [-1] +lclass:
-    dswname[iclass ] = outdir_sw + "/sw.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dswname[iclass ] = outdir_sw + "/sw.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 # sum of w2
 #-----------
@@ -229,8 +231,16 @@ mk_dir(outdir_sw2)
 if (dsw2name =={}):
   dsw2name  = {}
   for iclass in [-1] +lclass:
-    dsw2name[iclass ] = outdir_sw2 + "/sw2.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dsw2name[iclass ] = outdir_sw2 + "/sw2.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #----------------------
+# mean of pgrad
+#-----------
+outdir_mpgrad = outdir + "/mpgrad"
+mk_dir(outdir_mpgrad)
+if (dmpgradname =={}):
+  dmpgradname  = {}
+  for iclass in [-1] +lclass:
+    dmpgradname[iclass ] = outdir_mpgrad + "/mpgrad.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 
 
 #**********************
@@ -334,6 +344,14 @@ for iw in dlwbin.keys():
   #for iclass in lclass:
   for iclass in [-1]+lclass:
     da2sw2[iclass, iw] = zeros( nx*ny).reshape(ny,nx)
+#**************
+# dummy for da2mpgrad
+#--------------
+da2mpgrad = {}
+for iw in dlwbin.keys():
+  #for iclass in lclass:
+  for iclass in [-1]+lclass:
+    da2mpgrad[iclass, iw] = zeros( nx*ny).reshape(ny,nx)
 #**************
 # make a2ones 
 #--------------
@@ -525,6 +543,11 @@ for year in range(iyear, eyear+1):
           #-----
           a2sw2_tmp    = ma.masked_where( a2mask.mask, a2wap).filled(0.0)
           da2sw2[iclass, iw]  = da2sw2[iclass, iw] + a2sw2_tmp * a2sw2_tmp
+          #-----
+          # mpgrad
+          #-----
+          a2mpgrad_tmp = ma.masked_where( a2mask.mask, a2territory_day).filled(0.0)
+          da2mpgrad[iclass, iw]  = da2mpgrad[iclass, iw] + a2mpgrad_tmp
 
 
       #***************************************
@@ -579,6 +602,11 @@ for year in range(iyear, eyear+1):
         #-----
         a2sw2_tmp    = ma.masked_where( a2mask.mask, a2wap).filled(0.0)
         da2sw2[iclass, iw]  = da2sw2[iclass, iw] + a2sw2_tmp * a2sw2_tmp
+        #-----
+        # mpgrad
+        #-----
+        a2mpgrad_tmp    = ma.masked_where( a2mask.mask, a2territory_day).filled(0.0)
+        da2mpgrad[iclass, iw]  = da2mpgrad[iclass, iw] + a2mpgrad_tmp
 
   #****************************
   # combine all wbins to one array, annual data
@@ -670,10 +698,19 @@ for iclass in [-1] + lclass:
   #-
   da2sw2_comb[iclass] = array(da2sw2_comb[iclass], float32).reshape(nwbin, ny, nx)
 #---------
-
-
-
-
+# mpgrad
+#---------
+da2mpgrad_comb ={}
+#for iclass in lclass:
+for iclass in [-1] + lclass:
+  da2mpgrad_comb[iclass] = []
+  for iw in dlwbin.keys():
+    da2mpgrad_comb[iclass] = da2mpgrad_comb[iclass] + da2mpgrad[iclass, iw].flatten().tolist()
+  #-
+  da2mpgrad_comb[iclass] = array(da2mpgrad_comb[iclass], float32).reshape(nwbin, ny, nx)
+  da2mpgrad_comb[iclass] = ma.masked_where( da2num_comb[iclass]==0.0, da2mpgrad_comb[iclass]) / da2num_comb[iclass]
+  da2mpgrad_comb[iclass] = da2mpgrad_comb[iclass].filled(0.0)
+#
 ##****************************
 ## write map to files
 ##----------------------------
@@ -685,6 +722,7 @@ for iclass in [-1]+lclass:
   da2sp2_comb[iclass].tofile(dsp2name[iclass])
   da2sw_comb[iclass].tofile(dswname[iclass])
   da2sw2_comb[iclass].tofile(dsw2name[iclass])
+  da2mpgrad_comb[iclass].tofile(dmpgradname[iclass])
  
   print dnumname[iclass]
 

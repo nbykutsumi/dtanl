@@ -4,6 +4,7 @@ import sys
 from numpy import *
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
+from cf.plot import *
 #**********************
 if (len(sys.argv) >1):
   model    = sys.argv[1]
@@ -52,11 +53,18 @@ dspname       = {}
 dsp2name      = {}
 dswname       = {}
 dsw2name      = {}
- 
+
+#----------------------
+lllat         = -90.0
+lllon         = 0.0
+urlat         = 90.0
+urlon         = 360.0 
 #----------------------
 [iy, ey]    = ctrack_para.ret_iy_ey(expr)
 [im, em]    = ctrack_para.ret_im_em(season)
+mons        = ctrack_para.ret_mons(season)
 dpgradrange = ctrack_para.ret_dpgradrange()
+cmin        = dpgradrange[0][0]
 #----------------------
 lclass      = dpgradrange.keys()
 nclass      = len(lclass) -1
@@ -69,7 +77,7 @@ for i in dlwbin.keys():
 #***************************************
 #  names for input
 #---------------------------------------
-datadir     = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, expr, ens, thdura)
+datadir     = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, expr, ens, thdura, im, em, nclass, cmin)
 outdir      = datadir
 #
 #ctrack_func.mk_dir(outdir)
@@ -81,7 +89,7 @@ ctrack_func.mk_dir(outdir_num)
 if (dnumname =={}):
   dnumname  = {}
   for iclass in [-1] +lclass:
-    dnumname[iclass ] = outdir_num + "/num.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dnumname[iclass ] = outdir_num + "/num.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 
 #-----------
 # number of events , annual data
@@ -90,7 +98,7 @@ for year in range(iy, ey+1):
   outdir_num_ann = outdir + "/num/%04d"%(year)
   ctrack_func.mk_dir(outdir_num_ann)
   for iclass in [-1] +lclass:
-    dnumname[year, iclass ] = outdir_num_ann + "/num.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dnumname[year, iclass ] = outdir_num_ann + "/num.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 
 #-----------
 # mean number of events (events /year)
@@ -100,7 +108,7 @@ ctrack_func.mk_dir(outdir_mnum)
 if (dmnumname =={}):
   dmnumname  = {}
   for iclass in [-1] +lclass:
-    dmnumname[iclass ] = outdir_mnum + "/mnum.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dmnumname[iclass ] = outdir_mnum + "/mnum.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 # accumulated mean number of events (events /year)
 #-----------
@@ -109,7 +117,7 @@ ctrack_func.mk_dir(outdir_accmnum)
 if (daccmnumname =={}):
   daccmnumname  = {}
   for iclass in [-1] +lclass:
-    daccmnumname[iclass ] = outdir_accmnum + "/acc.mnum.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    daccmnumname[iclass ] = outdir_accmnum + "/acc.mnum.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 
 #-----------
 # sum of precip
@@ -119,7 +127,7 @@ outdir_sp = outdir + "/sp"
 if (dspname =={}):
   dspname  = {}
   for iclass in [-1] +lclass:
-    dspname[iclass ] = outdir_sp + "/sp.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dspname[iclass ] = outdir_sp + "/sp.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 # sum of w
 #-----------
@@ -128,7 +136,7 @@ outdir_sw = outdir + "/sw"
 if (dswname =={}):
   dswname  = {}
   for iclass in [-1] +lclass:
-    dswname[iclass ] = outdir_sw + "/sw.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
+    dswname[iclass ] = outdir_sw + "/sw.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad*0.001, nwbin, season, "day", model, expr, ens)
 #-----------
 
 #**********************
@@ -146,17 +154,17 @@ a2orog         = fromfile(orogname, float32).reshape(ny,nx)
 #  a2prxth     = fromfile(prxthname, float32).reshape(ny, nx)
 
 #-----------
-# mnum:  Mean cyclone number  ( cyclones / year)
+# mnum:  Mean cyclone number  ( cyclones / mon)
 #-----------
 for iclass in lclass:
   mnum       = zeros( nx*ny*nwbin, float32).reshape(nwbin,ny,nx)
   for year in range(iy, ey+1):
     mnum     = mnum + fromfile(dnumname[year, iclass], float32).reshape(nwbin,ny,nx)
   #--
-  mnum       = mnum / (ey - iy + 1)
+  mnum       = mnum / (ey - iy + 1) / mons
   mnum.tofile( dmnumname[iclass])
 #-----------
-# acc.mnum: Accumulated Mean cyclone number  ( cyclones / year)
+# acc.mnum: Accumulated Mean cyclone number  ( cyclones / mon)
 #-----------
 for iclass in lclass[1:]:
   accmnum      = zeros(nx*ny*nwbin, float32).reshape(nwbin,ny,nx)
@@ -179,21 +187,21 @@ lmon = dlmon[season]
 #****************************************************
 # basemap
 #-----------
-M      = Basemap(resolution = "l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0)
+M      = Basemap(resolution = "l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon)
 
-#-----------
-# mnum (cyclones /year)
-#-----------
-for iclass in lclass:
-  mnum      = fromfile(dmnumname[iclass], float32).reshape(nwbin, ny, nx)[0]
-  mnum      = ma.masked_equal(mnum, 0.0)
-  im       = M.imshow(mnum,  origin="lower", vmax=80.0)
-  M.drawcoastlines()
-  plt.colorbar()
-  figname  = dmnumname[iclass][:-3] + ".png"
-  plt.savefig(figname)
-  plt.clf()
-  print figname
+##-----------
+## mnum (cyclones /year)
+##-----------
+#for iclass in lclass:
+#  mnum      = fromfile(dmnumname[iclass], float32).reshape(nwbin, ny, nx)[0]
+#  mnum      = ma.masked_equal(mnum, 0.0)
+#  im       = M.imshow(mnum,  origin="lower", vmax=80.0)
+#  M.drawcoastlines()
+#  plt.colorbar()
+#  figname  = dmnumname[iclass][:-3] + ".png"
+#  plt.savefig(figname)
+#  plt.clf()
+#  print figname
 
 #-----------
 # accmnum (cyclones /year)
@@ -201,13 +209,29 @@ for iclass in lclass:
 for iclass in lclass[1:]:
   adat      = fromfile(daccmnumname[iclass], float32).reshape(nwbin, ny, nx)[0]
   adat      = ma.masked_equal(adat, 0.0)
-  im           = M.imshow(adat,  origin="lower",vmax=80.0)
+  #- map -----------
+  figmap    = plt.figure()
+  axmap     = figmap.add_axes([0, 0, 1.0, 1.0])
+  M         = Basemap(resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
+  bnd       = list(arange(1,23+1, 2))
+  bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
+  im        = M.imshow(adat,  origin="lower", norm=BoundaryNormSymm(bnd), cmap="gist_ncar_r")
   M.drawcoastlines()
-  plt.colorbar()
+
+  stitle    = "cyclones/100*100km2/mon,  grad > %.0fhPa/1000km"%(cmin/100.)
+  axmap.set_title(stitle)
+
   figname  = daccmnumname[iclass][:-3] + ".png"
-  plt.savefig(figname)
-  plt.clf()
+  figmap.savefig(figname)
   print figname
 
+  #- colorbar ------
+  cbarname  = figname[:-4] + "_cbar.png"
+  figcbar   = plt.figure(figsize=(1, 6))
+  axcbar    = figcbar.add_axes([0.1, 0.1, 0.4, 0.8])
+  figcbar.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar) 
+  figcbar.savefig(cbarname)
+  #-----------------
 
-
+  figmap.clf()
+  figcbar.clf()

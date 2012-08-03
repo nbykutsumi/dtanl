@@ -1,8 +1,23 @@
 module ctrack
 
+!- external subroutine file --------
+USE metfunc_fort
+
+!-----------------------------------
+
 CONTAINS
 !*****************************************************************
 !* SUBROUTINE & FUNCTION
+!*****************************************************************
+SUBROUTINE showal_map()
+  
+  implicit none
+  !-- input -------------------------------------
+  double precision,dimension(nz,ny,nx)         :: a2Ta, a2
+
+
+
+  CALL DSHOWALSKEWT(a1Plev, a1Ta, a1Td, nlev)
 !*****************************************************************
 SUBROUTINE aggr_pr(a2life, a2pgrad, thdist, thdura&
                 , miss_int,miss_dbl, lat_first, dlat&
@@ -99,7 +114,7 @@ do iy = 1, ny
   end do
 end do
 RETURN
-END SUBROUTINE 
+END SUBROUTINE aggr_pr
 !*****************************************************************
 SUBROUTINE solvelife_point(life, miss_int, dura, pgmax)
   implicit none

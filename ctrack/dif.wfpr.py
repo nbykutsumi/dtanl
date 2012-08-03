@@ -5,6 +5,8 @@ from numpy import *
 import os, sys
 from cf.plot import *
 import matplotlib.pyplot as plt
+import matplotlib
+import pylab
 #***************************************
 iyear_his   = 1990
 eyear_his   = 1999
@@ -24,21 +26,45 @@ dlat        = 1.8947368
 xth         = 0.0
 crad        = 1000.0
 #***************************************
+# for mapping
+lats        = linspace(-90.0, 90.0, ny)
+lons        = linspace(0.0, 360.0 -  360.0/nx, nx)
+#lllat       = 15.0
+#lllon       = 120.0
+#urlat       = 50.0
+#urlon       = 140.0
+
+lllat       = -90.0
+lllon       = 0.0
+urlat       = 90.0
+urlon       = 360.0
+
+meridians   = 30.0
+parallels   = 30.0
+
+#
+nnx         = int( (urlon - lllon)/ dlon)
+nny         = int( (urlat - lllat)/ dlat)
+
+#***************************************
 mnum_min    = 1.0
 #***************************************
 diyear  = {"his": iyear_his, "fut": iyear_fut}
 deyear  = {"his": eyear_his, "fut": eyear_fut}
+#***************************************
+(imon, emon) = ctrack_para.ret_im_em(season)
 #***************************************
 dexpr   = {"his": "historical", "fut": "rcp85", "dif": "dif"}
 #***************************************
 lera    = ["fut", "his"]
 lvar    = ["num", "sp", "mnum"]
 ldifvar = ["drnum", "drtotnum", "dmp"]
-
 #***************************************
 # class
 #-----------------------------
 dpgradrange   = ctrack_para.ret_dpgradrange()
+cmin          = dpgradrange[0][0]
+
 lclass        = dpgradrange.keys()
 nclass        = len(lclass) -1
 #***************************************
@@ -50,7 +76,20 @@ nwbin         = len(liw)
 #***************************************
 oekakidir     = "/home/utsumi/bin/dtanl/ctrack/oekaki"
 
-
+#----------------------
+# colormap
+#----------------------
+def ret_colormap(scale):
+  dcm  = {}
+  if scale in  ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"]:
+    #--------
+    dcm[scale] = pylab.cm.get_cmap("RdBu")
+  elif scale in lscale2:
+    dcm[scale] = pylab.cm.get_cmap("RdBu")
+  else:
+    dcm[scale] = pylab.cm.get_cmap("RdBu")
+  return dcm[scale]
+#
 #***************************************
 #  read orography
 #----------------------
@@ -62,13 +101,11 @@ a2orog         = fromfile(orogname, float32).reshape(ny,nx)
 # dirs
 #-------------------------
 ddir_root        = {}
-ddir_root["his"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, dexpr["his"], ens, thdura)
+ddir_root["his"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, dexpr["his"], ens, thdura, imon, emon, nclass, cmin )
 
-ddir_root["fut"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, dexpr["fut"], ens, thdura)
+ddir_root["fut"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, dexpr["fut"], ens, thdura, imon, emon, nclass, cmin)
 
-ddir_root["dif"] = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/wfpr"%(model, dexpr["fut"], diyear["his"], deyear["his"], diyear["fut"], deyear["fut"], thdura)
-
-csvdir_root      = "/media/disk2/out/CMIP5/day/%s/dif/%s/tracks/csv"%(model, ens)
+ddir_root["dif"] = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, dexpr["fut"], diyear["his"], deyear["his"], diyear["fut"], deyear["fut"], thdura, imon, emon, nclass, cmin)
 #-----
 ddir  = {}
 dname = {}
@@ -78,7 +115,8 @@ for era in lera:
 #--------------------------
 # dif dirs
 #--------------------------
-difdir_root = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/wfpr"%(model, dexpr["fut"], diyear["his"], deyear["his"], diyear["fut"], deyear["fut"], thdura)
+#difdir_root = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/wfpr"%(model, dexpr["fut"], diyear["his"], deyear["his"], diyear["fut"], deyear["fut"], thdura)
+difdir_root  = ddir_root["dif"]
 
 ddifdir = {}
 for difvar in ldifvar:
@@ -95,9 +133,9 @@ for class_lb in lclass[1:]:
     for var in lvar:
       for iclass in lclass:
         if iclass == 0:
-          dname[class_lb, era, var, iclass] =  ddir[era, var] + "/acc.%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, class_lb, nclass, crad, nwbin, season, model, expr, ens )
+          dname[class_lb, era, var, iclass] =  ddir[era, var] + "/acc.%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, cmin, class_lb, nclass, crad, nwbin, season, model, expr, ens )
         else:
-          dname[class_lb, era, var, iclass] =  ddir[era, var] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
+          dname[class_lb, era, var, iclass] =  ddir[era, var] + "/%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, cmin, iclass, nclass, crad, nwbin, season, model, expr, ens )
             
 #**********************
 # dif names for each class
@@ -106,7 +144,7 @@ ddifname = {}
 for class_lb in lclass[1:]:
   for difvar in ldifvar:
     for iclass in lclass:
-      ddifname[class_lb, difvar, iclass] = ddifdir[difvar] + "/up.%s.p%05.2f.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(difvar, xth, class_lb, iclass, nclass, crad, nwbin, season, model, expr, ens )
+      ddifname[class_lb, difvar, iclass] = ddifdir[difvar] + "/up.%s.p%05.2f.cmin%04d.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(difvar, xth, cmin, class_lb, iclass, nclass, crad, nwbin, season, model, expr, ens )
 
 #**********************
 dscalename = {}
@@ -118,7 +156,7 @@ func.mk_dir(xyzdir)
 lscale1     = ["sxyz", "dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"]
 for class_lb in lclass[1:]:
   for scale1 in lscale1:
-    dscalename[class_lb, scale1] = xyzdir + "/up.%s.p%05.2f.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale1, xth,class_lb, 0, nclass, crad, nwbin, season, model, expr, ens )
+    dscalename[class_lb, scale1] = xyzdir + "/up.%s.p%05.2f.cmin%04d.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale1, xth, cmin, class_lb, 0, nclass, crad, nwbin, season, model, expr, ens )
 #----------------------
 # nsxyz names for each class
 #----------------------
@@ -127,7 +165,7 @@ func.mk_dir(nxyzdir)
 lscale2     = ["nsxyz", "dnxyz", "ndpdf_c", "ndpdf_w", "ndp_w", "frac.dnxyz", "frac.ndpdf_c", "frac.ndpdf_w", "frac.ndp_w"]
 for class_lb in lclass[1:]:
   for scale2 in lscale2:
-    dscalename[class_lb, scale2] = nxyzdir + "/up.%s.p%05.2f.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale2, xth, class_lb, 0, nclass, crad, nwbin, season, model, expr, ens )
+    dscalename[class_lb, scale2] = nxyzdir + "/up.%s.p%05.2f.cmin%04d.up%02d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(scale2, xth, cmin, class_lb, 0, nclass, crad, nwbin, season, model, expr, ens )
 #----------------------
 #*******************************************************
 # make num, sp, mnum for vtype=="up"
@@ -325,7 +363,7 @@ for class_lb in lclass[1:]:
   #--------------------------------------
   a2dnXYZ   = a2dn * a2SXYZ
   #
-  frac_a2dnXYZ   = a2dnXYZ / a2nXYZ   # zero -> NaN
+  frac_a2dnXYZ   = ma.masked_where(a2nXYZ==0.0, a2dnXYZ) / a2nXYZ   # zero -> NaN
   
   #***************************************************************
   # a2ndXYZ
@@ -337,8 +375,8 @@ for class_lb in lclass[1:]:
   #
   a2ndXYZ   = a2n * a2SdXYZ
   #
-  frac_a2SdXYZ   = a2SdXYZ / a2SXYZ   # zero -> NaN
-  frac_a2ndXYZ   = a2ndXYZ / a2nXYZ   # zero -> NaN
+  frac_a2SdXYZ   = ma.masked_where(a2SXYZ==0.0, a2SdXYZ) / a2SXYZ   # zero -> NaN
+  frac_a2ndXYZ   = ma.masked_where(a2nXYZ==0.0, a2ndXYZ) / a2nXYZ   # zero -> NaN
   #
   #***************************************************************
   # a2nXdYZ
@@ -350,8 +388,8 @@ for class_lb in lclass[1:]:
   #
   a2nXdYZ   = a2n * a2SXdYZ
   #
-  frac_a2SXdYZ   = a2SXdYZ / a2SXYZ
-  frac_a2nXdYZ   = a2nXdYZ / a2nXYZ
+  frac_a2SXdYZ   = ma.masked_where(a2SXYZ==0.0, a2SXdYZ) / a2SXYZ
+  frac_a2nXdYZ   = ma.masked_where(a2nXYZ==0.0, a2nXdYZ) / a2nXYZ
   
   #***************************************************************
   # a2nXYdZ
@@ -363,8 +401,8 @@ for class_lb in lclass[1:]:
   #
   a2nXYdZ   = a2n * a2SXYdZ
   #
-  frac_a2SXYdZ   = a2SXYdZ / a2SXYZ
-  frac_a2nXYdZ   = a2nXYdZ / a2nXYZ
+  frac_a2SXYdZ   = ma.masked_where(a2SXYZ==0.0, a2SXYdZ) / a2SXYZ
+  frac_a2nXYdZ   = ma.masked_where(a2nXYZ==0.0, a2nXYdZ) / a2nXYZ
   
   #***************************************************************
   # write to file
@@ -415,20 +453,26 @@ for class_lb in lclass[1:]:
   #*************************************
   # make pict
   #*************************************
-  cmd       = oekakidir + "/track.gmt.py"
+  dcm = {}
   #----------------------
   # basemap
   #----------------------
-  M         = Basemap(resolution = "l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0)
-  #----------------------
-  # colormap
-  #----------------------
-  dcm  = {}
-  for scale in  ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"]:
-    #--------
-    dcm[scale] = "RdBu"
-  for scale in lscale2:
-    dcm[scale] = "RdBu"
+  #M         = Basemap(resolution = "l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0)
+  M         = Basemap(resolution = "l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon)
+  ##----------------------
+  ## colormap
+  ##----------------------
+  #dcm  = {}
+  #for scale in  ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"]:
+  #  #--------
+  #  dcm[scale] = pylab.cm.get_cmap("RdBu")
+  #  #dcm[scale].set_bad(color="gray")
+
+  #for scale in lscale2:
+  #  dcm[scale] = pylab.cm.get_cmap("RdBu")
+  #  dcm[scale] = dcm[scale].set_bad( (0.8, 0.8, 0.8))
+  ##
+  
   
   #----------------------
   # dmp
@@ -439,12 +483,15 @@ for class_lb in lclass[1:]:
   a         = fromfile(iname, float32) * 60.0 * 60.0 * 24.0
   a         = a.reshape(nwbin, ny, nx)
   a         = a[0]
-  a         = ma.masked_where( a2mask < mnum_min, a)
   pngname   = iname[:-3] + ".png"
   
-  
+  # transform the data  ---
+  a_trans   = M.transform_scalar( a, lons, lats, nnx, nny)
+  #------------------------
+  scale     = "dmp"
+  dcm[scale] = ret_colormap(scale) 
   bnd       = [-3.0, -2.0, -1.0, -0.5,  0.5 , 1.0, 2.0 , 3.0]
-  im        = M.imshow(a, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+  im        = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
   M.drawcoastlines()
   plt.title(stitle)
   savefig(pngname)
@@ -465,6 +512,8 @@ for class_lb in lclass[1:]:
   a2mask    = da3mnum_his[0][0]
   for scale in ["dpdf_c", "dpdf_w", "dp_w", "frac.dpdf_c", "frac.dpdf_w", "frac.dp_w"] + lscale2:
     #--------------
+    dcm[scale]   = ret_colormap(scale)
+    #--------------
     if scale[:4] == "frac":
       coef  = 1.0
     else:
@@ -474,24 +523,31 @@ for class_lb in lclass[1:]:
     pngname = iname[:-3] + ".png"
     a       = fromfile(iname, float32).reshape(ny, nx)
     a       = a * coef
-    a       = ma.masked_where( a2mask < mnum_min, a)
-    a       = ma.masked_invalid(a)
-    figmap  = plt.figure()
-    axmap   = figmap.add_axes([0, 0, 1.0, 1.0])
-    M       = Basemap(resolution = "l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0, ax=axmap)
+    ##------------------------
 
+    figmap  = plt.figure()
+    axmap   = figmap.add_axes([0, 0.1, 1.0, 0.8])
+    M       = Basemap(resolution = "l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
+
+    # transform ---
+    a_trans = M.transform_scalar(a, lons, lats, nnx, nny)
+    a2mask_trans = M.transform_scalar(a2mask, lons, lats, nnx, nny)
+    #-- mask mnum_his < xxxx-----
+    #a_trans = ma.masked_where(a2mask_trans < mnum_min, a_trans)
+    a_trans = ma.masked_invalid(a_trans) 
     #--- prep for colorbar --
     cbarname  = iname[:-3] + ".cbar.png"
-    bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
     figcbar   = plt.figure(figsize=(1,5))
     #axcbar    = figcbar.add_axes([0,0,0.9,1])
     axcbar    = figcbar.add_axes([0,0,0.4,1.0])
     #------------------------
 
     if scale[:4] == "frac":
+      #----
+      continue
+      #----
       bnd     = [-0.6, -0.4, -0.2, -0.05, 0.05, 0.2 , 0.4 , 0.6]
-      
-      im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+      im      = M.imshow(a_trans, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
       plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
     elif (scale in lscale2) & (scale not in ["nsxyz"]):
@@ -501,174 +557,38 @@ for class_lb in lclass[1:]:
       bnd     = [-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 90.0]
       #-----
       
-      im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+      im      = M.imshow(a_trans, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
       plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
       
     elif scale in ["dpdf_c", "dpdf_w", "dp_w"]:
       bnd     = [-3.0, -2.0, -1.0, -0.5, 0.5, 1.0, 2.0, 3.0]
-      im      = M.imshow(a, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+      im      = M.imshow(a_trans, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale], interpolation="nearest")
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
       plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
 
     else:
-      im      = M.imshow(a, origin ="lower",vmax=800.)
+      im      = M.imshow(a_trans, origin ="lower",vmax=800.)
       plt.colorbar(im, cax=axcbar)
-      
+    #-- superimpose shade(mask) -----
+    cmshade = matplotlib.colors.ListedColormap([(0.8, 0.8, 0.8), (0.8, 0.8, 0.8)])
+    ashade  = ma.masked_where(a2mask_trans > mnum_min, a2mask_trans)
+    im      = M.imshow(ashade, origin="lower", cmap=cmshade, interpolation="nearest")
     #-----
-    stitle = "%s up%02d"%(scale, class_lb)
+    stitle = "%s up%02d nc%02d, P%s"%(scale, class_lb, nclass,xth)
     axmap.set_title(stitle)
     M.drawcoastlines()
+
+    # draw lat/lon grid lines
+    M.drawmeridians(arange(0,360,meridians),  labels=[0, 0, 0, 1])
+    M.drawparallels(arange(-90,90,parallels), labels=[1, 0, 0, 0])
+
     figmap.savefig(pngname)
     print pngname
 
-
     figcbar.savefig(cbarname)
     plt.clf()
- 
   #----------------------
 
 
-##*************************************
-## make pict
-##*************************************
-#cmd       = oekakidir + "/track.gmt.py"
-#cptfile   = oekakidir + "cpt/polar.inv.-1.1.cpt"
-##---------------------
-#for var in lvar:
-#  for iclass in lclass:
-#    print "------------------------"
-#    print "make pict", var, "class=", iclass
-#    #----------------------
-#    iname     = dname["dif", var, iclass]
-#    pngname   = iname[:-3] + ".png"
-#    psname    = iname[:-3] + ".ps"
-#    title    = "dif"
-#    scalestep = 0.2
-#    overscale = 0
-#    os.system("python %s %s %s %s %s %s %s"%(\
-#             cmd                  \
-#            ,iname                \
-#            ,cptfile              \
-#            ,pngname              \
-#            ,title                \
-#            ,scalestep            \
-#            ,overscale            \
-#            ))       
-#    print pngname 
-#  #****************************************
-#
-#
-   
-##****************************************
-## make pict
-##----------------------------------------
-#cmd          = oekakidir + "/track.gmt.py"
-#cptfile      = oekakidir + "/cpt/polar.inv.-1.1.cpt"
-##-----------------
-#print "-----------------------------------"
-#print "make pict"
-#for iclass in lclass:
-#  #---------------
-#  iname       = ddifname[iclass]
-#  pngname     = ddifname[iclass][:-3] + ".png"
-#  psfile      = ddifname[iclass][:-3] + ".ps"
-#  title       = "dif"
-#  scalestep   = 0.2
-#  overscale   = 1 
-#  #---------------
-#  os.system("python %s %s %s %s %s %s %s"%(\
-#           cmd                  \
-#          ,iname                \
-#          ,cptfile              \
-#          ,pngname              \
-#          ,title                \
-#          ,scalestep            \
-#          ,overscale            \
-#          ))       
-#  print pngname 
-##****************************************
-## regional dif
-##----------------------------------------
-#dbound   = ctrack_para.ret_dbound()
-#lreg     = dbound.keys()
-##******************
-##
-##------------------
-#dfcm    = {}
-#dmv     = {}
-#dtv     = {}
-#dlv     = {}
-#for reg in lreg:
-#  print reg
-#  #******************
-#  # regionmask
-#  #------------------
-#  [lat_min, lat_max, lon_min, lon_max] = dbound[reg]
-#
-#  a2regionmask  = func.mk_region_mask(lat_min, lat_max, lon_min, lon_max, nx, ny, lat_first, lon_first, dlat, dlon)
-#  #--------------------
-#  for iclass in lclass:
-#    for era in ["his", "fut"]:
-#      #--------------------------
-#      dlv[reg, era, iclass] = []
-#      iyear  = diyear[era]
-#      eyear  = deyear[era]
-#      #--------------------------
-#      for year in range(iyear, eyear + 1):
-#        #***************
-#        # read
-#        #---------------
-#        a2dens  =  fromfile(ddensname[era, year, iclass], float32).reshape(96,144)
-#        #---------------
-#        # mask
-#        #---------------
-#        a2dens_tmp = ma.masked_where( a2regionmask ==0.0, a2dens)
-#        a2dens_tmp = ma.masked_invalid(a2dens_tmp)
-#        #---------------
-#        # mean dens
-#        #---------------
-#        dlv[reg, era, iclass].append( a2dens_tmp.mean() )
-#      #-----------------
-#      # calc regional mean
-#      #-----------------
-#      dmv[reg, era, iclass]       = mean(dlv[reg, era, iclass])
-#      #-----------------
-#    #-----------------
-#    # calc t-value
-#    #-----------------
-#    dtv[reg, iclass] = func.ret_tv_difmean(dlv[reg, "his",iclass], dlv[reg, "fut",iclass])
-#    print iclass, dtv[reg, iclass]
-#    #-----------------
-#    # calc difference of regional mean
-#    #-----------------
-#    dfcm[reg, iclass] = (mean(dlv[reg, "fut", iclass]) - mean(dlv[reg, "his", iclass]))/mean(dlv[reg,"his",iclass]) * 100.0
-#
-##****************************************
-## write csv
-##----------------------------------------
-#csvdir = csvdir_root + "/%04d.%04d-%04d.%04d"%(diyear["his"], deyear["his"], diyear["fut"], deyear["fut"])
-#
-#func.mk_dir(csvdir)
-#
-##------------
-#for reg in lreg:
-#  #--------
-#  # name
-#  #--------
-#  statname = csvdir + "/stat.%s.csv"%(reg)
-#  #--------
-#  sstat = "class,his,fut,frac.chng,t\n"
-#  for iclass in lclass:
-#    sstat = sstat + "%s,%s,%s,%s,%s"%( iclass, dmv[reg, "his", iclass], dmv[reg, "fut", iclass], dfcm[reg, iclass], dtv[reg, iclass]) + "\n"
-#  #--------
-#  # write
-#  #--------
-#  f = open(statname, "w")
-#  f.write(sstat)
-#  f.close()
-#  print statname 
-#
-#
-#
-#
+

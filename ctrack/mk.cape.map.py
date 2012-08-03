@@ -23,7 +23,6 @@ def cut_underground(orog, a1zg, a1):
   aout = aout.compressed()
   return aout
 #--------------------
-Nparcels = 3
 nresol = 10
 ddir   = {}
 dname  = {}
@@ -58,11 +57,11 @@ apap  = zeros([ny,nx], float32)
 apr   = zeros([ny,nx], float32)
 awap  = zeros([ny,nx], float32)
 iy0 = 40
-for iy in range(0,96):
+#for iy in range(0,96):
 #for iy in [50]:
-#for iy in range(iy0,iy0+4):
+for iy in range(iy0,iy0+4):
   for ix in range(0, 144):
-  #for ix in [20]:
+  #for ix in [10]:
     #--------------------------------
     for var in ["ta", "hus", "zg"]:
       da1[var]  = da3[var][:,iy,ix]
@@ -70,25 +69,20 @@ for iy in range(0,96):
     #----
     orog       = da2["orog"][iy,ix]
     #----
-    #a1plev     = da1["plev"]
-    #a1ta       = da1["ta"]
-    #a1hus      = da1["hus"]
-
     a1plev     = cut_underground(orog, da1["zg"], da1["plev"])
     a1ta       = cut_underground(orog, da1["zg"], da1["ta"])
     a1hus      = cut_underground(orog, da1["zg"], da1["hus"])
-
 
     #----
     a1plev     = interp_fill(a1plev, nresol)
     a1ta       = interp_fill(a1ta,   nresol)
     a1hus      = interp_fill(a1hus,   nresol)
     #----
-    lout = calcsound_fort.cape_1d(a1ta, a1plev, a1hus, Nparcels)
+    lout = calcsound_fort.cape_1d(a1ta, a1plev, a1hus)
     #if orog > da3["zg"][0,iy,ix]:
     #  print "AAAAAAAAAAAAAAAAAAAAA" 
     print iy, ix, lout[1][0], lout[3][0]
-    aoutp[iy,ix] = mean(lout[1])
-    apap[iy,ix]  = mean(lout[3])
+    aoutp[iy,ix] = mean(lout[1][0:3])
+    apap[iy,ix]  = mean(lout[3][0:3])
     apr[iy,ix]   = da2["pr"][iy,ix]
     awap[iy,ix]  = da3["wap"][3,iy,ix]
