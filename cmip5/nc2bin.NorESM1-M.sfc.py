@@ -6,12 +6,13 @@ import calendar
 odir_root ="/media/disk2/data/CMIP5/bn"
 #####################################################
 #lvar = ["pr","psl","tas","rhs","huss"] #pr, psl, tas, rhs, huss
-lvar = ["pr"]
+lvar = ["ps"]
 #tstp = "day"
+tstp  = "6hrLev"
 #tstp  = "6hr"
-tstp  = "3hr"
-tinc  = {"6hr":6, "3hr":3}
-hlast = {"6hr":18,"3hr":21}
+#tstp  = "3hr"
+tinc  = {"6hrLev":6,  "6hr":6,  "3hr":3}
+hlast = {"6hrLev":18, "6hr":18, "3hr":21}
 hdattype = "Plev"
 #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
 lmodel = ["NorESM1-M"]
@@ -26,7 +27,10 @@ ens  = "r1i1p1"
 #####################################################
 dlyrange     = {}
 #
-dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
+if tstp in ["6hrLev"]:
+  dlyrange["NorESM1-M", "historical"]  = [[1990,1999]]
+else:
+  dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
 dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
 #
 dlyrange["MIROC5", "historical"]  = [[1990,1999]]
@@ -38,15 +42,15 @@ dlyrange["CanESM2", "rcp85"]       = [[2006,2100]]
 #####################################################
 for model in lmodel:
   for expr in lexpr:
-    print expr, lyrange
     for var in lvar:
       lyrange = dlyrange[model, expr]
+      print expr, var, lyrange
       #####################################################
       # set ncdir
       #####################################################
       incdir = "/media/disk2/data/CMIP5/nc/%s/%s"%(tstp, model)
       #####################################################
-      if (tstp == "day"):        
+      if (tstp in ["day", "6hrLev"]):        
         ihead = var + "_" + tstp + "_" +model + "_" + expr +"_" +ens
         ohead = ihead
       elif ( (tstp == "3hr") and (var in ["pr"]) ):

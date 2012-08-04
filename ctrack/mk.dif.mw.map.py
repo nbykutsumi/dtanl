@@ -28,6 +28,8 @@ thorog      = 1500.0
 diyear  = {"his": iyear_his, "fut": iyear_fut}
 deyear  = {"his": eyear_his, "fut": eyear_fut}
 #***************************************
+(imon, emon)  = ctrack_para.ret_im_em(season)
+#***************************************
 dexpr   = {"his": "historical", "fut": "rcp85"}
 #***************************************
 lera    = ["fut", "his"]
@@ -37,6 +39,8 @@ laccvar = ["acc.mw"]
 # class
 #-----------------------------
 dpgradrange   = ctrack_para.ret_dpgradrange()
+cmin          = dpgradrange[0][0]
+
 lclass        = dpgradrange.keys()
 nclass        = len(lclass) -1
 #***************************************
@@ -60,11 +64,17 @@ a2orog         = fromfile(orogname, float32).reshape(ny,nx)
 # dirs
 #-------------------------
 ddir_root        = {}
-ddir_root["his"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, dexpr["his"], ens, thdura)
+ddir_root["his"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, dexpr["his"], ens, thdura, imon, emon, nclass, cmin )
 
-ddir_root["fut"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, dexpr["fut"], ens, thdura)
+ddir_root["fut"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, dexpr["fut"], ens, thdura, imon, emon, nclass, cmin)
 
-ddir_root["dif"] = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/wfpr"%(model, dexpr["fut"], iyear_his, eyear_his, iyear_fut, eyear_fut, thdura)
+ddir_root["dif"] = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, dexpr["fut"], diyear["his"], deyear["his"], diyear["fut"], deyear["fut"], thdura, imon, emon, nclass, cmin)
+
+#ddir_root["his"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, dexpr["his"], ens, thdura)
+#
+#ddir_root["fut"] = "/media/disk2/out/CMIP5/day/%s/%s/%s/tracks/dura%02d/wfpr"%(model, dexpr["fut"], ens, thdura)
+
+#ddir_root["dif"] = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/wfpr"%(model, dexpr["fut"], iyear_his, eyear_his, iyear_fut, eyear_fut, thdura)
 #-----
 ddir  = {}
 dname = {}
@@ -83,7 +93,7 @@ for era in lera:
   expr = dexpr[era]
   for var in ldirvar:
     for iclass in lclass + [-1]:
-      dname[era, var, iclass] =  ddir[era, var] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
+      dname[era, var, iclass] =  ddir[era, var] + "/%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, cmin, iclass, nclass, crad, nwbin, season, model, expr, ens )
 #-----------
 # names for acc
 #-----------
@@ -92,7 +102,7 @@ for era in lera:
   for var in ldirvar:
     for iclass in lclass[1:]:
       accvar = "acc."+var
-      dname[era, accvar, iclass] = ddir[era, var] + "/%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(accvar, xth, iclass, nclass, crad, nwbin, season, model, expr, ens )
+      dname[era, accvar, iclass] = ddir[era, var] + "/%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(accvar, xth, cmin, iclass, nclass, crad, nwbin, season, model, expr, ens )
 #**********************
 # names for output
 #----------------------
@@ -107,9 +117,9 @@ for dirvar in ldirvar:
     #-----
     for var in ltempvar:
 
-      doname["dif", var, iclass] = odir +  "/dif.%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, "historical", ens)
+      doname["dif", var, iclass] = odir +  "/dif.%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, cmin, iclass, nclass, crad, nwbin, season, model, "historical", ens)
 
-      doname["frac", var, iclass] = odir + "/frac.dif.%s.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, iclass, nclass, crad, nwbin, season, model, "historical", ens)
+      doname["frac", var, iclass] = odir + "/frac.dif.%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, cmin, iclass, nclass, crad, nwbin, season, model, "historical", ens)
 #****************************************
 da3in            = {}
 #**********************
