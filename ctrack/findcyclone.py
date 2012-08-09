@@ -1,4 +1,4 @@
-from ctrack import *
+from ctrack_fsub import *
 from numpy import *
 import calendar
 import os, sys
@@ -30,6 +30,21 @@ thorog      = float(sys.argv[13])
 #ny          = 96
 #miss_dblout = -9999.0
 #thorog      = 1500.0     #[m]
+
+print  model        #= "NorESM1-M"
+print  expr         #= "historical"
+print  ens          #= "r1i1p1"
+print  tstp         #= "6hr"
+print  hinc         #= 6
+print  iyear        #= 1990
+print  eyear        #= 1995
+print  imon         #= 1
+print  emon         #= 12
+print  nx           #= 144
+print  ny           #= 96
+print  miss_dblout  #= -9999.0
+print  thorog       #= 1500.0     #[m]
+
 
 #####################################################
 # functions
@@ -119,6 +134,7 @@ for year in range(iyear, eyear+1):
         check_file(pslname)
         pmeanname = pmeandir + "/pmean_%s_%s_%s_%s_%s.bn"%(tstp, model, expr, ens, stimeh)
         pgradname = pgraddir + "/pgrad_%s_%s_%s_%s_%s.bn"%(tstp, model, expr, ens, stimeh)
+
         #***************************************
         #***************************************
         # make pmean

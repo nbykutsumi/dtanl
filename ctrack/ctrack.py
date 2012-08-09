@@ -52,8 +52,8 @@ endh  = int(dendh[tstp])
 #lmodel = ["MIROC5", "CanESM2"]
 #lmodel = ["MIROC5"]
 lmodel = ["NorESM1-M"]
-lexprtype = ["his", "fut"]
-#lexprtype = ["fut"]
+#lexprtype = ["his", "fut"]
+lexprtype = ["fut"]
 dexpr={}
 dexpr["his"] = "historical"
 dexpr["fut"] = "rcp85"
@@ -63,8 +63,6 @@ dyrange={}
 #dyrange["fut"] = [2086, 2095]
 dyrange["his"] = ctrack_para.ret_iy_ey(dexpr["his"])
 dyrange["fut"] = ctrack_para.ret_iy_ey(dexpr["fut"])
-imon = 1
-emon = 12
 #lseason = ["DJF", "JJA","ALL"]
 lseason = ["DJF"]
 #####################################################
@@ -140,6 +138,7 @@ for model in lmodel:
     lyrange = dyrange[exprtype]
     iyear   = lyrange[0]
     eyear   = lyrange[1]
+    (imon, emon) = (1,12)
     print expr, iyear, eyear
     #****************************************************
     # read lat, lon data
@@ -175,11 +174,12 @@ for model in lmodel:
     lon_first = a1lon[0]
     dlat      = a1lat[1] - a1lat[0]
     dlon      = a1lon[1] - a1lon[0]
-
+  
     ##**************************************************
     ##  call findcyclone   # pgrad is made too.
     ##------------------
     #cmd = bindir + "/findcyclone.py"
+    #print "cmd=",cmd
     #os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
     #  %(cmd           \
     #  ,model          \
@@ -200,6 +200,7 @@ for model in lmodel:
     ##  call connectc.py
     ##------------------
     #cmd = bindir + "/connectc.py"
+    #print "cmd=",cmd
     #os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
     #  %(cmd           \
     #  ,model          \
@@ -219,7 +220,7 @@ for model in lmodel:
     #  ,thdp           \
     #  ,thdist         \
     #  ))
-    #
+    
     ##**************************************************
     #  call cdens.py
     #------------------

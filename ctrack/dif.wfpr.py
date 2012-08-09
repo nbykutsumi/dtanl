@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 import pylab
 #***************************************
-iyear_his   = 1990
+iyear_his   = 1980
 eyear_his   = 1999
-iyear_fut   = 2086
+iyear_fut   = 2076
 eyear_fut   = 2095 
 nx          = 144
 ny          = 96

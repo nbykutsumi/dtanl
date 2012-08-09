@@ -1,3 +1,4 @@
+import ctrack_para
 import os, sys
 ######################################
 #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
@@ -7,10 +8,13 @@ lrun   = ["historical","rcp85"]
 ###################
 # set dlyrange
 #-----------------
-dlyrange     = {"historical":[1990,1999], "rcp85":[2086,2095]}
+#dlyrange     = {"historical":[1990,1999], "rcp85":[2086,2095]}
+dlyrange     = {"historical":[1980,1999], "rcp85":[2076,2095]}
 ###################
-imon  = 12
-emon  = 2
+season = "DJF"
+(imon, emon)  = ctrack_para.ret_im_em(season)
+#imon  = 12
+#emon  = 2
 ###################
 # set dnz, dny, dnx
 ###################
@@ -33,7 +37,8 @@ dnx["CanESM2"] = 128
 #percent = 99.0
 #percent = 90.0
 #lpercent = [50.0, 70.0, 90.0, 99.0]
-lpercent = [60.0, 80.0]
+#lpercent = [60.0, 80.0]
+lpercent = [90.0]
 ##
 freq = "day"
 ens  = "r1i1p1"
