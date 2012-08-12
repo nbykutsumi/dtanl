@@ -18,7 +18,8 @@ hdattype = "Plev"
 lmodel = ["NorESM1-M"]
 #expr = "historical" #historical, rcp85
 #expr = "rcp85" #historical, rcp85
-lexpr =["historical","rcp85"]
+#lexpr =["historical","rcp85"]
+lexpr =["rcp85"]
 ens  = "r1i1p1"
 #lyrange= [ [1950,1999] ]
 #lyrange= [ [2056,2100] ]
@@ -29,9 +30,10 @@ dlyrange     = {}
 #
 if tstp in ["6hrLev"]:
   dlyrange["NorESM1-M", "historical"]  = [[1990,1999]]
+  dlyrange["NorESM1-M", "rcp85"]       = [[2086,2095]]
 else:
   dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
-dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
+  dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
 #
 dlyrange["MIROC5", "historical"]  = [[1990,1999]]
 dlyrange["MIROC5", "rcp85"]       = [[2080,2089], [2090,2099]]

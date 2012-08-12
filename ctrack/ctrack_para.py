@@ -14,8 +14,8 @@ def ret_lcrad():
 def ret_dpgradrange():
   ##dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,250.0],2:[250.0,500.0],3:[500.0,750.0],4:[750.0, 1000.0], 5:[1000.0, 1250.0], 6:[1250.0, 1500.0], 7:[2500.0, 3000.0], 8:[3000.0, 10.0e+10]}
   #dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,250.0],2:[250.0,500.0],3:[500.0,750.0],4:[750.0, 1000.0], 5:[1000.0, 1250.0], 6:[1250.0, 1500.0], 7:[1500, 1750], 8:[1750, 10.0e+10]}
-  dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,500.0],2:[500.0, 1000.0],3:[1000.0, 1500.0],4:[1500.0, 10.0e+10]}
-  #dpgradrange = {0:[500.0, 10.0e+10], 1:[500.0, 10.0e+10]}
+  #dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,500.0],2:[500.0, 1000.0],3:[1000.0, 1500.0],4:[1500.0, 10.0e+10]}
+  dpgradrange = {0:[500.0, 10.0e+10], 1:[500.0, 10.0e+10]}
   #---------------------
   #dpgradrange  = {0:[1.0, 10.0e+10], 1:[1.0, 100.0]}
   #for i in arange(2, 15+1):
@@ -109,26 +109,12 @@ def ret_dbound():
   #lon_max  = 150.0
   #dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
 
-  #reg      = "scjapan"
-  #lat_min  = 15.0
-  #lat_max  = 32.0
-  #lon_min  = 132.0
-  #lon_max  = 136.0
-  #dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
-
   reg      = "scjapan"
-  lat_min  = 19.0
-  lat_max  = 20.0
-  lon_min  = 128.0
-  lon_max  = 130.0
+  lat_min  = 5.0
+  lat_max  = 10.0
+  lon_min  = 75.0
+  lon_max  = 88.0
   dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
-
-  #reg      = "scjapan"
-  #lat_min  = 30.0
-  #lat_max  = 35.0
-  #lon_min  = -150.0
-  #lon_max  = -140.0
-  #dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
 
   return dbound
 #-----------------------------------

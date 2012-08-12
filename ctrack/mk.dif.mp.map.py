@@ -7,9 +7,9 @@ from numpy import *
 import os, sys
 from cf.plot import *
 #***************************************
-iyear_his   = 1990
+iyear_his   = 1980
 eyear_his   = 1999
-iyear_fut   = 2086
+iyear_fut   = 2076
 eyear_fut   = 2095 
 nx          = 144
 ny          = 96
@@ -48,10 +48,9 @@ deyear  = {"his": eyear_his, "fut": eyear_fut}
 dexpr   = {"his": "historical", "fut": "rcp85"}
 #***************************************
 lera    = ["fut", "his"]
-#ldirvar = ["mpgrad", "mp", "sp_season", "cfrac.sp", "cfrac.num","mnum"]
-ldirvar = ["mnum"]
-laccvar = ["acc.mnum"]
-#laccvar = ["acc.mp", "acc.sp_season", "acc.cfrac.sp", "acc.cfrac.num","acc.mnum"]
+ldirvar = ["mpgrad", "mp", "sp_season", "cfrac.sp", "cfrac.num","mnum"]
+#laccvar = ["acc.mpgrad", "acc.mnum"]
+laccvar = ["acc.mp", "acc.sp_season", "acc.cfrac.sp", "acc.cfrac.num","acc.mnum"]
 lfracvar= ["cfrac.sp", "cfrac.num", "acc.cfrac.sp","acc.cfrac.num"]
 lprvar  = ["mp", "sp_season", "acc.mp", "acc.sp_season"]
 lvar    = list(set( ldirvar + laccvar + lfracvar))
@@ -208,7 +207,8 @@ for var in ldirvar + laccvar:
         a2mnum_his = fromfile(dname["his","acc.mnum",iclass], float32).reshape(nwbin, ny, nx)[0]
         a2mask     = a2mnum_his
       #---------
-      for vartype in ["dif", "frac"]:
+      #for vartype in ["dif", "frac"]:
+      for vartype in ["dif"]:
         figname = doname[vartype, var, iclass][:-3] + ".png"
         adat    = fromfile(doname[vartype, var, iclass], float32).reshape(nwbin, ny, nx)[0]
         #--------
@@ -245,7 +245,7 @@ for var in ldirvar + laccvar:
 
         elif var in ["mp","acc.mp"]:
           bnd     = [-3.0, -2.0, -1.0, -0.5,  0.5 , 1.0, 2.0 , 3.0]
-          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
+          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var], interpolation="nearest")
           bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
           plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
 
@@ -258,7 +258,7 @@ for var in ldirvar + laccvar:
         elif var in ["mnum", "acc.mnum"]:           
           #bnd     = [-9.0, -6.0, -3.0, -1.0, 1.0 , 3.0 , 6.0, 9.0]
           bnd     = [-5.0, -4.0, -3.0, -2.0, -1.0, -0.5, 0.5, 1.0 , 2.0, 3.0, 4.0, 5.0]
-          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
+          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var], interpolation="nearest")
           bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
           plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar, ticks = bnd)
 
@@ -277,17 +277,25 @@ for var in ldirvar + laccvar:
         elif var in ["mpgrad"]:
           bnd       = range(-200, 200+1, 20)
           bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
+          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var], interpolation="nearest")
           bnd_cbar  = bnd
           plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
+          #-- superimpose shade(mask) -----
+          if iclass not in [-1, 0]:
+            cmshade   = matplotlib.colors.ListedColormap([(0.8, 0.8, 0.8), (0.8, 0.8, 0.8)])
+            ashade    = ma.masked_where(a2mask_trans > mnum_min, a2mask_trans)
+            im        = M.imshow(ashade, origin="lower", cmap=cmshade, interpolation="nearest")
+
         else:
           bnd       = range(-200, 200+1, 20)
           bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
           im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
           bnd_cbar  = bnd
-          plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
-          
+          plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)          
         #----------------------------
+        stitle = "dif.%s up%02d nc%02d P%04.1f, %s"%(var, iclass, nclass, xth, season)
+        axmap.set_title(stitle)
+
         M.drawcoastlines()
         figmap.savefig(figname)
         print figname

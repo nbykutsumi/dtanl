@@ -7,7 +7,8 @@ odir_root ="/media/disk2/data/CMIP5/bn"
 #####################################################
 #var = "wap" #wap, zg, hur, hus
 #lvar = ["wap", "zg"]
-lvar = ["ta","hus"]
+#lvar = ["ta","hus"]
+lvar = ["ta"]
 #tstp = "day"
 #tstp  = "6hr"
 tstp  = "6hrLev"
@@ -20,10 +21,9 @@ lmodel = ["NorESM1-M"]
 #expr = "historical" #historical, rcp85
 #expr = "rcp85"
 #lexpr = ["historical", "rcp85"]
-lexpr = ["historical"]
-#lexpr = ["rcp85"]
+#lexpr = ["historical"]
+lexpr = ["rcp85"]
 ens  = "r1i1p1"
-#lyrange= [ [1990,1999] ]
 #####################################################
 #####################################################
 # Function
@@ -91,7 +91,8 @@ for model in lmodel:
 
       elif ( tstp in ["6hrLev"] ):
         #dlyrange["NorESM1-M", "historical"]  = [[1991,1991],[1992,1992], [1993,1993]]
-        dlyrange["NorESM1-M", "historical"]  = [[1993,1993]]
+        #dlyrange["NorESM1-M", "historical"]  = [[1998,1998]]
+        dlyrange["NorESM1-M", "rcp85"]  = [[2086,2086],[2087,2087],[2088,2088],[2089,2089],[2090,2090],[2091,2091],[2092,2092],[2093,2093],[2094,2094],[2095,2095]]
 
       else:
         dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
@@ -105,6 +106,7 @@ for model in lmodel:
       if tstp in ["6hrLev"]:
         lmonrange = [[1,6], [7,12]]
         #lmonrange = [[7,12]]
+        #lmonrange = [[1,6]]
       else:
         lmonrange = [[1,12]]
       #----------------------------------------------------

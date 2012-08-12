@@ -211,7 +211,7 @@ for expr in lexpr:
     M         = Basemap(resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
     bnd       = list(arange(1,23+1, 2))
     bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-    im        = M.imshow(adat,  origin="lower", norm=BoundaryNormSymm(bnd), cmap="gist_ncar_r")
+    im        = M.imshow(adat,  origin="lower", norm=BoundaryNormSymm(bnd))
     M.drawcoastlines()
   
     stitle    = "cyclones/100*100km2/mon,  grad > %.0fhPa/1000km"%(cmin/100.)

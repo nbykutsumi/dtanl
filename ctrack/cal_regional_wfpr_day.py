@@ -4,9 +4,9 @@ from numpy import *
 import matplotlib
 import matplotlib.pyplot as plt
 #**************************************
-iyear_his   = 1990
+iyear_his   = 1980
 eyear_his   = 1999
-iyear_fut   = 2086
+iyear_fut   = 2076
 eyear_fut   = 2095
 
 
@@ -33,6 +33,8 @@ lera    = ["his", "fut"]
 
 diyear  = {"his": iyear_his, "fut": iyear_fut}
 deyear  = {"his": eyear_his, "fut": eyear_fut}
+
+(imon, emon) = ctrack_para.ret_im_em(season)
 #***************************************
 dexpr   = {"his": "historical", "fut": "rcp85", "dif": "dif"}
 #**************************************
@@ -40,6 +42,8 @@ lonlatinfo = ctrack_para.ret_lonlatinfo(model)
 [lon_first, lat_first, dlon, dlat] = lonlatinfo
 #
 dpgradrange = ctrack_para.ret_dpgradrange()
+cmin        = dpgradrange[0][0]
+
 lclass      = dpgradrange.keys()
 nclass      = len(lclass) -1
 #
@@ -49,8 +53,8 @@ nwbin       = len(liw)
 #
 #lxth        = ctrack_para.ret_lxth
 #lxth        = [0.0, 50.0, 60.0,  70.0, 80.0, 90.0, 99.0]
-#lxth = [0.0, 99.0]
-lxth = [90.0, 0.0]
+lxth = [0.0]
+#lxth = [90.0, 0.0]
 #**************************************
 #--------------------
 # make lwvalue
@@ -91,8 +95,9 @@ for crad in lcrad:
     for era in lera:
       expr    = dexpr[era]
       #--------------------------
-      dir_root = "/media/disk2/out/CMIP5/%s/%s/%s/%s/tracks/dura%02d/wfpr"%(tstp, model, expr, ens, thdura)
-      pictdir = dir_root + "/pict/c%02dclasses"%(nclass)
+      #dir_root = "/media/disk2/out/CMIP5/%s/%s/%s/%s/tracks/dura%02d/wfpr"%(tstp, model, expr, ens, thdura)
+      dir_root = "/media/disk2/out/CMIP5/%s/%s/%s/%s/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(tstp, model, expr, ens, thdura, imon, emon,nclass, cmin)
+      pictdir = dir_root + "/plot"
       numdir = dir_root + "/num"
       spdir  = dir_root + "/sp"
       sp2dir = dir_root + "/sp2"
@@ -116,35 +121,35 @@ for crad in lcrad:
       dnumname = {}
       #for iclass in lclass:
       for iclass in [-1] + lclass:
-        dnumname[iclass] = numdir + "/num.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
+        dnumname[iclass] = numdir + "/num.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
       #-------------------
       # name for sp
       #-------------------
       dspname = {}
       #for iclass in lclass:
       for iclass in [-1] + lclass:
-        dspname[iclass] = spdir + "/sp.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
+        dspname[iclass] = spdir + "/sp.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
       #-------------------
       # name for sp2
       #-------------------
       dsp2name = {}
       #for iclass in lclass:
       for iclass in [-1] + lclass:
-        dsp2name[iclass] = sp2dir + "/sp2.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
+        dsp2name[iclass] = sp2dir + "/sp2.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
       #-------------------
       # name for sw
       #-------------------
       dswname = {}
       #for iclass in lclass:
       for iclass in [-1] + lclass:
-        dswname[iclass] = swdir + "/sw.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
+        dswname[iclass] = swdir + "/sw.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
       #-------------------
       # name for sw2
       #-------------------
       dsw2name = {}
       #for iclass in lclass:
       for iclass in [-1] + lclass:
-        dsw2name[iclass] = sw2dir + "/sw2.p%05.2f.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
+        dsw2name[iclass] = sw2dir + "/sw2.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_%s_%s_%s_%s.bn"%(xth, cmin, iclass, nclass, crad, nwbin, season, tstp, model, expr, ens)
       
       #**************************************
       # read data
@@ -646,8 +651,8 @@ for crad in lcrad:
     #-----------------------------
     # figures for two expr
     #----------------------------- 
-    dir_root  = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/wfpr"%(model, dexpr["fut"], diyear["his"], deyear["his"], diyear["fut"], deyear["fut"], thdura)
-    pictdir = dir_root + "/plot/c%02dclasses"%(nclass)
+    dir_root  = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tracks/dura%02d/%02d-%02d/c%02d/cmin%04d"%(model, dexpr["fut"], diyear["his"], deyear["his"], diyear["fut"], deyear["fut"], thdura, imon, emon, nclass, cmin)
+    pictdir = dir_root + "/plot"
     func.mk_dir(pictdir)
 
     dlstyle  = {"his":"-", "fut":"--"}
@@ -674,7 +679,7 @@ for crad in lcrad:
       dlw     = {}
       dlrn    = {}
       #----------
-      for iclass in lclass[1:]:
+      for iclass in lclass[2:]:
         for era in lera:
           expr = dexpr[era]
           #--
@@ -709,7 +714,7 @@ for crad in lcrad:
       axplt   = figplt.add_subplot(111)
 
       #for iclass in lclass[1:]:
-      for iclass in lclass:
+      for iclass in lclass[2:]:
         expr = dexpr[era]
         #--
         ay_his = array(dlrnum[reg, dexpr["his"], iclass][1:])
@@ -747,7 +752,8 @@ for crad in lcrad:
       figplt  = plt.figure()
       axplt   = figplt.add_subplot(111)
 
-      for iclass in lclass[1:]:
+      #for iclass in lclass[1:]:
+      for iclass in lclass[2:]:
         expr = dexpr[era]
         #-----
         ay_his    = array(dlrnum[reg, dexpr["his"], iclass][1:])
@@ -786,7 +792,8 @@ for crad in lcrad:
       axplt   = figplt.add_subplot(111)
 
       dly = {}
-      for iclass in lclass[1:]:
+      #for iclass in lclass[1:]:
+      for iclass in lclass[2:]:
         expr = dexpr[era]
         #-----
         num_all   = sum([ dlnum[ reg, dexpr["his"], itemp] for itemp in lclass[1:] ])  # total number of cyclone for all class & all w
@@ -825,6 +832,5 @@ for crad in lcrad:
       figplt.suptitle("PDF(Ci) * dPDF(W|Ci)*P(W|Ci)")
       figplt.savefig(figname)
       print figname
-      print reg, xth, "sum=", sum([sum(dly[reg, xth, i]) for i in [1,2,3,4]])
 
               

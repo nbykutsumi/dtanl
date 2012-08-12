@@ -6,9 +6,9 @@ from numpy import *
 import os, sys
 from cf.plot import *
 #***************************************
-iyear_his   = 1990
+iyear_his   = 1980
 eyear_his   = 1999
-iyear_fut   = 2086
+iyear_fut   = 2076
 eyear_fut   = 2095 
 nx          = 144
 ny          = 96
@@ -24,6 +24,18 @@ dlat        = 1.8947368
 xth         = 0.0
 crad        = 1000.0
 thorog      = 1500.0
+
+mnum_min    = 1.0
+#---------------------------------------
+lats        = linspace(-90.0, 90.0, ny)
+lons        = linspace(0.0, 360.0 - 360.0/nx, nx)
+lllat       = -90.0
+lllon       = 0.0
+urlat       = 90.0
+urlon       = 360.0
+#
+nnx         = int( (urlon - lllon)/ dlon)
+nny         = int( (urlat - lllat)/ dlat)
 #***************************************
 diyear  = {"his": iyear_his, "fut": iyear_fut}
 deyear  = {"his": eyear_his, "fut": eyear_fut}
@@ -79,7 +91,7 @@ ddir_root["dif"] = "/media/disk2/out/CMIP5/day/%s/dif/%s/%04d-%04d.%04d-%04d/tra
 ddir  = {}
 dname = {}
 for era in lera + ["dif"]:
-  for var in ldirvar:
+  for var in ldirvar + ["mnum"]:
     #----
     ddir[era, var]  =  ddir_root[era] + "/%s"%(var)
     #---
@@ -91,7 +103,7 @@ for era in lera + ["dif"]:
 dname  = {}
 for era in lera:
   expr = dexpr[era]
-  for var in ldirvar:
+  for var in ldirvar + ["mnum"]:
     for iclass in lclass + [-1]:
       dname[era, var, iclass] =  ddir[era, var] + "/%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(var, xth, cmin, iclass, nclass, crad, nwbin, season, model, expr, ens )
 #-----------
@@ -99,7 +111,7 @@ for era in lera:
 #-----------
 for era in lera:
   expr  = dexpr[era]
-  for var in ldirvar:
+  for var in ldirvar + ["mnum"]:
     for iclass in lclass[1:]:
       accvar = "acc."+var
       dname[era, accvar, iclass] = ddir[era, var] + "/%s.p%05.2f.cmin%04d.c%02d.%02d.r%04d.nw%02d_%s_day_%s_%s_%s.bn"%(accvar, xth, cmin, iclass, nclass, crad, nwbin, season, model, expr, ens )
@@ -163,8 +175,20 @@ for var in ["mw", "acc.mw"]:
 
 
 for var in ["mw", "acc.mw"]:
+  da3mnum_his   = {}
   for era in lera:
     for iclass in lclass + [-1]:
+    #*************************************
+    # read mnum
+    #-------------------------------------
+    ##-------------------------------------
+      print iclass
+      if iclass == -1:
+        da3mnum_his[iclass]  = ones([ny, nx], float32)*1.0e+10
+      else:
+        da3mnum_his[iclass]  = fromfile(dname["his", "mnum", iclass], float32).reshape(nwbin, ny, nx)[0]
+        
+      #------------------------------------
       if ( var in laccvar) &(iclass in [0,1,-1, lclass[-1]]):
         continue
       #--
@@ -176,29 +200,42 @@ for var in ["mw", "acc.mw"]:
         adat    = fromfile(doname[vartype, var, iclass], float32).reshape(nwbin, ny, nx)[0]
         adat    = ma.masked_where( a2orog >= thorog, adat)
         adat    = ma.masked_equal(adat, 0.0)
+
         # ! convert w -> -w
         adat    = -adat
         figmap  = plt.figure()
         axmap   = figmap.add_axes([0, 0, 1.0, 1.0])
+
+        #--------------------- 
         M       = Basemap(resolution="l", llcrnrlat=-90.0, llcrnrlon=0.0, urcrnrlat=90.0, urcrnrlon=360.0, ax=axmap)
+
+        #-- transform --------
+        adat_trans   = M.transform_scalar(adat, lons, lats, nnx, nny)
+        a2mask_trans = M.transform_scalar(da3mnum_his[iclass], lons, lats, nnx, nny)
 
         #-- prep for colorbar ---
         cbarname= figname[:-4] + ".cbar.png"
         figcbar = plt.figure(figsize=(1,5))
-        axcbar  = figcbar.add_axes([0, 0, 0.4, 1.0])
+        axcbar  = figcbar.add_axes([0, 0, 0.3, 1.0])
 
         #------------------------
         if vartype == "frac": 
-          im       = M.imshow(adat, origin="lower", vmin=-1.0, vmax=1.0)
+          im       = M.imshow(adat, origin="lower", vmin=-1.0, vmax=1.0, interpolation="nearest")
         else: 
-          bnd      = [-0.04, -0.03, -0.02, -0.01, 0.01, 0.02, 0.03, 0.04]
+          #bnd      = [-0.04, -0.03, -0.02, -0.01, 0.01, 0.02, 0.03, 0.04]
+          bnd      = [-0.04, -0.03, -0.02, -0.01, -0.001, 0.001, 0.01, 0.02, 0.03, 0.04]
           bnd_cbar = [-1.0e+40] + bnd + [1.0e+40]
 
-          im       = M.imshow(adat, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
+          im       = M.imshow(adat_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var], interpolation="nearest")
           stitle   = "%s (-1 x %s) c%02d, P:%s"%(vartype, var,iclass,  xth)
           axmap.set_title(stitle)
 
           figcbar.colorbar(im, boundaries = bnd_cbar, extend ="both", cax=axcbar)
+        #-- superimpose shade(mask) -----
+        cmshade = matplotlib.colors.ListedColormap([(0.8, 0.8, 0.8), (0.8, 0.8, 0.8)])
+        ashade  = ma.masked_where(a2mask_trans > mnum_min, a2mask_trans)
+        im      = M.imshow(ashade, origin="lower", cmap=cmshade, interpolation="nearest")
+
         #
         #--------
         M.drawcoastlines()

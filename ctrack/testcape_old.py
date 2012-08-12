@@ -3,7 +3,7 @@ from numpy import *
 import calendar
 import ctrack_func
 import ctrack_para
-from calcsound_fort import *
+from calcsound_fort_old import *
 #-------------------
 nz6h = 26
 ny = 96
@@ -12,10 +12,10 @@ nzday = 8
 
 model      = "NorESM1-M"
 ens        = "r1i1p1"
-lexpr      = ["rcp85"]
-imon       = 12
-emon       = 3
-yrange      = [2093,2095]
+lexpr      = ["historical"]
+imon       = 1
+emon       = 1
+yrange      = [1990,1990]
 #-------------------
 def interp_fill(a1, nresol):
   n = len(a1)
@@ -39,14 +39,6 @@ def cut_underground_p(ps, a1plev, a1):
   aout = aout.compressed()
   return aout
 #--------------------
-def mk_monrange(imon, emon):
-  if imon <= emon:
-    lout = range(imon, emon+1)
-  else:
-    lout = range(imon, 12+1) + range(1, emon+1)
-  #----
-  return lout
-#--------------------
 
 lh       = [0, 6, 12, 18]
 Nparcels = 3
@@ -56,7 +48,7 @@ for expr in lexpr:
   (iyear, eyear)  = yrange
 
   for year in range(iyear, eyear+1):
-    for mon in mk_monrange(imon, emon):
+    for mon in range(imon, emon+1):
       ##############
       # no leap
       ##############
@@ -65,7 +57,7 @@ for expr in lexpr:
       else:
         ed = calendar.monthrange(year,mon)[1]
       ##############
-      for day in range(1, ed+1):
+      for day in range(1, 1+1):
         #*******************************************
         # 6-hourly
         #*******************************************
@@ -121,12 +113,12 @@ for expr in lexpr:
           dacapep[h] = zeros([ny,nx], float32)
           dapap[h]   = zeros([ny,nx], float32)
         
-          for iy in range(0,ny):
+          for iy in range(0,96):
           #for iy in [50]:
           #for iy in range(iy0,iy0+4):
-            print h, iy
-            for ix in range(0, nx):
-            #for ix in [20]:
+            #print h, iy
+            #for ix in range(0, 144):
+            for ix in [20]:
               #--------------------------------
               for var in ["ta", "hus", "pa"]:
                 da1_6hr[var, h]  = da3_6hr[var, h][:,iy,ix]
@@ -148,12 +140,13 @@ for expr in lexpr:
               a1ta       = interp_fill(a1ta,   nresol)
               a1hus      = interp_fill(a1hus,  nresol)
               #----
-              lout = calcsound_fort.cape_1d(a1ta, a1plev, a1hus, Nparcels)
+              lout = calcsound_fort_old.cape_1d(a1ta, a1plev, a1hus, Nparcels)
               dacapep[h][iy,ix]  = mean(lout[1])
               dapap[h][iy,ix]    = mean(lout[3])
         
               #if h ==0:
               #  awap[iy,ix]  = da3["wap"][3,iy,ix]
+              print iy, mean(lout[1]),mean(lout[3])
         #---------------------
         acapep  = zeros([ny,nx], float32)
         apap    = zeros([ny,nx], float32)
@@ -163,8 +156,8 @@ for expr in lexpr:
         #--
         acapep = acapep / len(lh)
         apap   = apap  / len(lh)
-        acapep.tofile(dname_day["capep"])
-        apap.tofile(dname_day["pap"])
+        #acapep.tofile(dname_day["capep"])
+        #apap.tofile(dname_day["pap"])
         
         
         

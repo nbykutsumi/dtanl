@@ -6,9 +6,9 @@ from numpy import *
 import os, sys
 from cf.plot import *
 #***************************************
-iyear_his   = 1990
+iyear_his   = 1980
 eyear_his   = 1999
-iyear_fut   = 2086
+iyear_fut   = 2076
 eyear_fut   = 2095 
 nx          = 144
 ny          = 96
@@ -243,10 +243,9 @@ for var in ["mp", "sp_season", "acc.mp", "acc.sp_season","cfrac.sp","acc.cfrac.s
         bnd       = arange(0, 1.0 + 0.01, 0.1)
         vvmin     = bnd[0]
         adat      = ma.masked_less(adat, vvmin)
-        im        = M.imshow(adat, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var] )
+        im        = M.imshow(adat, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var] , interpolation="nearest")
         bnd_cbar  = bnd
         plt.colorbar(boundaries = bnd_cbar)
-
       else:
         im      = M.imshow(adat, origin="lower")
         
