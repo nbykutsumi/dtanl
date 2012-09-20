@@ -1,6 +1,7 @@
 import os, sys
 from numpy import *
 #####################################################
+#####################################################
 def xy2fortpos(ix, iy, nx):
   number = iy* nx + ix +1
   return number

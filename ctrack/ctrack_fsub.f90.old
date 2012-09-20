@@ -1,18 +1,17 @@
 module ctrack_fsub
 
-!-----------------------------------
 
 CONTAINS
 !*****************************************************************
 !* SUBROUTINE & FUNCTION
 !*****************************************************************
-SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_in, a2sum, a2num)
+SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nradout, iy, ix, ny_in, nx_in, a2sum, a2num)
   implicit none
   !-- input -------------------------------------
   integer                                        ny_in, nx_in
 
-  integer                                        nrad_kmgrid, iy, ix
-!f2py intent(in)                                 nrad_kmgrid, iy, ix
+  integer                                        nradout, iy, ix
+!f2py intent(in)                                 nradout, iy, ix
   real,dimension(nx_in, ny_in)                :: a2in
 !f2py intent(in)                                 a2in
   real,dimension(ny_in)                       :: a1lat
@@ -23,27 +22,24 @@ SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_i
 !f2py intent(in)                                 dkm
 
   !-- output ------------------------------------
-  real,dimension(2*nrad_kmgrid+1, 2*nrad_kmgrid+1)    :: a2sum
-!f2py intent(out)                                a2sum
-  real,dimension(2*nrad_kmgrid+1, 2*nrad_kmgrid+1)    :: a2num
-!f2py intent(out)                                a2num
+  real,dimension(2*nradout+1, 2*nradout+1)    :: a2sum, a2num
+!f2py intent(out)                                a2sum, a2num
 
   !-- calc   ------------------------------------
-  integer                                        ny_kmgrid, nx_kmgrid
-  integer                                        iiy_latlongrid, iix_latlongrid
-  integer                                        nyrad_latlongrid, nxrad_latlongrid
-  integer                                        iiy_kmgrid, iix_kmgrid
+  integer                                        iiy, iix
+  integer                                        nyrad_sub, nxrad_sub
+  integer                                        iiy_sub, iix_sub
+  integer                                        iiradgrids_sub
   real                                           lat_first, lon_first
   real                                           latc, lonc
   real                                           latt, lont
   real                                           dlat, dlon
-  real                                           yradkm, xradkm
-  real                                           reskm_latlongrid
-  !----------------------------------------------
-  ny_kmgrid      = 2*nrad_kmgrid+1
-  nx_kmgrid      = 2*nrad_kmgrid+1 
-
-  !----------------------------------------------
+  real                                           yradkm
+  real                                           onegridkm
+  real                                           radtemp
+  !-- functions -------
+  !real                                           hubeny_real
+  integer                                        latgrids_real, longrids_real
   dlat           = a1lat(2) - a1lat(1)
   dlon           = a1lon(2) - a1lon(1)
   lat_first      = a1lat(1)
@@ -51,53 +47,67 @@ SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_i
 
   latc           = a1lat(iy)
   lonc           = a1lon(ix)
-  nyrad_latlongrid   = latgrids_real(latc, dlat, nrad_kmgrid*dkm*1000.0)
-  nxrad_latlongrid   = longrids_real(latc, dlon, nrad_kmgrid*dkm*1000.0)
+  !nyrad_sub      = latgrids_real(latc, dlat, nradout*dkm*1000.0)
+  !nxrad_sub      = longrids_real(latc, dlon, nradout*dkm*1000.0)
 
   !----------------------------------------------
   !--- initialize -------------------------------
   a2sum  = 0.0
   a2num  = 0.0
+
   !--- aggregate --------------------------------
-  do iiy_latlongrid = iy - nyrad_latlongrid, iy + nyrad_latlongrid
-    !-------------
-    if ((iiy_latlongrid <=0).or.(iiy_latlongrid > ny_in)) cycle
+  print *,"AAAAAAA"
 
-    !-------------
-    latt       =  lat_first + (iiy_latlongrid -1) * dlat
-    yradkm     =  hubeny_real(latc, 0.0, latt, 0.0)*0.001    ! [km]
-    iiy_kmgrid =  int((yradkm + 0.5*dkm)/dkm) * int( sign( 1.0, latt - latc)) + (nrad_kmgrid + 1)
+  !do iiy = iy -nyrad_sub, iy + nyrad_sub
+  !  if (iiy <=0) then
+  !    continue
+  !  endif
 
-    !-- check iiy_kmgrid
-    if ((iiy_kmgrid .le. 0).or.(iiy_kmgrid .gt. ny_kmgrid))cycle
+  !  print *,"BBB, iiy=",iiy
 
-    !-------------
+  !  latt     = lat_first + (iiy-1)*dlat
 
-    reskm_latlongrid  = hubeny_real( latt,  0.0, latt, dlon) * 0.001 ![km]
-    do iix_latlongrid = ix - nxrad_latlongrid , ix + nxrad_latlongrid
-      !----------------
-      if (( iix_latlongrid <= 0).or.( iix_latlongrid > nx_in))cycle
+  !  yradkm    = hubeny_real(latc, 0.0, latt, 0.0)* 0.001
 
-      !----------------
-      lont       =  lon_first + (iix_latlongrid -1) * dlon
+  !  iiy_sub   = int( (yradkm + dkm*0.5)/dkm ) * int(sign(1.0, latt - latc)) + nradout + 1
 
-      xradkm     =  reskm_latlongrid * abs(iix_latlongrid - ix)
-      iix_kmgrid =  int((xradkm + 0.5*dkm)/dkm) * int( sign( 1.0, lont - lonc ) ) + ( nrad_kmgrid + 1)
+  !  onegridkm = hubeny_real(latt, lonc, latt, lonc + dlon)*0.001
 
-      !-- check iix_kmgrid
-      if ((iix_kmgrid .le. 0).or.(iix_kmgrid .gt. nx_kmgrid))cycle
+  !  !--
+  !  do iix = ix - nxrad_sub, ix + nxrad_sub
+  !    if (iix <=0) then
+  !      continue
+  !    endif
+  !    !---
+  !    lont       = lon_first + (iix-1)*dlon
 
-      !-- sum up -------
-      a2sum(iix_kmgrid, iiy_kmgrid) = a2sum(iix_kmgrid, iiy_kmgrid) + a2in(iix_latlongrid, iiy_latlongrid)
+  !    iiradgrids_sub  = int( (onegridkm* abs(iix-ix) + dkm*0.5)/dkm )
+  !    if ( (lont - lonc) .ge. 0.0)then
+  !      iix_sub    =  iiradgrids_sub + nradout + 1
+  !    else
+  !      iix_sub    =  -iiradgrids_sub + nradout + 1
+  !    endif
+  !    print *,"iiradgrids_sub, nradout", iiradgrids_sub, nradout
 
-      a2num(iix_kmgrid, iiy_kmgrid) = a2num(iix_kmgrid, iiy_kmgrid) + 1
+  !    !a2sum(iix_sub, iiy_sub)  =  a2sum(iix_sub, iiy_sub) + a2in(iix, iiy)
+  !    print *, iix_sub, iiy_sub, a2sum(iix_sub, iiy_sub)
 
-      !a2num(iix_kmgrid, iiy_kmgrid) = a2num(iix_kmgrid, iiy_kmgrid) + abs(yradkm)
-      !------------------------------------------------
-    enddo
-  enddo
+  !    !iix_sub = 10
+  !    a2sum(iix_sub, iiy_sub) = 1.0
+  !!    print *,"a2sum", a2sum(iix_sub, iiy_sub)
+  !!    !a2num(iix_sub, iiy_sub)  =  a2num(iix_sub, iiy_sub) + 1.0
+  !!    !a2num(iix_sub, iiy_sub)  =  (iix-ix)**2.0 + (iiy-iy)**2.0
+
+  !  enddo
+  !enddo
+  !!----------------------------------------------
+  !print *, a2sum
+  !print *, "XXX, iix_sub, iiy_sub", iix_sub, iiy_sub
+
 RETURN
 END SUBROUTINE eqgrid_aggr
+
+
 
 !*****************************************************************
 SUBROUTINE aggr_pr(a2life, a2pgrad, thdist, thdura&
@@ -312,19 +322,21 @@ SUBROUTINE connectc(&
   !**************************************
   !** for calc 
   !**************************************
-  integer                                          ix0, iy0, ix1, iy1, iix1, iiy1, iix, iiy, iix_loop, iiy_loop
+  integer                                          ix, iy, ix0, iy0, ix1, iy1, iix1, iiy1, iix, iiy, iix_loop, iiy_loop
   integer                                          ngrids, sgrids, xgrids, ygrids
-  double precision                                 lat0, lon0, lat1, lon1
+  double precision                                 lat0, lon0, lat1, lon1, lat_surr, lon_surr
   double precision                                 ua0, va0, pmean0, psl0, dp0
   double precision                                 dp1
   double precision                                 londist, latdist
   double precision                                 dlat, dlon
   double precision                                 iilon, iilat, iipmean, iipsl
   double precision                                 iidist, iidp
-  double precision                                 iidist_temp, iidp_temp
+  double precision                                 iidist_temp, iidp_temp, dist_surr
+  double precision                                 dp, pgrad, pgrad_surr
+  integer                                          ik
   integer                                          xx, yy
   !integer,dimension(nx*ny)                      :: a1x, a1y
-  !integer,dimension(8)                           :: a1surrx, a1suury
+  integer,dimension(8)                           :: a1surrx, a1suury
   integer                                          cflag
 !------------------------------------------------------------
 dlat  = a1lat(2) - a1lat(1)
@@ -342,7 +354,7 @@ a2time1    = miss_int
 !------------------------------------------------
 do iy0 = 1, ny
   do ix0 = 1, nx
-    if (a2pmean0(ix0,iy0) .ne. miss_dbl) then
+    if (a2pmean0(ix,iy) .ne. miss_dbl) then
       dp0 = a2pmean0(ix0,iy0) -a2psl0(ix0,iy0)
       if ( dp0 .gt. thdp ) then
         !-----------------
@@ -1020,7 +1032,7 @@ SUBROUTINE vorticity(a2u, a2v, lat_first, dlon, dlat, miss_dbl, nx, ny, a2vort)
   integer                                  ix_nxt, ix_pre, iy_nxt, iy_pre
   integer                                  iix_nxt, iix_pre, iiy_nxt, iiy_pre
   double precision                         dx, dy
-  double precision                         lat, lat1, lat2, lon1, lon2
+  double precision                         lat, lat1, lat2, lon, lon1, lon2
   !----------------------------------
 lat1 = 90.0d0
 lat2 = lat1 + dlat
@@ -1111,53 +1123,58 @@ do i = 1, 100000
 end do
 RETURN
 END FUNCTION latgrids_real
-!!*****************************************************************
-FUNCTION longrids_real(lat, dlon, thdist)
-  implicit none
-  !-- for input -----------
-  real                                  thdist   ! [m]
-!f2py intent(in)                        thdist
-  real                                  lat, dlon
-!f2py intent(in)                        lat, dlon
-  !-- for output ----------
-  integer                               longrids_real
-!f2py intent(out)                       longrids_real
-  !-- for calc  -----------
-  integer                               i
-  real                                  dist, lon2
-  real                                  dist_pre
-  !-- functions -----------
-  !real                                  hubeny_real
-  !------------------------
-!-- initialize --
-longrids_real = -9999
-!----------------
 
-dist = 0.0
-do i = 1, 100000
-  lon2     = dlon * i
-  dist_pre = dist
-  dist     = hubeny_real(lat, 0.0, lat, lon2)
-  if (dist .gt. abs(thdist)) then
-    if ( (dist + dist_pre)*0.5 .lt. abs(thdist) )then
-      if (thdist .ge. 0.0) then
-        longrids_real = i
-      else
-        longrids_real = -i
-      end if
-    else
-      if (thdist .ge. 0.0) then
-        longrids_real = i -1 
-      else
-        longrids_real = -(i -1)
-      end if
-    endif
-    exit
-  end if
-end do
-RETURN
-END FUNCTION longrids_real
-!*****************************************************************
+!!!!*****************************************************************
+!FUNCTION longrids_real(lat, dlon, thdist)
+!  implicit none
+!  !-- for input -----------
+!  real                                  thdist   ! [m]
+!!f2py intent(in)                        thdist
+!  real                                  lat, dlon
+!!f2py intent(in)                        lat, dlon
+!  !-- for output ----------
+!  integer                               longrids_real
+!!f2py intent(out)                       longrids_real
+!  !-- for calc  -----------
+!  integer                               i
+!  real                                  dist, lon2
+!  real                                  dist_pre
+!  !-- functions -----------
+!  real                                  hubeny_real
+!  !------------------------
+!!-- initialize --
+!longrids_real = -9999
+!!----------------
+!
+!dist = 0.0
+!do i = 1, 100000
+!  lon2     = dlon * i
+!  dist_pre = dist
+!  dist     = hubeny_real(lat, 0.0, lat, lon2)
+!  if (dist .gt. abs(thdist)) then
+!    if ( (dist + dist_pre)*0.5 .lt. abs(thdist) )then
+!      if (thdist .ge. 0.0) then
+!        longrids_real = i
+!      else
+!        longrids_real = -i
+!      end if
+!    else
+!      if (thdist .ge. 0.0) then
+!        longrids_real = i -1
+!      else
+!        longrids_real = -(i -1)
+!      end if
+!    endif
+!    exit
+!  end if
+!end do
+!RETURN
+!END FUNCTION longrids_real
+!!*****************************************************************
+
+
+
+
 FUNCTION latgrids(lat, dlat, thdist)
   implicit none
   !-- for input -----------
@@ -1166,21 +1183,13 @@ FUNCTION latgrids(lat, dlat, thdist)
   double precision                      lat, dlat
 !f2py intent(in)                        lat, dlat
   !-- for output ----------
-  integer                               latgrids 
+  double precision                      latgrids 
 !f2py intent(out)                       latgrids
   !-- for calc  -----------
   integer                               i
   double precision                      dist, lat2
   double precision                      dist_pre
-  !-- functions -----------
-  !double precision                      hubeny
   !------------------------
-
-!-- initialize ----
-latgrids = -9999
-!-------------------
-
-
 dist = 0.0d0
 do i = 1, 100000
   lat2     = lat + dlat * i
@@ -1214,20 +1223,13 @@ FUNCTION longrids(lat, dlon, thdist)
   double precision                      lat, dlon
 !f2py intent(in)                        lat, dlon
   !-- for output ----------
-  integer                               longrids 
+  double precision                      longrids 
 !f2py intent(out)                       longrids
   !-- for calc  -----------
   integer                               i
   double precision                      dist, lon2
   double precision                      dist_pre
-  !-- functions -----------
-  !double precision                      hubeny
   !------------------------
-
-!-- initialize  -----
-longrids = -9999
-!--------------------
-
 dist = 0.0d0
 do i = 1, 100000
   lon2     = dlon * i
@@ -1293,7 +1295,7 @@ do i = 1, 100000
 end do
 RETURN
 END SUBROUTINE gridrange
-!!*****************************************************************
+!*****************************************************************
 FUNCTION hubeny_real(lat1, lon1, lat2, lon2)
   implicit none
   !-- for input -----------
@@ -1336,6 +1338,8 @@ RETURN
 END FUNCTION hubeny_real
 
 !*****************************************************************
+
+
 FUNCTION hubeny(lat1, lon1, lat2, lon2)
   implicit none
   !-- for input -----------
@@ -1354,6 +1358,7 @@ FUNCTION hubeny(lat1, lon1, lat2, lon2)
   double precision                      latrad1, latrad2, lonrad1, lonrad2
   double precision                      latave, dlat, dlon
   double precision                      dlondeg
+  double precision                      meridian, primevertical
   !------------------------
   latrad1   = lat1 * pi / 180.0d0
   latrad2   = lat2 * pi / 180.0d0

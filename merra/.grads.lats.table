@@ -45,7 +45,7 @@
 # comments_2 = comments, ignored by LATS
 #
 #---------------------------------------------------------------------------------------------------
-t10m        | 1  | Temperature at 10 m above the displacement height                     |      | float | sfc | -999 | 16 |   |   |
+slp        | 1  | Sea level pressure                                                    |      | float | sfc | -999 | 16 |   |   |
 #---------------------------------------------------------------------------------------------------
 #!  vert
 # Vertical dimension types

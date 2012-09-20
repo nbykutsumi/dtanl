@@ -6,12 +6,14 @@ from glob import *
 from netCDF4 import *
 from numpy import *
 #----------------------------------------------
-lvar = ["prectot","ps","qv10m","t10m"]
+lvar  = ["slp"]
+#lvar = ["prectot","ps","qv10m","t10m"]
 #lvar = ["h","omega"]
 #lvar = ["h","omega","prectot","ps","qv10m","t10m"]
-lvarchange = ["prectot","ps","qv10m","slp","t10m"]
-iy = 2001
-ey = 2010
+#lvarchange = ["prectot","ps","qv10m","slp","t10m"]
+lvarchange = ["slp"]
+iy = 1981
+ey = 1996
 im = 1
 em = 12
 tstp = "day"
@@ -139,8 +141,9 @@ for var in lvar:
         sncfile2 = sncfile[:-2] + "C.nc"
         if (var in lvarchange):
           if os.access(sncfile, os.F_OK):
-            os.system("lats4d.sh  -i %s -merra1.25a -o %s > ./log.txt 2>&1"%(sncfile, sncfile2))
-          print sncfile2
+            #os.system("lats4d.sh  -i %s -merra1.25a -o %s > ./log.txt 2>&1"%(sncfile, sncfile2))
+            os.system("lats4d.sh  -i %s -merra1.25 -o %s > ./log.txt 2>&1"%(sncfile, sncfile2))
+          print "1", sncfile2
         #-----------------------
         # make binary file from NetCDF
         #-----------------------

@@ -1,24 +1,23 @@
-2.0.a9.oga.1
-/opt/opengrads/Contents/grads -blc 'run lats4d.gs -q -i /media/disk2/data/MERRA/nc/day/t10m/2010/MERRA.tavg1_2d_slv_Nx.day.t10m.2010123100.nc -merra1.25a -o /media/disk2/data/MERRA/nc/day/t10m/2010/MERRA.tavg1_2d_slv_Nx.day.t10m.2010123100.C.nc '
+/bin/ls: 1.* にアクセスできません: そのようなファイルやディレクトリはありません
+/home/utsumi/inst/opengrads/Contents/grads -blc 'run lats4d.gs -q -i /media/disk2/data/MERRA/nc/day/slp/1996/MERRA.tavg1_2d_slv_Nx.day.slp.1996123100.nc -merra1.25 -o /media/disk2/data/MERRA/nc/day/slp/1996/MERRA.tavg1_2d_slv_Nx.day.slp.1996123100.C.nc '
 
               Welcome to the OpenGrADS Bundle Distribution
               --------------------------------------------
 
 For additional information enter "grads -h".
 
-Starting "/opt/opengrads/Contents/Linux/Versions/2.0.a9.oga.1/x86_64/grads   -blc 'run lats4d.gs -q -i /media/disk2/data/MERRA/nc/day/t10m/2010/MERRA.tavg1_2d_slv_Nx.day.t10m.2010123100.nc -merra1.25a -o /media/disk2/data/MERRA/nc/day/t10m/2010/MERRA.tavg1_2d_slv_Nx.day.t10m.2010123100.C.nc ' " ...
+Starting "/home/utsumi/inst/opengrads/Contents/Linux/Versions/2.0.1.oga.1/x86_64/grads   -blc 'run lats4d.gs -q -i /media/disk2/data/MERRA/nc/day/slp/1996/MERRA.tavg1_2d_slv_Nx.day.slp.1996123100.nc -merra1.25 -o /media/disk2/data/MERRA/nc/day/slp/1996/MERRA.tavg1_2d_slv_Nx.day.slp.1996123100.C.nc ' " ...
 
-/opt/opengrads/Contents/Linux/Versions/2.0.a9.oga.1/x86_64/grads: /opt/intel/composerxe-2011.4.191/compiler/lib/intel64/libimf.so: no version information available (required by /opt/opengrads/Contents/Linux/Versions/2.0.a9.oga.1/x86_64/grads)
 
-Grid Analysis and Display System (GrADS) Version 2.0.a9.oga.1
-Copyright (c) 1988-2010 by Brian Doty and the
+Grid Analysis and Display System (GrADS) Version 2.0.1.oga.1
+Copyright (c) 1988-2011 by Brian Doty and the
 Institute for Global Environment and Society (IGES)
 GrADS comes with ABSOLUTELY NO WARRANTY
 See file COPYRIGHT for more information
 
-Config: v2.0.a9.oga.1 little-endian readline printim grib2 netcdf hdf4-sds hdf5 opendap-grids,stn athena geotiff shapefile
+Config: v2.0.1.oga.1 little-endian readline printim grib2 netcdf hdf4-sds hdf5 opendap-grids,stn athena geotiff shapefile
 Issue 'q config' command for more detailed configuration information
-Loading User Defined Extensions table </opt/opengrads/Contents/Linux/Versions/2.0.a9.oga.1/x86_64/gex/udxt> ... ok.
+Loading User Defined Extensions table </home/utsumi/inst/opengrads/Contents/Linux/Versions/2.0.1.oga.1/x86_64/gex/udxt> ... ok.
 GX Package Initialization: Size = 11 8.5 
 Running in Batch mode
 No hardcopy metafile open
@@ -26,7 +25,7 @@ All files closed; all defined objects released;
 All GrADS attributes have been reinitialized
 Warning: OPTIONS keyword "template" is used, but the 
    DSET entry contains no substitution templates.
-lats4d: created coards file /media/disk2/data/MERRA/nc/day/t10m/2010/MERRA.tavg1_2d_slv_Nx.day.t10m.2010123100.C.nc.nc
+lats4d: created coards file /media/disk2/data/MERRA/nc/day/slp/1996/MERRA.tavg1_2d_slv_Nx.day.slp.1996123100.C.nc.nc
 lats4d: exiting from GrADS...
 No hardcopy metafile open
 GX package terminated 

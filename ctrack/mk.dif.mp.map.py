@@ -31,10 +31,16 @@ thorog      = 1500.0
 lats        = linspace(-90.0, 90.0, ny)
 lons        = linspace(0.0, 360.0 - 360.0/nx, nx)
 
-lllat       = -90.0
-lllon       = 0.0
-urlat       = 90.0
-urlon       = 360.0
+#lllat       = -90.0
+#lllon       = 0.0
+#urlat       = 90.0
+#urlon       = 360.0
+
+lllat       = 22.0
+lllon       = 122.0
+urlat       = 46.0
+urlon       = 150.0
+
 
 nnx         = int( (urlon - lllon)/ dlon)
 nny         = int( (urlat - lllat)/ dlat)
@@ -264,7 +270,7 @@ for var in ldirvar + laccvar:
 
         elif var in ["sp_season", "acc.sp_season"]:
           bnd     = [-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 90.0]
-          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var])
+          im      = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[var], interpolation="nearest")
           bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
           plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
 

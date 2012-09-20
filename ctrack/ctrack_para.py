@@ -45,6 +45,11 @@ def ret_im_em(season):
     im_em = [12, 2]
   return im_em
 #-----------------------------------
+def ret_lmon(season):
+  if season == "DJF":
+    lmon  = [1,2, 12]
+  return lmon
+#-----------------------------------
 def ret_mons(season):
   (im, em) = ret_im_em(season)
   if im <= em:
@@ -95,26 +100,26 @@ def ret_dbound():
   #dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
   #
   #
-  #reg      = "scjapan"
-  #lat_min  = 22.0
-  #lat_max  = 41.0
-  #lon_min  = 122.0
-  #lon_max  = 150.0
-  #dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
-  #
-  #reg      = "njapan"
-  #lat_min  = 41.0
-  #lat_max  = 46.0
-  #lon_min  = 125.0
-  #lon_max  = 150.0
-  #dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
-
   reg      = "scjapan"
-  lat_min  = 5.0
-  lat_max  = 10.0
-  lon_min  = 75.0
-  lon_max  = 88.0
+  lat_min  = 22.0
+  lat_max  = 41.0
+  lon_min  = 122.0
+  lon_max  = 150.0
   dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
+  
+  reg      = "njapan"
+  lat_min  = 41.0
+  lat_max  = 46.0
+  lon_min  = 125.0
+  lon_max  = 150.0
+  dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
+
+  #reg      = "scjapan"
+  #lat_min  = 5.0
+  #lat_max  = 10.0
+  #lon_min  = 75.0
+  #lon_max  = 88.0
+  #dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
 
   return dbound
 #-----------------------------------

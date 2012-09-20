@@ -34,10 +34,16 @@ lons        = linspace(0.0, 360.0 -  360.0/nx, nx)
 #urlat       = 50.0
 #urlon       = 140.0
 
-lllat       = -90.0
-lllon       = 0.0
-urlat       = 90.0
-urlon       = 360.0
+#lllat       = -90.0
+#lllon       = 0.0
+#urlat       = 90.0
+#urlon       = 360.0
+
+lllat       = 22.0
+lllon       = 122.0
+urlat       = 46.0
+urlon       = 150.0
+
 
 meridians   = 30.0
 parallels   = 30.0
@@ -491,7 +497,7 @@ for class_lb in lclass[1:]:
   scale     = "dmp"
   dcm[scale] = ret_colormap(scale) 
   bnd       = [-3.0, -2.0, -1.0, -0.5,  0.5 , 1.0, 2.0 , 3.0]
-  im        = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+  im        = M.imshow(a_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale], interpolation="nearest")
   M.drawcoastlines()
   plt.title(stitle)
   savefig(pngname)
@@ -547,7 +553,7 @@ for class_lb in lclass[1:]:
       continue
       #----
       bnd     = [-0.6, -0.4, -0.2, -0.05, 0.05, 0.2 , 0.4 , 0.6]
-      im      = M.imshow(a_trans, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+      im      = M.imshow(a_trans, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale], interpolation="nearest")
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
       plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
     elif (scale in lscale2) & (scale not in ["nsxyz"]):
@@ -557,7 +563,7 @@ for class_lb in lclass[1:]:
       bnd     = [-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 90.0]
       #-----
       
-      im      = M.imshow(a_trans, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale])
+      im      = M.imshow(a_trans, origin ="lower", norm=BoundaryNormSymm(bnd), cmap=dcm[scale], interpolation="nearest")
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
       plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
       
@@ -568,7 +574,7 @@ for class_lb in lclass[1:]:
       plt.colorbar(im, boundaries = bnd_cbar, extend="both", cax=axcbar)
 
     else:
-      im      = M.imshow(a_trans, origin ="lower",vmax=800.)
+      im      = M.imshow(a_trans, origin ="lower",vmax=800., interpolation="nearest")
       plt.colorbar(im, cax=axcbar)
     #-- superimpose shade(mask) -----
     cmshade = matplotlib.colors.ListedColormap([(0.8, 0.8, 0.8), (0.8, 0.8, 0.8)])
@@ -580,8 +586,8 @@ for class_lb in lclass[1:]:
     M.drawcoastlines()
 
     # draw lat/lon grid lines
-    M.drawmeridians(arange(0,360,meridians),  labels=[0, 0, 0, 1])
-    M.drawparallels(arange(-90,90,parallels), labels=[1, 0, 0, 0])
+    #M.drawmeridians(arange(0,360,meridians),  labels=[0, 0, 0, 1])
+    #M.drawparallels(arange(-90,90,parallels), labels=[1, 0, 0, 0])
 
     figmap.savefig(pngname)
     print pngname
