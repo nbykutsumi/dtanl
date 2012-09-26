@@ -29,8 +29,10 @@ SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_i
 !f2py intent(out)                                a2num
 
   !-- calc   ------------------------------------
+  integer                                     :: extragrid = 4
   integer                                        ny_kmgrid, nx_kmgrid
   integer                                        iiy_latlongrid, iix_latlongrid
+  integer                                        iix_latlongrid_loop
   integer                                        nyrad_latlongrid, nxrad_latlongrid
   integer                                        iiy_kmgrid, iix_kmgrid
   real                                           lat_first, lon_first
@@ -52,14 +54,13 @@ SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_i
   latc           = a1lat(iy)
   lonc           = a1lon(ix)
   nyrad_latlongrid   = latgrids_real(latc, dlat, nrad_kmgrid*dkm*1000.0)
-  nxrad_latlongrid   = longrids_real(latc, dlon, nrad_kmgrid*dkm*1000.0)
 
   !----------------------------------------------
   !--- initialize -------------------------------
   a2sum  = 0.0
   a2num  = 0.0
   !--- aggregate --------------------------------
-  do iiy_latlongrid = iy - nyrad_latlongrid, iy + nyrad_latlongrid
+  do iiy_latlongrid = iy - nyrad_latlongrid -extragrid, iy + nyrad_latlongrid +extragrid
     !-------------
     if ((iiy_latlongrid <=0).or.(iiy_latlongrid > ny_in)) cycle
 
@@ -67,28 +68,39 @@ SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_i
     latt       =  lat_first + (iiy_latlongrid -1) * dlat
     yradkm     =  hubeny_real(latc, 0.0, latt, 0.0)*0.001    ! [km]
     iiy_kmgrid =  int((yradkm + 0.5*dkm)/dkm) * int( sign( 1.0, latt - latc)) + (nrad_kmgrid + 1)
-
+    
     !-- check iiy_kmgrid
     if ((iiy_kmgrid .le. 0).or.(iiy_kmgrid .gt. ny_kmgrid))cycle
 
     !-------------
+    nxrad_latlongrid   = longrids_real(latt, dlon, nrad_kmgrid*dkm*1000.0)
 
     reskm_latlongrid  = hubeny_real( latt,  0.0, latt, dlon) * 0.001 ![km]
-    do iix_latlongrid = ix - nxrad_latlongrid , ix + nxrad_latlongrid
+    do iix_latlongrid_loop = ix - nxrad_latlongrid -extragrid, ix + nxrad_latlongrid +extragrid
       !----------------
-      if (( iix_latlongrid <= 0).or.( iix_latlongrid > nx_in))cycle
+      !if (( iix_latlongrid_loop <= 0).or.( iix_latlongrid_loop > nx_in))cycle
+      if ( iix_latlongrid_loop <= 0) then
+        iix_latlongrid   = nx_in + iix_latlongrid_loop
+
+      else if (iix_latlongrid_loop > nx_in) then
+        iix_latlongrid   = iix_latlongrid_loop - nx_in
+
+      else
+        iix_latlongrid   = iix_latlongrid_loop
+      endif
 
       !----------------
       lont       =  lon_first + (iix_latlongrid -1) * dlon
-
-      xradkm     =  reskm_latlongrid * abs(iix_latlongrid - ix)
-      iix_kmgrid =  int((xradkm + 0.5*dkm)/dkm) * int( sign( 1.0, lont - lonc ) ) + ( nrad_kmgrid + 1)
+      xradkm     =  reskm_latlongrid * abs(iix_latlongrid_loop - ix)  !<- use iix_latlongrid_loop, not iix_latlongrid
+      iix_kmgrid =  int((xradkm + 0.5*dkm)/dkm) * sign( 1, iix_latlongrid_loop - ix ) + ( nrad_kmgrid + 1)
 
       !-- check iix_kmgrid
       if ((iix_kmgrid .le. 0).or.(iix_kmgrid .gt. nx_kmgrid))cycle
 
       !-- sum up -------
       a2sum(iix_kmgrid, iiy_kmgrid) = a2sum(iix_kmgrid, iiy_kmgrid) + a2in(iix_latlongrid, iiy_latlongrid)
+      !a2sum(iix_kmgrid, iiy_kmgrid) = a2sum(iix_kmgrid, iiy_kmgrid) + lont
+      !a2sum(iix_kmgrid, iiy_kmgrid) = lont
 
       a2num(iix_kmgrid, iiy_kmgrid) = a2num(iix_kmgrid, iiy_kmgrid) + 1
 
@@ -824,6 +836,132 @@ SUBROUTINE findcyclone(a2psl, a1lat, a1lon, miss_in, miss_out, nx, ny, a2pmean, 
   integer                                           ix, iy, ik
   integer                                           iix, iiy, iiix, iiiy, ix_surr, iy_surr
   integer                                           icount, validnum, flag
+  integer                                        :: miss_int = -9999
+  double precision                                  pmean, psl, pgrad, pgrad_temp
+  double precision                                  dist_surr
+  double precision                                  lat, lon, lat_surr, lon_surr
+  double precision,dimension(8)                  :: a1ambi
+  integer,dimension(8)                           :: a1surrx, a1surry
+
+  double precision                               :: lat_first, dlon, dlat
+  double precision                               :: thdist = 1000.0d0*1000.0d0
+  !----------------------------------------------------------
+lat_first = a1lat(1)
+dlat      = a1lat(2) - a1lat(1)
+dlon      = a1lon(2) - a1lon(1)
+!------
+do iy = 1, ny
+  do ix = 1, nx
+    psl = a2psl(ix, iy)
+    if (psl .eq. miss_in)then
+      a2pmean(ix,iy) = miss_out
+      a2pgrad(ix,iy) = miss_out
+    else
+      !---------------
+      ! ambient data
+      !---------------
+      ik = 0
+      do iiy = iy-1, iy+1, 2
+        do iix = ix -1, ix+1
+          ik = ik +1
+          call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
+          a1ambi(ik) = a2psl(iiix, iiiy)
+        end do
+      end do
+      iiy = iy
+      do iix = ix-1, ix+1, 2
+        ik = ik +1
+        call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
+        a1ambi(ik) = a2psl(iiix, iiiy)
+      end do
+      !----------------
+      ! compare to the ambient grids
+      !----------------
+      flag = 0
+      do ik = 1, 8
+        if ( psl .ge. a1ambi(ik) )  then
+          flag = 1
+          exit
+        end if
+      end do
+      !----------------
+      if (flag .eq. 1) then
+        a2pmean(ix, iy) = miss_out
+        a2pgrad(ix, iy) = miss_out
+      else if (flag .eq. 0) then
+        lat = a1lat(iy)
+        lon = a1lon(ix) 
+        !call mk_8gridsxy(ix, iy, nx, ny, a1surrx, a1surry)
+        !call circle_xy(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny,a1x, a1y)
+        print *, lat, lat_first, dlon, dlat, thdist
+        print *, miss_int, nx, ny
+
+        print *,"AAAAAAAAAAAAA"
+        call circle_xy(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1surrx, a1surry)
+        print *,a1surrx
+        print *,a1surry
+        pmean  = 0.0d0
+        pgrad  = 0.0d0
+        icount = 0
+        validnum= 0
+        do ik = 1, nx*ny
+          icount   = icount + 1
+          ix_surr  = a1surrx(ik)
+          iy_surr  = a1surry(ik)
+          lon_surr = a1lon(ix_surr)
+          lat_surr = a1lat(iy_surr)
+          if (ix_surr .eq. miss_int) then
+            exit
+          end if
+          if ( a1ambi(ik) .ne. miss_in)then
+            validnum = validnum + 1
+            !------------
+            ! make pgrad
+            !------------
+            dist_surr  = hubeny(lat, lon, lat_surr, lon_surr)
+            pgrad_temp = ( a2psl(ix_surr, iy_surr) - a2psl(ix, iy) )/dist_surr * 1000.0 * 1000.0    ![Pa/1000km]
+            pgrad      = pgrad + pgrad_temp
+            !------------
+            pmean = pmean + a1ambi(ik)
+          end if
+        end do
+        if (validnum .eq. 0)then
+          pmean = miss_out
+          pgrad = miss_out
+        else
+          pmean = pmean /validnum
+          pgrad = pgrad /validnum
+        end if
+        a2pmean(ix, iy) = pmean
+        a2pgrad(ix, iy) = pgrad
+      end if
+    end if
+    !---------------
+  end do
+end do
+
+RETURN
+END SUBROUTINE findcyclone
+!*****************************************************************
+SUBROUTINE findcyclone_old(a2psl, a1lat, a1lon, miss_in, miss_out, nx, ny, a2pmean, a2pgrad)
+  implicit none
+  !** for input ---------------------------------------------
+  integer                                           nx, ny
+  double precision,dimension(nx ,ny)             :: a2psl
+!f2py intent(in)                                    a2psl
+  double precision,dimension(ny)                 :: a1lat
+!f2py intent(in)                                    a1lat
+  double precision,dimension(nx)                 :: a1lon
+!f2py intent(in)                                    a1lon
+  double precision                                  miss_in, miss_out
+!f2py intent(in)                                    miss_in, miss_out
+  !** for output --------------------------------------------
+  double precision,dimension(nx, ny)             :: a2pmean, a2pgrad
+!f2py intent(out)                                   a2pmean, a2pgrad
+  !** for calc  ---------------------------------------------
+  integer                                           ix, iy, ik
+  integer                                           iix, iiy, iiix, iiiy, ix_surr, iy_surr
+  integer                                           icount, validnum, flag
   double precision                                  pmean, psl, pgrad, pgrad_temp
   double precision                                  dist_surr
   double precision                                  lat, lon, lat_surr, lon_surr
@@ -911,7 +1049,7 @@ do iy = 1, ny
 end do
 
 RETURN
-END SUBROUTINE findcyclone
+END SUBROUTINE findcyclone_old
 !*****************************************************************
 !*****************************************************************
 SUBROUTINE ixy2iixy(ix,iy, nx, ny, iix, iiy)
