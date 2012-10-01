@@ -289,6 +289,11 @@ SUBROUTINE connectc(&
         &, nx, ny)
   implicit none  
   !**************************************
+  ! a2lastpos returns nx*(iy -1) + nx
+  ! where ix = 1,2, .. nx,   iy = 1, 2, .. ny
+  ! NOT ix = 0, 1, .. nx-1,  iy = 0, 1, .. ny
+
+  !**************************************
   !** for input 
   !**************************************
   integer                                          nx, ny
@@ -835,28 +840,29 @@ SUBROUTINE findcyclone(a2psl, a1lat, a1lon, miss_in, miss_out, nx, ny, a2pmean, 
   !** for calc  ---------------------------------------------
   integer                                           ix, iy, ik
   integer                                           iix, iiy, iiix, iiiy, ix_surr, iy_surr
-  integer                                           icount, validnum, flag
+  integer                                           iy_surr_rad, ix_surr_rad
+  integer                                           validnum, flag
   integer                                        :: miss_int = -9999
   double precision                                  pmean, psl, pgrad, pgrad_temp
   double precision                                  dist_surr
   double precision                                  lat, lon, lat_surr, lon_surr
+  double precision                                  lat_first, dlat, dlon
+  double precision                               :: thdist = 1000.0d0*1000.0d0  ! (1500km)
   double precision,dimension(8)                  :: a1ambi
-  integer,dimension(8)                           :: a1surrx, a1surry
+  integer,dimension(nx*ny)                       :: a1surrx, a1surry
 
-  double precision                               :: lat_first, dlon, dlat
-  double precision                               :: thdist = 1000.0d0*1000.0d0
   !----------------------------------------------------------
 lat_first = a1lat(1)
 dlat      = a1lat(2) - a1lat(1)
 dlon      = a1lon(2) - a1lon(1)
-!------
+
+!------------------
+a2pmean = miss_out
+a2pgrad = miss_out
 do iy = 1, ny
   do ix = 1, nx
     psl = a2psl(ix, iy)
-    if (psl .eq. miss_in)then
-      a2pmean(ix,iy) = miss_out
-      a2pgrad(ix,iy) = miss_out
-    else
+    if (psl .ne. miss_in) then
       !---------------
       ! ambient data
       !---------------
@@ -885,63 +891,67 @@ do iy = 1, ny
         end if
       end do
       !----------------
-      if (flag .eq. 1) then
-        a2pmean(ix, iy) = miss_out
-        a2pgrad(ix, iy) = miss_out
-      else if (flag .eq. 0) then
+      if (flag .eq. 0) then
+
         lat = a1lat(iy)
         lon = a1lon(ix) 
         !call mk_8gridsxy(ix, iy, nx, ny, a1surrx, a1surry)
-        !call circle_xy(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny,a1x, a1y)
-        print *, lat, lat_first, dlon, dlat, thdist
-        print *, miss_int, nx, ny
-
-        print *,"AAAAAAAAAAAAA"
         call circle_xy(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1surrx, a1surry)
-        print *,a1surrx
-        print *,a1surry
         pmean  = 0.0d0
         pgrad  = 0.0d0
-        icount = 0
         validnum= 0
         do ik = 1, nx*ny
-          icount   = icount + 1
-          ix_surr  = a1surrx(ik)
-          iy_surr  = a1surry(ik)
+
+          ix_surr_rad = a1surrx(ik)
+          iy_surr_rad = a1surry(ik)
+          if ((ix_surr_rad .eq. miss_int) .or. (iy_surr_rad .eq. miss_int)) cycle
+
+          ix_surr  = roundx(ix + ix_surr_rad, nx)
+          iy_surr  = iy + iy_surr_rad
+          if ((iy_surr .le. 0) .or. (iy_surr .gt. ny)) cycle
+          if (a2psl(ix_surr, iy_surr) .eq. miss_in) cycle
+          if ( (ix_surr .eq. ix) .and. (iy_surr .eq. iy) ) cycle
+
           lon_surr = a1lon(ix_surr)
           lat_surr = a1lat(iy_surr)
-          if (ix_surr .eq. miss_int) then
-            exit
-          end if
-          if ( a1ambi(ik) .ne. miss_in)then
-            validnum = validnum + 1
-            !------------
-            ! make pgrad
-            !------------
-            dist_surr  = hubeny(lat, lon, lat_surr, lon_surr)
-            pgrad_temp = ( a2psl(ix_surr, iy_surr) - a2psl(ix, iy) )/dist_surr * 1000.0 * 1000.0    ![Pa/1000km]
-            pgrad      = pgrad + pgrad_temp
-            !------------
-            pmean = pmean + a1ambi(ik)
-          end if
+
+          validnum = validnum + 1
+          !------------
+          ! make pgrad
+          !------------
+          dist_surr  = hubeny(lat, lon, lat_surr, lon_surr)
+          pgrad_temp = ( a2psl(ix_surr, iy_surr) - a2psl(ix, iy) )/dist_surr * 1000.0d0 * 1000.0d0    ![Pa/1000km]
+
+          pgrad      = pgrad + pgrad_temp
+          pmean      = pmean + a2psl(ix_surr, iy_surr)
+
+          if (pgrad_temp .gt. 1000000.0d0)then
+            print *, pgrad_temp, a2psl(ix_surr, iy_surr), dist_surr
+            print *, ix_surr, iy_surr
+            stop
+          endif
         end do
+
         if (validnum .eq. 0)then
           pmean = miss_out
           pgrad = miss_out
         else
-          pmean = pmean /validnum
-          pgrad = pgrad /validnum
+          pmean = pmean /dble(validnum)
+          pgrad = pgrad /dble(validnum)
         end if
         a2pmean(ix, iy) = pmean
         a2pgrad(ix, iy) = pgrad
+
       end if
     end if
+
     !---------------
   end do
 end do
 
 RETURN
 END SUBROUTINE findcyclone
+
 !*****************************************************************
 SUBROUTINE findcyclone_old(a2psl, a1lat, a1lon, miss_in, miss_out, nx, ny, a2pmean, a2pgrad)
   implicit none
@@ -1076,6 +1086,72 @@ end if
 RETURN
 END SUBROUTINE ixy2iixy
 !*****************************************************************
+SUBROUTINE circle_xy_light(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, nlen_out, a1x, a1y)
+  implicit none
+  !-- input -----------------------------
+  integer                               nx, ny, nlen_out
+  double precision                      lat, lat_first, dlon, dlat
+!f2py intent(in)                        lat, lat_first, dlon, dlat
+  double precision                      thdist  ![m]
+!f2py intent(in)                        thdist  ![m]
+  integer                               miss_int
+!f2py intent(in)                        miss_int
+  !-- output ----------------------------
+  integer,dimension(nlen_out)        :: a1x, a1y
+!f2py intent(out)                       a1x, a1y
+  !-- calc ------------------------------
+  integer                               icount
+  integer                               x, y, ix, iy, ix_loop, iy_loop
+  integer                               ngrids, sgrids, xgrids, ygrids
+  double precision                      idist, ilat, ilon
+  double precision                      lon
+!****************************************
+! search
+!----------------------------------------
+lon       = 0.0d0
+x  = 1
+y  = int((lat - lat_first)/dlat) + 1
+!-----------
+! set range
+!***********
+call gridrange(lat, dlat, dlon, thdist, ngrids, sgrids, xgrids)
+if (sgrids .ge. ngrids )then
+  ygrids = sgrids
+else
+  ygrids = ngrids
+end if
+!--
+!-----------
+! search loop
+!***********
+icount = 0
+a1x    = miss_int
+a1y    = miss_int
+
+do iy_loop = -ygrids, ygrids
+  do ix_loop = -xgrids, xgrids
+
+    call ixy2iixy(ix_loop, iy_loop, nx, ny, ix, iy)
+    ilat        = lat + iy_loop *dlat
+    ilon        = lon + ix_loop *dlon
+    idist       = hubeny(lat, lon, ilat, ilon)
+
+    if (idist .lt. thdist) then
+      icount = icount + 1
+      a1x(icount) = ix_loop   ! not ix
+      a1y(icount) = iy_loop   ! not iy
+    end if
+    if (icount .eq. nlen_out)then
+      exit
+    endif
+  end do
+end do
+
+ 
+RETURN
+END SUBROUTINE circle_xy_light
+
+
 !*****************************************************************
 SUBROUTINE circle_xy(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1x, a1y)
   implicit none
@@ -1112,8 +1188,6 @@ else
   ygrids = ngrids
 end if
 !--
-
-
 !-----------
 ! search loop
 !***********
@@ -1122,10 +1196,12 @@ a1x    = miss_int
 a1y    = miss_int
 do iy_loop = -ygrids, ygrids
   do ix_loop = -xgrids, xgrids
+
     call ixy2iixy(ix_loop, iy_loop, nx, ny, ix, iy)
     ilat        = lat + iy_loop *dlat
     ilon        = lon + ix_loop *dlon
     idist       = hubeny(lat, lon, ilat, ilon)
+
     if (idist .lt. thdist) then
       icount = icount + 1
       a1x(icount) = ix_loop   ! not ix

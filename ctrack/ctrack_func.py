@@ -60,12 +60,17 @@ def read_txtlist(iname):
   aout  = array(lines, float32)
   return aout
 #****************************************************
-#def solvelife(number):
-#  #pmin = int(number / 10000)
-#  #dura = number - pmin *10000
-#  dura = int(number / 1000000)
-#  pgmax = number - dura*1000000
-#  return (pgmax, dura)
+def solvelife_point_py(number, miss_int):
+  #pmin = int(number / 10000)
+  #dura = number - pmin *10000
+  if (number == miss_int):
+    dura   = miss_int
+    pgmax  = miss_int
+  else:
+    dura = int(number / 1000000)
+    pgmax = number - dura*1000000
+  #----
+  return (pgmax, dura)
 #**************************************************
 # make area [km2] map
 def cal_area(lat1, lat2, dlon):
