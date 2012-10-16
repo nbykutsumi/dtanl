@@ -5,11 +5,12 @@ import datetime
 #******************************************************
 idir_root = "/media/disk2/data/CMIP5/bn"
 #******************************************************
-lvar   = ["ua","va"]
+lvar   = ["va","ua"]
+#tstp   = "day"
 tstp   = "day"
 lmodel = ["NorESM1-M"]
 #lexpr  = ["historical", "rcp85"]
-lexpr  = ["rcp85"]
+lexpr  = ["historical"]
 ens    = "r1i1p1"
 dw     = 7
 #-----
@@ -21,7 +22,8 @@ diz    = {"700hPa":2}
 #******************************************************
 dlyrange     = {}
 #
-dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
+#dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
+dlyrange["NorESM1-M", "historical"]  = [[2000,2005]]
 dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
 #
 dlyrange["MIROC5", "historical"]  = [[1990,1999]]

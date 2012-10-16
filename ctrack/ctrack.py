@@ -196,30 +196,30 @@ for model in lmodel:
     #  ,miss_dbl       \
     #  ,thorog         \
     #  ))
-    ##**************************************************
-    ##  call connectc.py
-    ##------------------
-    #cmd = bindir + "/connectc.py"
-    #print "cmd=",cmd
-    #os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
-    #  %(cmd           \
-    #  ,model          \
-    #  ,expr           \
-    #  ,ens            \
-    #  ,tstp           \
-    #  ,hinc           \
-    #  ,iyear          \
-    #  ,eyear          \
-    #  ,imon           \
-    #  ,emon           \
-    #  ,nx             \
-    #  ,ny             \
-    #  ,miss_dbl       \
-    #  ,miss_int       \
-    #  ,endh           \
-    #  ,thdp           \
-    #  ,thdist         \
-    #  ))
+    #**************************************************
+    #  call connectc.py
+    #------------------
+    cmd = bindir + "/connectc.py"
+    print "cmd=",cmd
+    os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
+      %(cmd           \
+      ,model          \
+      ,expr           \
+      ,ens            \
+      ,tstp           \
+      ,hinc           \
+      ,iyear          \
+      ,eyear          \
+      ,imon           \
+      ,emon           \
+      ,nx             \
+      ,ny             \
+      ,miss_dbl       \
+      ,miss_int       \
+      ,endh           \
+      ,thdp           \
+      ,thdist         \
+      ))
     
     ##**************************************************
     #  call cdens.py
@@ -506,38 +506,38 @@ for model in lmodel:
     #      , thorog\
     #      , iz500\
     #      ))
-    #**************************************************
-    #  call aggr_wfpr_day.py  # make num, sp, sp2  
-    #**************************************************
-    cmd  = bindir + "/aggr_wfpr_day.py"
-    print "cmd=", cmd
-    print "lcrad=",lcrad
-    print "lxth=",lxth
-    for crad in lcrad:
-      for season in lseason:
-        for xth in lxth:
-          print "xth=",xth, "crad=",crad
-          os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"%(\
-               cmd\
-              ,model   \
-              ,expr    \
-              ,ens     \
-              ,tstp    \
-              ,hinc    \
-              ,iyear   \
-              ,eyear   \
-              ,season  \
-              ,nx      \
-              ,ny      \
-              ,nz      \
-              ,miss_dbl\
-              ,miss_int\
-              ,crad    \
-              ,thdura  \
-              ,thorog  \
-              ,iz500   \
-              ,xth     \
-              ))
+    ##**************************************************
+    ##  call aggr_wfpr_day.py  # make num, sp, sp2  
+    ##**************************************************
+    #cmd  = bindir + "/aggr_wfpr_day.py"
+    #print "cmd=", cmd
+    #print "lcrad=",lcrad
+    #print "lxth=",lxth
+    #for crad in lcrad:
+    #  for season in lseason:
+    #    for xth in lxth:
+    #      print "xth=",xth, "crad=",crad
+    #      os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"%(\
+    #           cmd\
+    #          ,model   \
+    #          ,expr    \
+    #          ,ens     \
+    #          ,tstp    \
+    #          ,hinc    \
+    #          ,iyear   \
+    #          ,eyear   \
+    #          ,season  \
+    #          ,nx      \
+    #          ,ny      \
+    #          ,nz      \
+    #          ,miss_dbl\
+    #          ,miss_int\
+    #          ,crad    \
+    #          ,thdura  \
+    #          ,thorog  \
+    #          ,iz500   \
+    #          ,xth     \
+    #          ))
 
 
 

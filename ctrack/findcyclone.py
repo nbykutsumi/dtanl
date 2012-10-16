@@ -142,7 +142,7 @@ for year in range(iyear, eyear+1):
       
         apsl   = fromfile(pslname,   float32).reshape(ny, nx)
         apsl   = ma.masked_where(a2orog > thorog , apsl).filled(miss_dblout)
-        findcyclone_out = array(ctrack.findcyclone(apsl.T, a1lat, a1lon, -9999.0, miss_dblout), float32)
+        findcyclone_out = array(ctrack_fsub.findcyclone(apsl.T, a1lat, a1lon, -9999.0, miss_dblout), float32)
         apmean = findcyclone_out[0].T
         apgrad = findcyclone_out[1].T
         apmean.tofile(pmeanname)

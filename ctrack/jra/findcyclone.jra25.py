@@ -5,7 +5,7 @@ import os, sys
 #--------------------------------------------------
 tstp        = "6hr"
 hinc        = 6
-iyear       = 2000
+iyear       = 2002
 eyear       = 2004
 imon        = 1
 emon        = 12

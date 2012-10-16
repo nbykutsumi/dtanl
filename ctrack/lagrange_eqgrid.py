@@ -4,9 +4,10 @@ import ctrack_para
 import os, calendar
 import matplotlib.pyplot as plt
 import cf
+from cf.plot import BoundaryNormSymm
 #*************************************************************
 iyear     = 1990
-eyear     = 1993
+eyear     = 1990
 season    = "DJF"
 model     = "NorESM1-M"
 tstp     = "6hr"
@@ -18,10 +19,11 @@ nz_org    = 8
 iz500     = 3
 
 var       = "pr"
-thgrad_min    = 500.0  # Pa/1000km
-thgrad_max    = 1000.0 # Pa/1000km
-#thgrad_min    = 1000.0  # Pa/1000km
-#thgrad_max    = 2000.0  # Pa/1000km
+#thgrad_min    = 500.0  # Pa/1000km
+#thgrad_max    = 1000.0 # Pa/1000km
+dpgradrange   = ctrack_para.ret_dpgradrange()
+thgrad_min    = dpgradrange[0][0]
+thgrad_max    = dpgradrange[0][1]
 #---------------------
 dkm           = 100.0  # equal area grid resolution [km]
 nradeqgrid    = 30
@@ -77,6 +79,7 @@ didir_root["wap"]    = idir_root1 + "/%s"%("wap")
 #-------
 odir         = "/home/utsumi/bin/dtanl/ctrack/temp"
 oname_mean   = odir + "/%s.%s.%04.0f-%04.0f.bn"%(var, sreg, thgrad_min, thgrad_max)
+oname_cor    = odir + "/cc.%s.%s.%04.0f-%04.0f.bn"%(var, sreg, thgrad_min, thgrad_max)
 
 #---- lat and lon data :original ----------
 latname      = didir_root["pr"] + "/lat.txt"
@@ -91,13 +94,14 @@ lat_org_first  = a1lat_org[0]
 lon_org_first  = a1lon_org[0]
 
 #---- lat and lon data : original ---------
-a1lat_fin     = arange(-89.95, 89.95, 0.25)
-a1lon_fin     = arange(0.0, 359.95, 0.25)
-lat_fin_first = a1lat_fin[0]
-lon_fin_first = a1lon_fin[0]
-dlat_fin      = a1lat_fin[1] - a1lat_fin[0]
-dlon_fin      = a1lon_fin[1] - a1lon_fin[0]
-
+lat_fin_first = -89.95
+lon_fin_first = 0.05
+lat_fin_last  = 89.95
+lon_fin_last  = 359.95
+dlat_fin      = 0.1
+dlon_fin      = 0.1
+a1lat_fin     = arange(lat_fin_first, lat_fin_last + dlat_fin*0.5, dlat_fin)
+a1lon_fin     = arange(lon_fin_first, lon_fin_last + dlon_fin*0.5, dlon_fin)
 #------------------------------------------
 ymin_org      = int( (latmin - lat_org_first)/dlat_org )
 ymax_org      = int( (latmax - lat_org_first)/dlat_org )
@@ -111,10 +115,19 @@ else:
 lx_org      = range(xmin_org, xmax_org+1)
 ly_org      = range(ymin_org, ymax_org+1)
 
-#------------------------------------------
 #---- dummy ------------------------------
+a2one             = ones([ny_eqgrid, nx_eqgrid], float32)
+
 a2sum_eqgrid      = zeros([ny_eqgrid, nx_eqgrid], float32)
 a2num_eqgrid      = zeros([ny_eqgrid, nx_eqgrid], float32)
+
+#---- dummy for cor. coef ----------------
+a2cor_num         = zeros([ny_eqgrid, nx_eqgrid], float32)
+a2cor_SA          = zeros([ny_eqgrid, nx_eqgrid], float32)
+a2cor_SB          = zeros([ny_eqgrid, nx_eqgrid], float32)
+a2cor_SAB         = zeros([ny_eqgrid, nx_eqgrid], float32)
+a2cor_SA2         = zeros([ny_eqgrid, nx_eqgrid], float32)
+a2cor_SB2         = zeros([ny_eqgrid, nx_eqgrid], float32)
 #-----------------------------------------
 i = 0
 for year in range(iyear, eyear+1):
@@ -152,13 +165,6 @@ for year in range(iyear, eyear+1):
 
         #--- original --> fine grid ---
         a2in_fin        = cf.biIntp(a1lat_org, a1lon_org, da2in[var], a1lat_fin, a1lon_fin)[0] 
-        ##--- join data to expand the area -----
-        #da2in_temp           = {}
-        #da2in_temp["pgrad"]  = c_[da2in["pgrad"], da2in["pgrad"], da2in["pgrad"]]
-        ##da2in_temp["life"]   = c_[da2in["life"], da2in["life"], da2in["life"]]
-
-        ##-
-        #a2in_fin_temp        = c_[a2in_fin, a2in_fin, a2in_fin]
 
         #--- cyclone center data -------------
         da2in["center"] = ma.masked_less(da2in["pgrad"], 0.0).filled(0.0)
@@ -186,20 +192,47 @@ for year in range(iyear, eyear+1):
                                   , dkm\
                                   , nradeqgrid\
                                   , iy_fin_fort\
-                                  , ix_fin_fort) 
+                                  , ix_fin_fort\
+                                  , miss_out) 
  
-              a2sum_eqgrid  = a2sum_eqgrid + a2sum_eqgrid_temp.T
-              a2num_eqgrid  = a2num_eqgrid + a2num_eqgrid_temp.T
+              a2sum_eqgrid_temp = a2sum_eqgrid_temp.T
+	      a2num_eqgrid_temp = a2num_eqgrid_temp.T
 
+	      a2sum_eqgrid  = a2sum_eqgrid + a2sum_eqgrid_temp
+              a2num_eqgrid  = a2num_eqgrid + a2num_eqgrid_temp
+
+              #--- for correlation coefficient ------
+	      a2cor_num_temp= ma.masked_where( a2num_eqgrid_temp <=0.0, a2one).filled(0.0)
+	      a2cor_A_temp = (ma.masked_where(a2num_eqgrid_temp==0.0, a2sum_eqgrid_temp) / a2num_eqgrid_temp).filled(0.0)
+	      a2cor_B_temp = a2cor_num_temp * da2in["pgrad"][iy_org, ix_org]
+
+              a2cor_num     = a2cor_num + a2cor_num_temp
+	      a2cor_SA      = a2cor_SA  + a2cor_A_temp
+	      a2cor_SB      = a2cor_SB  + a2cor_B_temp
+	      a2cor_SAB     = a2cor_SAB + a2cor_A_temp * a2cor_B_temp
+	      a2cor_SA2     = a2cor_SA2 + a2cor_A_temp **2.0
+	      a2cor_SB2     = a2cor_SB2 + a2cor_B_temp **2.0
 #----------------------------------------------
 a2mean_eqgrid  = ma.masked_where(a2num_eqgrid ==0.0, a2sum_eqgrid) / a2num_eqgrid
 a2mean_eqgrid  = a2mean_eqgrid.filled(0.0)
 
+#-- corr. coeff -------
+a2cor_MA       = (ma.masked_where(a2cor_num ==0.0, a2cor_SA) / a2cor_num).filled(0.0)
+a2cor_MB       = (ma.masked_where(a2cor_num ==0.0, a2cor_SB) / a2cor_num).filled(0.0)
+#
+a2cor_bunshi   = a2cor_SAB - a2cor_MB * a2cor_SA - a2cor_MA * a2cor_SB + a2cor_num * a2cor_MA * a2cor_MB
+
+a2cor_bunbo1   = a2cor_SA2 - 2.0 * a2cor_MA * a2cor_SA + a2cor_num * a2cor_MA**2.0
+
+a2cor_bunbo2   = a2cor_SB2 - 2.0 * a2cor_MB * a2cor_SB + a2cor_num * a2cor_MB**2.0
+
+a2cor_bunbo    = (a2cor_bunbo1 * a2cor_bunbo2)**0.5
+a2cor_eqgrid   = ( ma.masked_where(a2cor_bunbo == 0.0, a2cor_bunshi) / a2cor_bunbo ).filled(0.0)
+
 #-- save --------------
 a2mean_eqgrid.tofile(oname_mean)
+a2cor_eqgrid.tofile(oname_cor)
 #-- figure ---------------------
-
-
 
 if var == "pr":
   coef = 60*60*24.0
@@ -214,3 +247,14 @@ plt.colorbar()
 plt.savefig(figname_mean)
 plt.clf()
 print figname_mean
+
+#-- figure corr. coef --------
+bnd          = [-0.5, -0.4, -0.3, -0.2, -0.1, -0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+a2cor_eqgrid = fromfile(oname_cor, float32).reshape(ny_eqgrid, nx_eqgrid)
+figname_cor  = oname_cor[:-3] + ".png"
+plt.clf()
+plt.imshow(a2cor_eqgrid, origin="lower", interpolation="nearest", vmin= -0.5, vmax=0.5, norm=BoundaryNormSymm(bnd), cmap="RdBu_r")
+plt.colorbar()
+plt.savefig(figname_cor)
+plt.clf()
+print figname_cor

@@ -6,13 +6,15 @@ CONTAINS
 !*****************************************************************
 !* SUBROUTINE & FUNCTION
 !*****************************************************************
-SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_in, a2sum, a2num)
+SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, miss, ny_in, nx_in, a2sum, a2num)
   implicit none
   !-- input -------------------------------------
   integer                                        ny_in, nx_in
 
   integer                                        nrad_kmgrid, iy, ix
 !f2py intent(in)                                 nrad_kmgrid, iy, ix
+  real                                           miss
+!f2py intent(in)                              :: miss
   real,dimension(nx_in, ny_in)                :: a2in
 !f2py intent(in)                                 a2in
   real,dimension(ny_in)                       :: a1lat
@@ -96,6 +98,9 @@ SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, ny_in, nx_i
 
       !-- check iix_kmgrid
       if ((iix_kmgrid .le. 0).or.(iix_kmgrid .gt. nx_kmgrid))cycle
+
+      !-- check miss value -------
+      if (a2in(iix_latlongrid, iiy_latlongrid) .eq. miss)cycle
 
       !-- sum up -------
       a2sum(iix_kmgrid, iiy_kmgrid) = a2sum(iix_kmgrid, iiy_kmgrid) + a2in(iix_latlongrid, iiy_latlongrid)
