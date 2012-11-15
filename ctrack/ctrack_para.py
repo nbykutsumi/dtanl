@@ -35,7 +35,7 @@ def ret_iy_ey(expr):
     #[iy, ey] = [1990, 1999]
     #[iy, ey] = [1980, 1989]
     #[iy, ey] = [1980, 1999]
-    [iy, ey] = [2000, 2004]
+    [iy, ey] = [1980, 2005]
   elif expr == "rcp85":
     #[iy, ey] = [2086, 2095]
     #[iy, ey] = [2076, 2085]
@@ -51,6 +51,8 @@ def ret_im_em(season):
 def ret_lmon(season):
   if season == "DJF":
     lmon  = [1,2, 12]
+  elif season == "ALL":
+    lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
   return lmon
 #-----------------------------------
 def ret_mons(season):

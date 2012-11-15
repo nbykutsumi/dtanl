@@ -1,14 +1,41 @@
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
+import matplotlib
 from numpy import *
 import calendar
 import ctrack_para
 import ctrack_func
 import sys, os
+import gsmap_func
+from cf.plot import *
+import datetime
 #--------------------------------------
+#vtype   = "GSMaP"
+#vtype   = "GPCP1DD"
+lvtype   = ["GSMaP","JRA"]
+#vtype   = "JRA"
+iyear   = 2004
+eyear   = 2004
+imon    = 1
+emon    = 12
+iday    = 1
+
+thdura  = 24
 
 #**********************************************
-def tenkizu_single(year, mon, day, hour):
+def shifttime(year, mon, day, hour, hour_inc):
+  now         = datetime.datetime(year, mon, day, hour)
+  dhour       = datetime.timedelta(hours = hour_inc)
+  target      = now + dhour
+  year_target = target.year
+  mon_target  = target.month
+  day_target  = target.day
+  hour_target = target.hour
+  return (year_target, mon_target, day_target, hour_target)
+#**********************************************
+
+
+def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
   ny      = 180
   nx      = 360
   # local region ------
@@ -16,21 +43,20 @@ def tenkizu_single(year, mon, day, hour):
   # corner points should be
   # at the center of original grid box
   lllat   = 20.
-  urlat   = 50.
+  urlat   = 60.
   lllon   = 110.
-  urlon   = 165.
+  urlon   = 160.
   
-  thdura  = 24
   miss_int= -9999
 
 
   stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
 
-  sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu"
+  sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh"%(thdura)
   sodir         = sodir_root + "/%04d%02d"%(year, mon)
   ctrack_func.mk_dir(sodir)
 
-  soname        = sodir + "/tenkizu.%s.png"%(stime)
+  soname        = sodir + "/tenkizu.%04d.%02d.%02d.%02d.%s.png"%(year, mon, day, hour, vtype)
   #----------------------------
   dlat    = 1.0
   dlon    = 1.0
@@ -45,8 +71,59 @@ def tenkizu_single(year, mon, day, hour):
   lclass  = dpgradrange.keys()
   nclass  = len(lclass)
   thpgrad = dpgradrange[0][0]
+  #--- value ------------------
+  a2v           = zeros([ny, nx])
+  a2num         = zeros([ny, nx])
+  a2one         = ones([ny, nx])
+  #
+  if vtype == "GSMaP":
+    lhour_inc     = [-3, 0, 3, 6]
+    for hour_inc in lhour_inc:
+      (year_t, mon_t, day_t, hour_t) = shifttime(year, mon, day, hour, hour_inc)
+      print day, year_t, mon_t, day_t, hour_t
+      vdir_root  = "/media/disk2/data/GSMaP/sa.one/3hr/ptot"
+      vdir       = vdir_root + "/%04d%02d"%(year_t, mon_t)
+      vname      = vdir + "/gsmap_mvk.3rh.%04d%02d%02d.%02d00.v5.222.1.sa.one"%(year_t, mon_t, day_t, hour_t)
+      a2v_t      = fromfile(vname, float32).reshape(120, 360)
+      a2v_t      = gsmap_func.gsmap2global_one(a2v_t, -9999.0)
+      a2num_t    = ma.masked_where(a2v_t ==-9999.0, a2one).filled(0.0)
+      a2num      = a2num + a2num_t
+      a2v        = a2v + ma.masked_equal(a2v_t, -9999.0)
+    #--
+    #a2v        = ma.masked_where(a2num < len(lhour_inc), a2v)/a2num
+    a2v        = a2v / len(lhour_inc)
+    a2v        = a2v*60*60*24.0
+    a2v        = a2v.filled(-9999.0)
+    a2mask     = a2v
+
+
+    if day == 22:
+      array(a2v,float32).tofile("./temp.sa.one")
+      array(a2num, float32).tofile("./num.sa.one")
+
+  if vtype == "GPCP1DD":
+    vdir_root     = "/media/disk2/data/GPCP1DD/data/1dd"
+    vdir          = vdir_root + "/%04d"%(year)
+    vname         = vdir + "/gpcp_1dd_v1.1_p1d.%04d%02d%02d.bn"%(year, mon, day)
+    a2v           = fromfile(vname, float32).reshape(ny, nx)
+    a2v           = flipud(a2v)
+
+  if vtype == "JRA":
+    lhour_inc     = [0,6]
+    for hour_inc in lhour_inc:
+      (year_t, mon_t, day_t, hour_t) = shifttime(year, mon, day, hour, hour_inc)
+      print day, year_t, mon_t, day_t, hour_t
+
+      vdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PR"
+      vdir          = vdir_root + "/%04d%02d"%(year_t, mon_t)
+      vname         = vdir + "/fcst_phy2m.PR.%04d%02d%02d%02d.sa.one"%(year_t, mon_t, day_t, hour_t)
+      a2v_t         = fromfile(vname, float32).reshape(ny, nx)
+      a2v           = a2v + a2v_t
+    #--
+    a2v           = a2v / len(lhour_inc)
+    a2v           = a2v * 60*60*24.0
+
   #----------------------------
-  
   
   psldir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL"
   pgraddir_root   = "/media/disk2/out/JRA25/sa.one/6hr/pgrad"
@@ -114,11 +191,44 @@ def tenkizu_single(year, mon, day, hour):
   figmap   = plt.figure()
   axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
   M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
-  
+
   #-- transform -----------
   print "transform"
+  if vtype in ["GSMaP"]:
+    a2v_trans    = M.transform_scalar( ma.masked_equal(a2v, -9999.0),   a1lon, a1lat, nnx, nny).data
+    a2mask_trans = M.transform_scalar( ma.masked_equal(a2mask, -9999.0), a1lon, a1lat, nnx, nny).data
+
+  else:
+    a2v_trans    = M.transform_scalar( a2v,   a1lon, a1lat, nnx, nny) 
+  #--- 
   a2psl_trans  = M.transform_scalar( a2psl, a1lon, a1lat, nnx, nny)
-  
+  #
+
+  #-- boundaries ----------
+  if vtype in ["GSMaP", "GPCP1DD", "JRA"]:
+    #bnd        = [1,3,5,7,9,11,13,15,17]
+    bnd        = [1,5,10,15,20,25,30,35,40,45,50,55,60]
+    bnd_cbar   = [-1.0e+40] + bnd + [1.0e+40]
+
+  #-- color ---------------
+  #scm      = "gist_stern_r"
+  #scm      = "gist_ncar_r"
+  #scm      = "jet"
+  #scm      = "rainbow"
+  scm      = "Spectral_r"
+  #scm      = "gist_rainbow"
+  cminst   = matplotlib.cm.get_cmap(scm, len(bnd))
+  acm      = cminst( arange( len(bnd) ) )
+  lcm      = [[1,1,1,1]]+ acm.tolist()
+  mycm      = matplotlib.colors.ListedColormap( lcm )
+  #-- value imshow --------
+  im       = M.imshow(a2v_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm, interpolation="nearest")
+
+  #-- superimpose shape (mask) ---
+  if vtype in ["GSMaP"]:
+    cmshade  = matplotlib.colors.ListedColormap([(0.8, 0.8, 0.8), (0.8, 0.8, 0.8)])
+    a2shade  = ma.masked_where(a2mask_trans != -9999.0, a2mask_trans)
+    im       = M.imshow(a2shade, origin="lower", cmap=cmshade, interpolation="nearest")
   #-- contour   -----------
   print "contour"
   llevels  = arange(900.0, 1100.0, 2.0).tolist()
@@ -145,31 +255,55 @@ def tenkizu_single(year, mon, day, hour):
   #-- meridians and parallels
   M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1]) 
   M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0]) 
+  #-- title -------------------
+  stitle   = "%s"%(vtype)
+  stitle   = stitle + "\n" +"%04d-%02d-%02d  JST %02d:00"%(year, mon, day, hour)
+  axmap.set_title("%s"%(stitle))
+
   #-- save --------------------
   print "save"
   plt.savefig(soname)
   plt.clf()
   print soname
+  #-------------------
+
+  # for colorbar ---
+  if cbarflag == True:
+    figmap   = plt.figure()
+    axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
+    M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
+    a2v_trans    = M.transform_scalar( a2v,   a1lon, a1lat, nnx, nny) 
+    im       = M.imshow(a2v_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm)
+  
+    figcbar   = plt.figure(figsize=(5, 0.6))
+    axcbar    = figcbar.add_axes([0, 0.4, 1.0, 0.6])
+    bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
+    plt.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar, orientation="horizontal")
+    #plt.colorbar(im, boundaries= bnd_cbar, extend="max", cax=axcbar, orientation="horizontal")
+  
+    cbarname  = sodir + "/cbar.%s.png"%(vtype)
+    figcbar.savefig(cbarname)
+    
 #***************************************
 
-iyear   = 2001
-eyear   = 2001
-imon    = 1
-emon    = 12
-
-iday    = 1
-
-for year in range(iyear, eyear+1):
-  for mon in range(imon, emon+1):
-    ##############
-    # no leap
-    ##############
-    if (mon==2)&(calendar.isleap(year)):
-      eday = calendar.monthrange(year,mon)[1] -1
-    else:
+for vtype in lvtype:
+  for year in range(iyear, eyear+1):
+    for mon in range(imon, emon+1):
+      ##############
+      # no leap
+      ##############
+      #if (mon==2)&(calendar.isleap(year)):
+      #  eday = calendar.monthrange(year,mon)[1] -1
+      #else:
+      #  eday = calendar.monthrange(year,mon)[1]
+  
       eday = calendar.monthrange(year,mon)[1]
-    #-------------
-    for day in range(iday, eday+1):
-      print year, mon
-      for hour in [12]:
-        tenkizu_single(year, mon, day, hour)
+      #-------------
+      for day in range(iday, eday+1):
+        print year, mon
+        for hour in [12]:
+          if ((year==iyear)&(mon==imon)&(day==iday)):
+            cbarflag=True
+          else:
+            cbarflag=False
+          tenkizu_single(year, mon, day, hour, vtype, cbarflag)

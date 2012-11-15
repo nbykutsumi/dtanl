@@ -63,13 +63,15 @@ for year in range(iyear, eyear+1):
     #*************
     odir       = odir_root + "/%04d%02d"%(year, mon)
     mk_dir(odir)
-    #*************
-    # no leap
-    #*************
-    if (mon==2)&(calendar.isleap(year)):
-      ed = calendar.monthrange(year,mon)[1] -1
-    else:
-      ed = calendar.monthrange(year,mon)[1]
+    ##*************
+    ## no leap
+    ##*************
+    #if (mon==2)&(calendar.isleap(year)):
+    #  ed = calendar.monthrange(year,mon)[1] -1
+    #else:
+    #  ed = calendar.monthrange(year,mon)[1]
+
+    ed = calendar.monthrange(year,mon)[1]
     #*************
     for day in range(1, ed + 1):
       stime  = "%04d%02d%02d%02d"%(year,mon,day, 0)

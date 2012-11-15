@@ -18,29 +18,24 @@ miss_cmip  = 1.0e+20
 miss_dbl = -9999.0
 miss_int = -9999
 
+nx     = 360
+ny     = 180
 ###################
 # set dnz, dny, dnx
 ###################
-dnx    = {}
-dny    = {}
 dnz    = {}
 diz500 = {}
 #
 model = "NorESM1-M"
 dnz.update({(model,"psl"):1, (model,"ua"):1, (model,"va"):1, (model,"hus"):8, (model,"ta"):8, (model,"wap"):8, (model,"zg"):8, (model,"huss"):1, (model,"psl"):1, (model,"tas"):1, (model,"prc"):1, (model,"pr"):1, (model,"rhs"):1})
-dny[model] = 96
-dnx[model] = 144
 diz500[model] = 3
 #
 model = "MIROC5"
 dnz.update({(model,"psl"):1, (model,"ua"):1, (model,"va"):1, (model,"hus"):8, (model,"ta"):8, (model,"wap"):8, (model,"zg"):8, (model,"huss"):1, (model,"psl"):1, (model,"tas"):1, (model,"prc"):1, (model,"pr"):1, (model,"rhs"):1})
-dny[model] = 128
-dnx[model] = 256
+diz500[model] = 3
 #
 model = "CanESM2"
 dnz.update({(model,"psl"):1, (model,"ua"):1, (model,"va"):1, (model,"hus"):8, (model,"ta"):8, (model,"wap"):8, (model,"zg"):8, (model,"huss"):1, (model,"psl"):1, (model,"tas"):1, (model,"prc"):1, (model,"pr"):1, (model,"rhs"):1})
-dny[model] = 64
-dnx[model] = 128
 
 #####################################################
 tstp  = "6hr"
@@ -50,8 +45,7 @@ dendh = { "6hr":18}
 endh  = int(dendh[tstp])
 #lmodel = ["NorESM1-M", "MIROC5","CanESM2"]
 #lmodel = ["MIROC5", "CanESM2"]
-#lmodel = ["MIROC5"]
-lmodel = ["NorESM1-M"]
+lmodel = ["MIROC5"]
 #lexprtype = ["his", "fut"]
 lexprtype = ["his"]
 dexpr={}
@@ -126,8 +120,6 @@ bindir    = "/home/utsumi/bin/dtanl/ctrack"
 oekakidir = "/home/utsumi/bin/dtanl/ctrack/oekaki"
 for model in lmodel:
   #----------------------------------------------------
-  ny = dny[model]
-  nx = dnx[model]
   nz = dnz[model, "wap"]
   iz500 = diz500[model]
   #****************************************************
@@ -143,7 +135,7 @@ for model in lmodel:
     #****************************************************
     # read lat, lon data
     #----------------------
-    axisdir_root    = "/media/disk2/data/CMIP5/bn/psl/%s"%(tstp)
+    axisdir_root    = "/media/disk2/data/CMIP5/sa.one/psl/%s"%(tstp)
     axisdir    = axisdir_root  + "/%s/%s/%s"%(model, expr, ens)
     latname    = axisdir  + "/lat.txt"
     lonname    = axisdir  + "/lon.txt"
@@ -154,7 +146,7 @@ for model in lmodel:
     
     lat_first  = a1lat[0]
     #-------
-    a2area = array(zeros(ny*nx), float32).reshape(96,144)
+    a2area = array(zeros(ny*nx), float32).reshape(ny,nx)
     #---
     for iy in [0, ny-1]:
       lat           = a1lat[iy]
@@ -178,7 +170,7 @@ for model in lmodel:
     #**************************************************
     #  call findcyclone   # pgrad is made too.
     #------------------
-    cmd = bindir + "/findcyclone.py"
+    cmd = bindir + "/findcyclone.one.py"
     print "cmd=",cmd
     os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
       %(cmd           \
@@ -199,7 +191,7 @@ for model in lmodel:
     #**************************************************
     #  call connectc.py
     #------------------
-    cmd = bindir + "/connectc.py"
+    cmd = bindir + "/connectc.one.py"
     print "cmd=",cmd
     os.system("python %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s"\
       %(cmd           \
@@ -255,7 +247,7 @@ for model in lmodel:
       #-----------------
       doutdir           = {}
       for year in range(iyear, eyear+1) + [0]:
-        doutdir[year]   = "/media/disk2/out/CMIP5/6hr/%s/%s/%s/tracks/map/%04d"%(model, expr, ens, year)
+        doutdir[year]   = "/media/disk2/out/CMIP5/sa.one/6hr/%s/%s/%s/tracks/map/%04d"%(model, expr, ens, year)
       #------------------
       ddens_area_name   = {}
       ddens_area_u_name = {}
@@ -265,18 +257,18 @@ for model in lmodel:
       # names: dens and track
       #---------------------------
       for iclass in lclass:
-        dtrack_name[iclass]              = doutdir[0]    + "/track.grid.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.bn"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
+        dtrack_name[iclass]              = doutdir[0]    + "/track.grid.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.sa.one"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
         #--
         for year in range(iyear, eyear+1) + [0]:
-          ddens_area_name[year, iclass]  = doutdir[year] + "/dens.area.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.bn"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
+          ddens_area_name[year, iclass]  = doutdir[year] + "/dens.area.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.sa.one"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
       #---------------------------
       # names: dens and track for upper side
       #---------------------------
       for iclass in lclass[1:]:
-        dtrack_u_name[iclass]          = doutdir[0] + "/u.track.grid.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.bn"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
+        dtrack_u_name[iclass]          = doutdir[0] + "/u.track.grid.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.sa.one"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
         #--
         for year in range(iyear, eyear+1) + [0]: 
-          ddens_area_u_name[year, iclass]        = doutdir[year]    + "/u.dens.area.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.bn"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
+          ddens_area_u_name[year, iclass]        = doutdir[year]    + "/u.dens.area.dura%02d.nc%02d.c%02d_%s_%s_%s_%s_%s.sa.one"%(thdura, nclass, iclass, season, tstp, model, expr, ens)
 
 
       ##************************************

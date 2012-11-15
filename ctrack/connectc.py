@@ -43,17 +43,23 @@ thdist      = float(sys.argv[16])
 #####################################################
 # functions
 #####################################################
-def xy2fortpos(ix, iy, nx):
-  number = iy* nx + ix +1
+def fortxy2fortpos(ix, iy, nx):
+  ix     = ix + 1  # ix = 1,2,.. nx
+  iy     = iy + 1  # iy = 1,2,.. ny
+  #number = iy* nx + ix +1
+  number = (iy-1)* nx + ix
   return number
 #####################################################
-def fortpos2xy(number, nx, miss_int):
+def fortpos2pyxy(number, nx, miss_int):
   if (number == miss_int):
     iy0 = miss_int
     ix0 = miss_int
   else:
-    iy0 = int(number/nx)         # iy0 = 0, 1, 2, ..
-    ix0 = number - nx*iy0 -1     # ix0 = 0, 1, 2, ..
+    iy0 = int((number-1)/nx)  +1  # iy0 = 1, 2, ..
+    ix0 = number - nx*(iy0-1)     # ix0 = 1, 2, ..
+
+    iy0 = iy0 -1    # iy0 = 0, 1, .. ny-1
+    ix0 = ix0 -1    # ix0 = 0, 1, .. nx-1
   #----
   return ix0, iy0
 #####################################################
@@ -332,7 +338,7 @@ for year in range(iyear, eyear+1):
         #    idate1   = a2idate1[iy1, ix1]
         #    time1    = a2time1[iy1, ix1]
         #    lastpos1 = a2lastpos1[iy1, ix1]
-        #    (ix0, iy0) = fortpos2xy( lastpos1, nx, miss_int)
+        #    (ix0, iy0) = fortpos2pyxy( lastpos1, nx, miss_int)
         #    if (ix0 != miss_int):
         #      psl0   = a2psl0[iy0, ix0]
         #      pmin0  = a2pmin0[iy0, ix0]
@@ -435,7 +441,7 @@ for year in range(eyear, iyear -1, -1):
               pgmax1   = a2pgmax1[iy1, ix1]
               time1    = a2time1[iy1, ix1]
               lifenext = a2lifenext[iy1, ix1]
-              (ix0,iy0) = fortpos2xy(a2lastpos1[iy1,ix1], nx, miss_int)
+              (ix0,iy0) = fortpos2pyxy(a2lastpos1[iy1,ix1], nx, miss_int)
               #---- 
               if (lifenext == miss_int):
                 #life1 = 10000 * int(pgmax1) + time1
@@ -456,7 +462,7 @@ for year in range(eyear, iyear -1, -1):
               # make "a2nextpos0"
               #***************
               if (iy0 != miss_int):
-                a2nextpos0[iy0, ix0] = xy2fortpos(ix1, iy1, nx)
+                a2nextpos0[iy0, ix0] = fortxy2fortpos(ix1, iy1, nx)
         #-------------------
         # replace a2lifenext with new data
         #*******************

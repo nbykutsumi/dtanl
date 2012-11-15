@@ -5,7 +5,7 @@ import os, sys
 #--------------------------------------------------
 tstp        = "6hr"
 hinc        = 6
-iyear       = 2002
+iyear       = 2000
 eyear       = 2004
 imon        = 1
 emon        = 12
@@ -89,15 +89,18 @@ for year in range(iyear, eyear+1):
     mk_dir(pmeandir)
     mk_dir(pgraddir)
 
-    ##############
-    # no leap
-    ##############
-    if (mon==2)&(calendar.isleap(year)):
-      ed = calendar.monthrange(year,mon)[1] -1
-    else:
-      ed = calendar.monthrange(year,mon)[1]
+    ###############
+    ## no leap
+    ###############
+    #if (mon==2)&(calendar.isleap(year)):
+    #  ed = calendar.monthrange(year,mon)[1] -1
+    #else:
+    #  ed = calendar.monthrange(year,mon)[1]
+    #
+    ed = calendar.monthrange(year,mon)[1]
     ##############
     for day in range(1, ed+1):
+    #for day in range(28, ed+1):
       for hour in range(0, 23+1, hinc):
         stimeh  = "%04d%02d%02d%02d"%(year,mon,day,hour)
         #***************************************

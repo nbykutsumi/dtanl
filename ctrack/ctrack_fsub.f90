@@ -294,7 +294,7 @@ SUBROUTINE connectc(&
         &, nx, ny)
   implicit none  
   !**************************************
-  ! a2lastpos returns nx*(iy -1) + nx
+  ! a2lastpos returns nx*(iy -1) + ix
   ! where ix = 1,2, .. nx,   iy = 1, 2, .. ny
   ! NOT ix = 0, 1, .. nx-1,  iy = 0, 1, .. ny
 
