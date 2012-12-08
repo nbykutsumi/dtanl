@@ -1,11 +1,8 @@
 MODULE dtanl_fsub
 
 CONTAINS
-
-
-
 !*********************************************************
-SUBROUTINE mk_a2frontogen_def(a2thermo, a2uwind, a2vwind, nx, ny, a2frontogen_def)
+SUBROUTINE mk_a2frontogen_def(a2thermo, a2uwind, a2vwind, nx, ny, a2frontogen_div)
 implicit none
 !--- in -------
 integer                  nx, ny
@@ -21,10 +18,9 @@ real                     lat, dns, dew
 integer                  ix, iy
 integer                  ixn, ixs, ixw, ixe
 integer                  iyn, iys, iyw, iye
-real                     un, us, uw, ue, vn, vs, vw, ve
+real                     uw, ue, vn, vs
 real                     thermon, thermos, thermow, thermoe
-real                     abs_nabla_thermo
-real                     D1, D2
+real                     abs_nabla_thermo, div
 !----parameter -
 real                  :: lat_first = -89.5
 !--------------
@@ -44,29 +40,23 @@ do iy = 1,ny
     thermow  = a2thermo(ixw, iyw)
     thermoe  = a2thermo(ixe, iye)
     !
-    un       = a2uwind(ixn,iyn)
-    us       = a2uwind(ixs,iys)
     uw       = a2uwind(ixw,iyw)
     ue       = a2uwind(ixe,iye)
     vn       = a2vwind(ixn,iyn)
     vs       = a2vwind(ixs,iys)
-    vw       = a2vwind(ixw,iyw)
-    ve       = a2vwind(ixe,iye)
     !
     abs_nabla_thermo  =( ((thermow-thermoe)/dew)**2.0 + ((thermon-thermos)/dns)**2.0 )**0.5
     !
-    D1       = (ue-uw)/dew - (vn-vs)/dns
-    D2       = (ve-vw)/dew + (un-us)/dns
+    div      = (ue-uw)/dew + (vn-vs)/dns
     !---
-    a2frontogen_def(ix,iy) =-0.5/abs_nabla_thermo    &
-           *(   D1*( ( (thermoe-thermow)/dew )**2.0  &
-                    -( (thermon-thermos)/dns )**2.0 )&
-             +2*D2*(thermoe-thermow)/dew*(thermon-thermos)/dns )
-    !---
+    a2frontogen_div(ix,iy)  = -0.5*abs_nabla_thermo*div
+!    a2frontogen_div(ix,iy)  = a2uwind(ix,iy)
+!    !---
   end do
 end do
 return
-END SUBROUTINE mk_a2frontogen_def
+END SUBROUTINE mk_a2frontogen_div
+
 
 !*********************************************************
 SUBROUTINE mk_a2frontogen_div(a2thermo, a2uwind, a2vwind, nx, ny, a2frontogen_div)

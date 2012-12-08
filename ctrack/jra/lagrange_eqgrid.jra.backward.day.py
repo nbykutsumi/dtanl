@@ -17,8 +17,8 @@ ny_org    = 180
 
 var       = "pr"
 
-#aphromask = "TRUE"
-aphromask = "FALSE"
+aphromask = "TRUE"
+#aphromask = "FALSE"
 lmon      = ctrack_para.ret_lmon(season)
 #lmon      = [1]
 #thgrad_min    = 500.0  # Pa/1000km
@@ -28,8 +28,7 @@ dpgradrange   = ctrack_para.ret_dpgradrange()
 #lclass        = [0,1]
 #lclass        = [2,3]
 #lclass        = [4]
-#lclass        = [0,1,2,3,4]
-lclass        = [0,1,2,3]
+lclass        = [0,1,2,3,4]
 #-------------------------------------------
 miss_out  = -9999.0
 miss_gpcp = -99999.
@@ -43,6 +42,7 @@ miss_gpcp = -99999.
 #lvtype        = ["APHRO_MA"]
 #lvtype        = ["APHRO_MA","JRA"]
 lvtype        = ["GSMaP","JRA","APHRO_MA","GPCP1DD"]
+#lvtype        = ["JRA","APHRO_MA","GPCP1DD"]
 #lvtype        = ["GSMaP","JRA","GPCP1DD"]
 #lvtype        = ["GSMaP"]
 #---------------------
@@ -52,8 +52,8 @@ nx_eqgrid     = nradeqgrid*2 + 1
 ny_eqgrid     = nradeqgrid*2 + 1
 #---------------------
 latmin    = 30.0
-#latmax    = 54.0
-latmax    = 38.0
+latmax    = 54.0
+#latmax    = 38.0
 lonmin    = 60.0
 lonmax    = 149.5
 
@@ -119,9 +119,10 @@ for vtype in lvtype:
   
   #-------
   if aphromask == "TRUE":
-    odir         = "/home/utsumi/bin/dtanl/ctrack/temp/%s/day/land/%s"%(season, sreg)
+    #odir         = "/home/utsumi/bin/dtanl/ctrack/temp/%s/day/land/%s"%(season, sreg)
+    odir         = "/media/disk2/out/cyclone/composite/%s/day/land/%s"%(season, sreg)
   else:
-    odir         = "/home/utsumi/bin/dtanl/ctrack/temp/%s/day/nomask/%s"%(season, sreg)
+    odir         = "/media/disk2/out/cyclone/composite/%s/day/nomask/%s"%(season, sreg)
 
   #odir = odir +"/test"
   #-------
@@ -226,7 +227,7 @@ for vtype in lvtype:
         eday  = calendar.monthrange(year, mon)[1]
         #-----------------
         for day in range(1, eday+1):
-        #for day in range(28, eday+1):
+        #for day in [2,3]:
           print lclass, iclass, vtype, year, mon, day, "eday=",eday
           print "lmon=" , lmon
           #for hour in lhour:
@@ -273,7 +274,9 @@ for vtype in lvtype:
                 didir[var] = didir_root[var] + "/%04d%02d"%(year_target, mon_target)
               elif vtype:
                 didir[var] = didir_root[var] + "/%04d"%(year_target)
-   
+
+              #if vtype in ["GSMaP"]:
+              #  didir[var] = didir[var] + "/test" 
               #-- prec name --
               if var == "pr":
                 if vtype == "GSMaP":
@@ -390,7 +393,7 @@ for vtype in lvtype:
                   a2count_eqgrid       = a2count_eqgrid + a2count_eqgrid_temp
                   #--- for max  ---------
                   a2temp               = ma.masked_where(a2num_eqgrid_temp ==0.0, a2sum_eqgrid_temp)/a2num_eqgrid_temp
-                  a2temp.filled(miss_out)
+                  a2temp               = a2temp.filled(miss_out)
                   a2max_eqgrid         = ma.maximum(a2max_eqgrid, a2temp).data
     #----------------------------------------------
     a2mean_eqgrid  = ma.masked_where(a2num_eqgrid ==0.0, a2sum_eqgrid) / a2num_eqgrid
@@ -435,7 +438,6 @@ for vtype in lvtype:
     a2mean_eqgrid = fromfile(oname_mean, float32).reshape(ny_eqgrid, nx_eqgrid)
     figname_mean = oname_mean[:-3] + ".png"
     plt.clf()
-    plt.imshow(a2mean_eqgrid * figcoef, origin="lower", interpolation="nearest", vmin= 0.0, vmax=15.0)
     plt.imshow(a2mean_eqgrid * figcoef, origin="lower", interpolation="nearest", vmin= 0.0, vmax=15.0)
     plt.colorbar()
     plt.savefig(figname_mean)

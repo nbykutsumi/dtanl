@@ -3,233 +3,83 @@ from numpy import *
 import ctrack_func
 import ctrack_para
 import matplotlib.pyplot as plt
+import matplotlib
 import sys,os
+import datetime
 from cf.plot import *
 #---------------------------
-year  = 2004
-mon   = 2
-day   = 22
-hour  = 12
-plev  = 850*100.0
-vtype = "temp"
-thdura= 24
-tname = "/media/disk2/data/JRA25/sa.one/6hr/TMP/%04d%02d/anal_p25.TMP.0850hPa.%04d%02d%02d%02d.sa.one"%(year, mon, year, mon, day, hour)
-qname = "/media/disk2/data/JRA25/sa.one/6hr/SPFH/%04d%02d/anal_p25.SPFH.0850hPa.%04d%02d%02d%02d.sa.one"%(year, mon, year, mon, day, hour)
+lllat   = 20.
+urlat   = 60.
+lllon   = 110.
+urlon   = 160.
 
-a2t    = fromfile(tname, float32).reshape(180,360)
-a2q    = fromfile(qname, float32).reshape(180,360)
-a2wb     = dtanl_fsub.mk_a2wetbulbtheta(plev, a2t.T, a2q.T).T
-a2gradwb = dtanl_fsub.mk_a2grad_abs_saone(a2wb.T).T
+dlat    = 1.0
+dlon    = 1.0
+a1lat   = arange(-89.5, 89.5  + dlat*0.1, dlat)
+a1lon   = arange(0.5,   359.5 + dlon*0.1, dlon)
 
-a2temp   = a2gradwb
-cbarflag = False
+meridians = 10.0
+parallels = 10.0
+
+v = 1000.0
 
 
-def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
-  ny      = 180
-  nx      = 360
-  # local region ------
-  #
-  # corner points should be
-  # at the center of original grid box
-  lllat   = 20.
-  urlat   = 60.
-  lllon   = 110.
-  urlon   = 160.
+idir = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL/200407"
+iname = idir + "/anal_p25.PRMSL.2004070100.sa.one"
 
-  miss_int= -9999
+a2psl = fromfile(iname, float32).reshape(180,360)*0.01
+#a2cont = dtanl_fsub.mk_a2contour(a2psl.T, v).T
 
+#************************
+# for mapping
+nnx        = int( (urlon - lllon)/dlon)
+nny        = int( (urlat - lllat)/dlat)
+a1lon_loc  = linspace(lllon, urlon, nnx)
+a1lat_loc  = linspace(lllat, urlat, nny)
+LONS, LATS = meshgrid( a1lon_loc, a1lat_loc)
+#------------------------
+# Basemap
+#------------------------
+print "Basemap"
+figmap   = plt.figure()
+axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
+M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
 
-  stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
+#---------------------------
+a2psl_trans = M.transform_scalar(a2psl, a1lon, a1lat, nnx, nny)
+a2cont_trans = dtanl_fsub.mk_a2contour_regional(a2psl_trans.T, v).T
+#a2cont_trans = M.transform_scalar(a2cont, a1lon, a1lat, nnx, nny)
 
-  sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh"%(thdura)
-  sodir         = sodir_root + "/%04d%02d"%(year, mon)
-  ctrack_func.mk_dir(sodir)
+#---------------------------
+im    = M.imshow(a2cont_trans, origin="lower", interpolation="nearest")
+M.drawcoastlines()
+#-- meridians and parallels
+M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1])
+M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0])
 
-  #soname        = sodir + "/tenkizu.%04d.%02d.%02d.%02d.%s.png"%(year, mon, day, hour, vtype)
-  soname        = sodir + "/temp.tenkizu.%04d.%02d.%02d.%02d.%s.png"%(year, mon, day, hour, vtype)
+figname = "./temp.png"
+plt.savefig(figname)
+plt.clf()
+print figname
 
-  #----------------------------
-  dlat    = 1.0
-  dlon    = 1.0
-  a1lat   = arange(-89.5, 89.5  + dlat*0.1, dlat)
-  a1lon   = arange(0.5,   359.5 + dlon*0.1, dlon)
+#------------------------
+# Basemap
+#------------------------
+print "Basemap"
+figmap   = plt.figure()
+axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
+M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
+#---------------------------
+a2psl_trans = M.transform_scalar(a2psl, a1lon, a1lat, nnx, nny)
+a2cont_trans = dtanl_fsub.mk_a2contour_regional(a2psl_trans.T, v).T
+#im    = M.imshow(a2psl, origin="lower", interpolation="nearest")
+im    = M.contour(LONS, LATS, a2psl_trans, latlon=True)
+M.drawcoastlines()
+#-- meridians and parallels
+M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1])
+M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0])
 
-  meridians = 10.0
-  parallels = 10.0
-
-  #----------------------------
-  dpgradrange  = ctrack_para.ret_dpgradrange()
-  lclass  = dpgradrange.keys()
-  nclass  = len(lclass)
-  thpgrad = dpgradrange[0][0]
-  #--- value ------------------
-  if vtype == "GSMaP":
-    vdir_root     = "/media/disk2/data/GSMaP/sa.one/3hr/ptot"
-    vdir          = vdir_root + "/%04d%02d"%(year, mon)
-    vname         = vdir + "/gsmap_mvk.3rh.%04d%02d%02d.%02d00.v5.222.1.sa.one"%(year, mon, day, hour)
-    a2v           = fromfile(vname, float32).reshape(120, 360)
-    a2v           = gsmap_func.gsmap2global_one(a2v, -9999.0)
-    a2v           = ma.masked_equal(a2v, -9999.0)*60*60*24.0
-  if vtype == "GPCP1DD":
-    vdir_root     = "/media/disk2/data/GPCP1DD/data/1dd"
-    vdir          = vdir_root + "/%04d"%(year)
-    vname         = vdir + "/gpcp_1dd_v1.1_p1d.%04d%02d%02d.bn"%(year, mon, day)
-    a2v           = fromfile(vname, float32).reshape(ny, nx)
-    a2v           = flipud(a2v)
-
-  if vtype == "JRA":
-    vdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PR"
-    vdir          = vdir_root + "/%04d%02d"%(year, mon)
-    vname         = vdir + "/fcst_phy2m.PR.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
-    print vname
-    a2v           = fromfile(vname, float32).reshape(ny, nx)
-    a2v           = a2v * 60*60*24.0
-
-  if vtype == "temp":
-
-    a2v           = a2temp
-  #----------------------------
-
-  psldir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL"
-  pgraddir_root   = "/media/disk2/out/JRA25/sa.one/6hr/pgrad"
-  lifedir_root    = "/media/disk2/out/JRA25/sa.one/6hr/life"
-
-  psldir          = psldir_root   + "/%04d%02d"%(year, mon)
-  pgraddir        = pgraddir_root + "/%04d%02d"%(year, mon)
-  lifedir         = lifedir_root  + "/%04d%02d"%(year, mon)
-
-  pslname         = psldir   + "/fcst_phy2m.PRMSL.%s.sa.one"%(stime)
-  pgradname       = pgraddir + "/pgrad.%s.sa.one"%(stime)
-  lifename        = lifedir  + "/life.%s.sa.one"%(stime)
-
-  a2psl           = fromfile(pslname,   float32).reshape(ny, nx)
-  a2pgrad         = fromfile(pgradname, float32).reshape(ny, nx)
-  a2life          = fromfile(lifename,  int32).reshape(ny, nx)
-  #************************
-  # PSL Pa --> hPa
-  a2psl           = a2psl * 0.01
-
-  dcenter  = {}
-  for iclass in lclass:
-    dcenter[iclass] = []
-  #------------------------
-  #------------------------
-  for iy in range(0, ny):
-    #---------------
-    lat       = a1lat[iy]
-    if ((lat < lllat) or (urlat < lat)):
-      continue
-    #---------------
-    for ix in range(0, nx):
-      #-------------
-      lon     = a1lon[ix]
-      if ((lon < lllon) or (urlon < lon)):
-        continue
-      #-------------
-      pgrad   = a2pgrad[iy, ix]
-      #------
-      if (pgrad < thpgrad):
-        continue
-
-      #-- check duration -----
-      life  = a2life[iy, ix]
-      dura  = ctrack_func.solvelife_point_py(life, miss_int)[1]
-      if  (dura < thdura):
-        continue
-
-      #-----------------------
-      for iclass in lclass[1:]:
-        pgrad_min = dpgradrange[iclass][0]
-        pgrad_max = dpgradrange[iclass][1]
-        if (pgrad_min <= pgrad < pgrad_max):
-          dcenter[iclass].append([lat, lon])
-  #************************
-  # for mapping
-  nnx        = int( (urlon - lllon)/dlon)
-  nny        = int( (urlat - lllat)/dlat)
-  a1lon_loc  = linspace(lllon, urlon, nnx)
-  a1lat_loc  = linspace(lllat, urlat, nny)
-  LONS, LATS = meshgrid( a1lon_loc, a1lat_loc)
-  #------------------------
-  # Basemap
-  #------------------------
-  print "Basemap"
-  figmap   = plt.figure()
-  axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
-  M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
-
-  #-- transform -----------
-  print "transform"
-  a2psl_trans  = M.transform_scalar( a2psl, a1lon, a1lat, nnx, nny)
-  a2v_trans    = M.transform_scalar( a2v,   a1lon, a1lat, nnx, nny)
-
-  #-- boundaries ----------
-  if vtype in ["GSMaP", "GPCP1DD", "JRA"]:
-    bnd        = [1,3,5,7,9,11,13,15]
-    bnd_cbar   = [-1.0e+40] + bnd + [1.0e+40]
-  #-- color ---------------
-  #scm      = "gist_stern_r"
-  scm      = "jet"
-
-  #-- value imshow --------
-  #im       = M.imshow(a2v_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=scm, interpolation="nearest")
-  im       = M.imshow(a2v_trans, origin="lower", cmap=scm, interpolation="nearest")
-
-  #-- contour   -----------
-  print "contour"
-  llevels  = arange(900.0, 1100.0, 2.0).tolist()
-  im       = M.contour(LONS, LATS, a2psl_trans, latlon=True, levels=llevels,  colors="k")
-  plt.clabel(im, fontsize=9, inline=1, fmt="%d")
-
-  #-- plot cyclone centers ---
-  print "plot cyclone centers"
-  for iclass in lclass[1:]:
-    if (len(dcenter[iclass]) ==  0.0):
-      continue
-    #-----------
-    for latlon in dcenter[iclass]:
-      lat = latlon[0]
-      lon = latlon[1]
-      M.scatter( lon, lat, color="r", marker="o", s=100)
-      x_plot, y_plot = M(lon, lat+0.5)
-      plt.text(x_plot, y_plot, "%d"%(iclass), color="r", fontsize=15)
-
-  #-- coastline ---------------
-  print "coastlines"
-  M.drawcoastlines()
-  #-- meridians and parallels
-  M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1])
-  M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0])
-  #-- title -------------------
-  axmap.set_title("%04d-%02d-%02d  JST %02d:00"%(year, mon, day, hour))
-
-  #-- save --------------------
-  print "save"
-  plt.savefig(soname)
-  plt.clf()
-  print soname
-  #-------------------
-
-  # for colorbar ---
-  if cbarflag == True:
-    figmap   = plt.figure()
-    axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
-    M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
-    a2v_trans    = M.transform_scalar( a2v,   a1lon, a1lat, nnx, nny)
-    #im       = M.imshow(a2v_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=scm)
-    im       = M.imshow(a2v_trans, origin="lower", cmap=scm)
-
-    figcbar   = plt.figure(figsize=(5, 0.6))
-    axcbar    = figcbar.add_axes([0, 0.4, 1.0, 0.6])
-    bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-    #plt.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar, orientation="horizontal")
-    plt.colorbar(im, extend="both", cax=axcbar, orientation="horizontal")
-
-    cbarname  = sodir + "/%s.png"%(vtype)
-    figcbar.savefig(cbarname)
-
-#***************************************
-
-tenkizu_single(year, mon, day, hour, vtype, cbarflag)
-
+figname = "./temp2.png"
+plt.savefig(figname)
+plt.clf()
+print figname

@@ -12,13 +12,14 @@ import datetime
 #--------------------------------------
 #vtype   = "GSMaP"
 #vtype   = "GPCP1DD"
-lvtype   = ["GSMaP","JRA"]
-#vtype   = "JRA"
-iyear   = 2004
-eyear   = 2004
-imon    = 1
-emon    = 12
-iday    = 1
+#lvtype   = ["JRA"]
+lvtype   = ["GSMaP"]
+#lvtype   = ["GSMaP","JRA"]
+iyear   = 2001
+eyear   = 2001
+imon    = 6
+emon    = 6
+iday    = 19
 
 thdura  = 24
 
@@ -257,7 +258,7 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
   M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0]) 
   #-- title -------------------
   stitle   = "%s"%(vtype)
-  stitle   = stitle + "\n" +"%04d-%02d-%02d  JST %02d:00"%(year, mon, day, hour)
+  stitle   = stitle + "\n" +"%04d-%02d-%02d  UTC %02d:00 (JST %02d:00)"%(year, mon, day, hour, hour+9)
   axmap.set_title("%s"%(stitle))
 
   #-- save --------------------
@@ -301,7 +302,8 @@ for vtype in lvtype:
       #-------------
       for day in range(iday, eday+1):
         print year, mon
-        for hour in [12]:
+        #for hour in [0]:
+        for hour in [0]:
           if ((year==iyear)&(mon==imon)&(day==iday)):
             cbarflag=True
           else:

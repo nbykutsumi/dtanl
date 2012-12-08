@@ -7,10 +7,10 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2004
+iyear    = 2000
 eyear    = 2004
-imon     = 2
-emon     = 2
+imon     = 7
+emon     = 7
 tstp     = "6hr"
 idir_root   =  "/home/utsumi/mnt/export/nas12/JRA25"
 odir_root   =  "/media/disk2/data/JRA25/sa.one/%s"%(tstp)
@@ -19,18 +19,16 @@ miss_out    = -9999.0
 #plev        = 850    # pressure level (hPa)
 #plev        = 925    # pressure level (hPa)
 #plev        = 500    # pressure level (hPa)
-plev        = 400    # pressure level (hPa)
+#plev        = 400    # pressure level (hPa)
 #plev        = 300    # pressure level (hPa)
+#plev        = 250    # pressure level (hPa)
+#lplev       = [500,250]
+#lplev       = [850]
+lplev       = [925]
 
-
-#var     = "TMP"
-#var     = "SPFH"
-#var    = "ACPCP"
-#var    = "NCPCP"
-#var    = "PRMSL"
-#var    = "UGRD"
-#var    = "VGRD"
-lvar   = ["TMP", "SPFH"]
+#lvar   = ["HGT"]
+#lvar   = ["TMP", "SPFH"]
+lvar   = ["SPFH","TMP","UGRD", "VGRD"]
 dtype  = {}
 dtype["ACPCP"] = "fcst_phy2m"
 dtype["NCPCP"] = "fcst_phy2m"
@@ -39,6 +37,7 @@ dtype["UGRD" ] = "anal_p25"
 dtype["VGRD" ] = "anal_p25"
 dtype["SPFH" ] = "anal_p25"
 dtype["TMP"  ] = "anal_p25"
+dtype["HGT" ] = "anal_p25"
 
 lvar_nonegative = ["PRMSL", "ACPCP", "NCPCP"]
 lvar_prec  = ["ACPCP", "NCPCP"]
@@ -80,93 +79,93 @@ def mk_dir(sdir):
   if not os.access(sdir , os.F_OK):
     os.mkdir(sdir)
 #********************************************
-
-for var in lvar:
-  ctlname    = idir_root + "/%04d01/%s.ctl"%(iyear, dtype[var])
-  stype      = dtype[var]
-  for year in range(iyear, eyear + 1):
-    for mon in range(imon, emon + 1):
-      idir      = idir_root  +  "/%04d%02d"%(year, mon)
-      odir_temp = odir_root  +  "/%s"%(var)
-      odir      = odir_temp  +  "/%04d%02d"%(year, mon)
-      #-- make directory ---
-      mk_dir(odir_temp)
-      mk_dir(odir)
-  
-  
-      #-- discription file ----------------
-      #< dims >
-      sout   = "lev %d\nlat %d\nlon %d"%(nz_fin, ny_fin, nx_fin)
-      f      = open( odir + "/dims.txt", "w")
-      f.write(sout)
-      f.close()
-  
-      #< lat >
-      sout   = "\n".join(map( str, a1lat_fin))
-      f      = open( odir + "/lat.txt", "w")
-      f.write(sout)
-      f.close()
-  
-      #< lon >
-      sout   = "\n".join(map( str, a1lon_fin))
-      f      = open( odir + "/lon.txt", "w")
-      f.write(sout)
-      f.close()
-  
-      #< dump >
-      tempname = idir + "/%s.%04d%02d0100"%(stype, year, mon)
-      dumpname = odir + "/dump.txt"
-  
-      ptemp  = subprocess.call("wgrib -V %s | grep -A 6 %s | grep -A 6 '%dmb' > %s"%(tempname, var, plev, dumpname), shell=True)
-        
-      #---------
-      eday  = calendar.monthrange(year, mon)[1]
-      if singleday == True:
-        eday   = 1
-      #-----------------
-      for day in range(1, eday+1):
-      #for day in range(28, eday+1):
-        #---
+for plev in lplev:
+  for var in lvar:
+    ctlname    = idir_root + "/%04d01/%s.ctl"%(iyear, dtype[var])
+    stype      = dtype[var]
+    for year in range(iyear, eyear + 1):
+      for mon in range(imon, emon + 1):
+        idir      = idir_root  +  "/%04d%02d"%(year, mon)
+        odir_temp = odir_root  +  "/%s"%(var)
+        odir      = odir_temp  +  "/%04d%02d"%(year, mon)
+        #-- make directory ---
+        mk_dir(odir_temp)
+        mk_dir(odir)
+    
+    
+        #-- discription file ----------------
+        #< dims >
+        sout   = "lev %d\nlat %d\nlon %d"%(nz_fin, ny_fin, nx_fin)
+        f      = open( odir + "/dims.txt", "w")
+        f.write(sout)
+        f.close()
+    
+        #< lat >
+        sout   = "\n".join(map( str, a1lat_fin))
+        f      = open( odir + "/lat.txt", "w")
+        f.write(sout)
+        f.close()
+    
+        #< lon >
+        sout   = "\n".join(map( str, a1lon_fin))
+        f      = open( odir + "/lon.txt", "w")
+        f.write(sout)
+        f.close()
+    
+        #< dump >
+        tempname = idir + "/%s.%04d%02d0100"%(stype, year, mon)
+        dumpname = odir + "/dump.txt"
+    
+        ptemp  = subprocess.call("wgrib -V %s | grep -A 6 %s | grep -A 6 '%dmb' > %s"%(tempname, var, plev, dumpname), shell=True)
+          
+        #---------
+        eday  = calendar.monthrange(year, mon)[1]
         if singleday == True:
-          print "*****************"
-          print "   single day !!"
-          print "*****************"
-        #---
-        print year, mon, day 
-        for hour in [0, 6, 12, 18]:
-          stime     = "%04d%02d%02d%02d"%(year, mon, day, hour)
-          #----- Names ------------
-          gribname  = idir + "/%s.%s"%(stype, stime)
-          tempname  = odir + "/%s.%s.%04dhPa.%s.temp.sa.one"%(stype, var, plev, stime)
-          oname     = odir + "/%s.%s.%04dhPa.%s.sa.one"%(stype, var, plev, stime)
-  
-          print gribname
-  
-  
-          #-- grib --> binary -----
-  
-          args      = "wgrib %s | grep %s | grep '700 mb' | wgrib %s -i -nh -o %s"%(gribname, var, gribname, tempname)
-  
-          #print args
-          ptemp     = subprocess.call(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-          
-          #-- Interpolation and Flipud --------
-          a2org     = flipud(fromfile(tempname, float32).reshape(ny_org, nx_org))
-          #
-          if var in lvar_nonegative:
-            a2org   = ma.masked_less(a2org, 0.0).filled(miss_out)
-          #
-          a2fin     = cf.biIntp( a1lat_org, a1lon_org, a2org, a1lat_fin, a1lon_fin, miss = miss_out)[0]
-  
-          #
-          a2fin.tofile( oname ) 
-          print tempname
-  
-          
-  
-          ##-- delete temp file ----------------
-          os.remove(tempname)
-          #------------------------------------
+          eday   = 1
+        #-----------------
+        for day in range(1, eday+1):
+        #for day in range(28, eday+1):
+          #---
+          if singleday == True:
+            print "*****************"
+            print "   single day !!"
+            print "*****************"
+          #---
+          print year, mon, day 
+          for hour in [0, 6, 12, 18]:
+            stime     = "%04d%02d%02d%02d"%(year, mon, day, hour)
+            #----- Names ------------
+            gribname  = idir + "/%s.%s"%(stype, stime)
+            tempname  = odir + "/%s.%s.%04dhPa.%s.temp.sa.one"%(stype, var, plev, stime)
+            oname     = odir + "/%s.%s.%04dhPa.%s.sa.one"%(stype, var, plev, stime)
+    
+            print gribname
+    
+    
+            #-- grib --> binary -----
+    
+            args      = "wgrib %s | grep %s | grep '%d mb' | wgrib %s -i -nh -o %s"%(gribname, var, plev, gribname, tempname)
+    
+            #print args
+            ptemp     = subprocess.call(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            #-- Interpolation and Flipud --------
+            a2org     = flipud(fromfile(tempname, float32).reshape(ny_org, nx_org))
+            #
+            if var in lvar_nonegative:
+              a2org   = ma.masked_less(a2org, 0.0).filled(miss_out)
+            #
+            a2fin     = cf.biIntp( a1lat_org, a1lon_org, a2org, a1lat_fin, a1lon_fin, miss = miss_out)[0]
+    
+            #
+            a2fin.tofile( oname ) 
+            print tempname
+    
+            
+    
+            ##-- delete temp file ----------------
+            os.remove(tempname)
+            #------------------------------------
   
 
 

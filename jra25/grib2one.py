@@ -20,13 +20,14 @@ miss_out    = -9999.0
 
 #var    = "ACPCP"
 #var    = "NCPCP"
-#var    = "PRMSL"
+var    = "PRMSL"
 #var    = "UGRD"
 #var    = "VGRD"
 dtype  = {}
 dtype["ACPCP"] = "fcst_phy2m"
 dtype["NCPCP"] = "fcst_phy2m"
-dtype["PRMSL"] = "fcst_phy2m"
+#dtype["PRMSL"] = "fcst_phy2m"
+dtype["PRMSL"] = "anal_p25"
 dtype["UGRD" ] = "anal_p25"
 dtype["VGRD" ] = "anal_p25"
 
@@ -37,12 +38,22 @@ lvar_prec  = ["ACPCP", "NCPCP"]
 
 ctlname    = idir_root + "/%04d01/%s.ctl"%(iyear, dtype[var])
 #--- LAT & LON & NX, NY : Original  ------------------------------
-if var in lvar_2d:
+if dtype[var] in ["anal_p25"]:
+  dlat_org      = 2.5
+  dlon_org      = 2.5
+
+  lat_first_org = -90.0
+  lat_last_org  = 90.0
+  lon_first_org = 0.0
+  lon_last_org  = 360.0 - 2.5
+  a1lat_org     = arange(lat_first_org, lat_last_org + dlat_org*0.1, dlat_org)  
+
+elif var in lvar_2d:
   dlon_org      = 1.125
 
   lon_first_org = 0.0
   lon_last_org  = lon_first_org + dlon_org*(320-1) + dlon_org*0.1
-  a1lat_org     = array( jra_func.read_llat(ctlname))
+  a1lat_org     = array( jra_func.read_llat(ctlname, dtype[var]))
 
 elif var in lvar_700mb:  
   dlat_org      = 2.5
