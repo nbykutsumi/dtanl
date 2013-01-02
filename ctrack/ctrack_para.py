@@ -1,8 +1,7 @@
 import calendar
 from numpy import *
 #----------------------------------------------------------
-#--------------
-# 
+
 #--------------
 def ret_lcrad():
   #lcrad =  [500.0*1000.0, 1000.0*1000.0, 1500.0*1000.0, 2000.0*1000.0]
@@ -96,6 +95,13 @@ def ret_dlwbin():
 #-----------------------------------
 def ret_dbound():
   dbound   = {}
+
+  reg      = "se.asia"
+  lat_min  = 0.0
+  lat_max  = 80.0
+  lon_min  = 60.0
+  lon_max  = 190.0
+  dbound[reg] = [lat_min, lat_max, lon_min, lon_max]
   
   #reg      = "alljapan"
   #lat_min  = 22.0
@@ -136,3 +142,4 @@ def ret_lonlatinfo(model):
     dlat        = 1.8947368
     lonlatinfo = [lon_first, lat_first, dlon, dlat]
     return lonlatinfo
+

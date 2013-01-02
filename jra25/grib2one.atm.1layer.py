@@ -7,28 +7,23 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2000
+iyear    = 2004
 eyear    = 2004
-imon     = 7
-emon     = 7
+#lmon     = [1,2,3,4,5,6,8,9,10,11,12]
+lmon     = arange(1,12+1)
 tstp     = "6hr"
 idir_root   =  "/home/utsumi/mnt/export/nas12/JRA25"
 odir_root   =  "/media/disk2/data/JRA25/sa.one/%s"%(tstp)
 singleday   = False  # True or False
 miss_out    = -9999.0
-#plev        = 850    # pressure level (hPa)
-#plev        = 925    # pressure level (hPa)
-#plev        = 500    # pressure level (hPa)
-#plev        = 400    # pressure level (hPa)
-#plev        = 300    # pressure level (hPa)
-#plev        = 250    # pressure level (hPa)
-#lplev       = [500,250]
-#lplev       = [850]
-lplev       = [925]
+#lplev       = [250]   # pressure level (hPa)
+lplev       = [500]
+#lplev       = [925]
 
 #lvar   = ["HGT"]
-#lvar   = ["TMP", "SPFH"]
-lvar   = ["SPFH","TMP","UGRD", "VGRD"]
+lvar   = ["TMP", "SPFH"]
+#lvar   = ["SPFH","TMP","UGRD", "VGRD"]
+#lvar   = ["UGRD", "VGRD"]
 dtype  = {}
 dtype["ACPCP"] = "fcst_phy2m"
 dtype["NCPCP"] = "fcst_phy2m"
@@ -84,7 +79,7 @@ for plev in lplev:
     ctlname    = idir_root + "/%04d01/%s.ctl"%(iyear, dtype[var])
     stype      = dtype[var]
     for year in range(iyear, eyear + 1):
-      for mon in range(imon, emon + 1):
+      for mon in lmon:
         idir      = idir_root  +  "/%04d%02d"%(year, mon)
         odir_temp = odir_root  +  "/%s"%(var)
         odir      = odir_temp  +  "/%04d%02d"%(year, mon)

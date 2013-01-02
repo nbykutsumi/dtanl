@@ -9,34 +9,37 @@ import datetime
 from cf.plot import *
 import Image
 #---------------------------
-year  = int(sys.argv[1])
-mon   = int(sys.argv[2])
-day   = int(sys.argv[3])
-hour  = int(sys.argv[4])
-lllat = float(sys.argv[5])
-urlat = float(sys.argv[6])
-lllon = float(sys.argv[7])
-urlon = float(sys.argv[8])
-plev  = float(sys.argv[9])
-cbarflag = sys.argv[10]
-
-#year  = 2004
-#mon   = 6
-#day   = 26
-#hour  = 0
-#
-## local region ------
-## corner points should be
-## at the center of original grid box
-#lllat   = 20.
-#urlat   = 60.
-#lllon   = 110.
-#urlon   = 160.
-
-#lllat   = 0.
-#urlat   = 60.
-#lllon   = 200.
-#urlon   = 360.
+if len(sys.argv) > 1:
+  year  = int(sys.argv[1])
+  mon   = int(sys.argv[2])
+  day   = int(sys.argv[3])
+  hour  = int(sys.argv[4])
+  lllat = float(sys.argv[5])
+  urlat = float(sys.argv[6])
+  lllon = float(sys.argv[7])
+  urlon = float(sys.argv[8])
+  plev  = float(sys.argv[9])
+  cbarflag = sys.argv[10]
+  thdura = float(sys.argv[11])
+else:
+  year  = 2004
+  mon   = 7
+  day   = 18
+  hour  = 0
+  
+  # local region ------
+  # corner points should be
+  # at the center of original grid box
+  lllat   = 20.
+  urlat   = 60.
+  lllon   = 110.
+  urlon   = 160.
+  #plev    = 925*100.0  #(Pa)
+  plev    = 850*100.0  #(Pa)
+  #plev    = 250*100.0  #(Pa)
+  cbarflag= "True"
+  thdura= 6
+#--------------------
 
 cslat  = 36.5
 cslon  = 150.5
@@ -52,8 +55,8 @@ miss_int= -9999
 #lplev = [850*100.0]
 lplev = [plev] # [Pa]
 lprtype = ["JRA"]
-vtype = "grad.wb"
-thdura= 24
+#vtype = "grad.wb"
+vtype = "grad.thetae"
 
 #lthfmask0  = [0.2,0.5,1.0]
 lthfmask0  = [1.0]
@@ -61,7 +64,7 @@ lthfmask0  = [1.0]
 #lthfmask1 = [0.0, 0.1, 0.2, 0.3]
 #lthfmask1 = [0.12,0.15,0.17]
 #lthfmask1 = [0.05, 0.15, 0.3]
-lthfmask1 = [0.00,0.05, 0.15]
+lthfmask1 = [0.0]
 #thfmask1 = 0.0
 #thfmask1 = 0.1
 #thfmask1 = 0.2
@@ -69,7 +72,8 @@ lthfmask1 = [0.00,0.05, 0.15]
 #thfmask1 = 0.5
 
 #lthfmask2 = [0.0]
-lthfmask2 = [0.25]
+#lthfmask2 = [0.25]
+lthfmask2 = [0.3]
 #lthfmask2 = [0.75]
 #lthfmask2 = [1.0]
 #lthfmask2 = [0.5, 0.75, 1.0]
@@ -101,22 +105,23 @@ da2fmask2 = {}
 for plev in lplev:
   a2t    = fromfile(tname, float32).reshape(180,360)
   a2q    = fromfile(qname, float32).reshape(180,360)
-  a2wb     = dtanl_fsub.mk_a2wetbulbtheta(plev, a2t.T, a2q.T).T
-  a2gradwb = dtanl_fsub.mk_a2grad_abs_saone(a2wb.T).T
+  #a2wb     = dtanl_fsub.mk_a2wetbulbtheta(plev, a2t.T, a2q.T).T
+  #a2gradwb = dtanl_fsub.mk_a2grad_abs_saone(a2wb.T).T
+  a2thermo  = dtanl_fsub.mk_a2theta_e(plev, a2t.T, a2q.T).T
+  a2gradthermo  = dtanl_fsub.mk_a2grad_abs_saone(a2thermo.T).T
 
   #-- locator ---
   #a2gradwb2 = dtanl_fsub.mk_a2grad_abs_saone(a2gradwb.T).T
-  (a2grad2x, a2grad2y) = dtanl_fsub.mk_a2grad_saone(a2gradwb.T)
+  a2gradthermo2 = dtanl_fsub.mk_a2grad_abs_saone(a2gradthermo.T).T
+  (a2grad2x, a2grad2y) = dtanl_fsub.mk_a2grad_saone(a2gradthermo.T)
   a2grad2x = a2grad2x.T
   a2grad2y = a2grad2y.T
   a2loc    = dtanl_fsub.mk_a2axisgrad(a2grad2x.T, a2grad2y.T).T
   #(a2axis_x, a2axis_y) = dtanl_fsub.mk_a2meanunitaxis( 2grad2x.T, a2grad2x.T
-  a2fmask1 = dtanl_fsub.mk_a2frontmask1(a2wb.T).T
-  a2fmask2 = dtanl_fsub.mk_a2frontmask2(a2wb.T).T
+  a2fmask1 = dtanl_fsub.mk_a2frontmask1(a2thermo.T).T
+  a2fmask2 = dtanl_fsub.mk_a2frontmask2(a2thermo.T).T
 
   cbarflag = True
-
-
 
   stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
 
@@ -125,7 +130,7 @@ for plev in lplev:
   ctrack_func.mk_dir(sodir)
 
   #soname        = sodir + "/tenkizu.%04d.%02d.%02d.%02d.%s.png"%(year, mon, day, hour, vtype)
-  soname        = sodir + "/grad.wb.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.png"%(year, mon, day, hour, plev*0.01, vtype)
+  soname        = sodir + "/grad.thetae.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.png"%(year, mon, day, hour, plev*0.01, vtype)
   #name_grad2    = sodir + "/grad2.wb.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.png"%(year, mon, day, hour, plev*0.01, vtype)
 
   #name_loc      = sodir + "/loc.wb.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.png"%(year, mon, day, hour, plev*0.01, vtype)
@@ -144,8 +149,8 @@ for plev in lplev:
   nclass  = len(lclass)
   thpgrad = dpgradrange[0][0]
   #--- value ------------------
-  if vtype == "grad.wb":
-    a2v           = a2gradwb * 1000.0*100.0         # [K (100km)-1]
+  if vtype == "grad.thetae":
+    a2v           = a2gradthermo * 1000.0*100.0         # [K (100km)-1]
     a2loc         = a2loc * (1000.0*100.0)**3.0     # [K (100km)-3]
     a2fmask1      = a2fmask1 * (1000.0*100.0)**2.0  # [K (100km)-2]
     a2fmask2      = a2fmask2 * (1000.0*100.0)       # [K (100km)-1]
@@ -218,7 +223,8 @@ for plev in lplev:
   a1lat_loc  = linspace(lllat, urlat, nny)
   LONS, LATS = meshgrid( a1lon_loc, a1lat_loc)
   #-- boundaries ----------
-  bnd        = [0.5,1.0,1.3,1.6,1.9,2.1,2.4]
+  #bnd        = [0.5,1.0,1.3,1.6,1.9,2.1,2.4]
+  bnd        = [0.1, 0.4, 0.7 ,1.0,1.3,1.6,1.9,2.1,2.4]
   bnd_cbar   = [-1.0e+40] + bnd + [1.0e+40]
   #-- color ---------------
   #scm      = "gist_stern_r"
@@ -229,7 +235,6 @@ for plev in lplev:
   lcm      = acm.tolist()
   mycm     = matplotlib.colors.ListedColormap( lcm )
   #mycm     = "jet"
-
 
   #********************************
   #*** grad *
@@ -247,7 +252,6 @@ for plev in lplev:
   print "transform"
   a2psl_trans  = M.transform_scalar( a2psl, a1lon, a1lat, nnx, nny)
   a2v_trans    = M.transform_scalar( a2v,   a1lon, a1lat, nnx, nny)
-  #a2v2_trans   = M.transform_scalar( a2v2,   a1lon, a1lat, nnx, nny)
 
   #-- value imshow --------
   im       = M.imshow(a2v_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm, interpolation="nearest")
@@ -308,11 +312,17 @@ for plev in lplev:
   #********************************
   # loc
   #********************************
-  print "loclocloclo"
+  uname      = "/media/disk2/data/JRA25/sa.one/6hr/UGRD/%04d%02d/anal_p25.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
+  vname      = "/media/disk2/data/JRA25/sa.one/6hr/VGRD/%04d%02d/anal_p25.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
+  a2uwind    = fromfile(uname, float32).reshape(180,360)
+  a2vwind    = fromfile(vname, float32).reshape(180,360)
+  a2loc_temp = dtanl_fsub.mk_a2contour(a2loc.T, 0.0, 0.0, -9999.0).T
+  a2fspeed   = dtanl_fsub.mk_a2frontspeed(a2thermo.T, a2loc_temp.T, a2uwind.T, a2vwind.T, -888888).T
+
   for thfmask0 in lthfmask0:
     for thfmask2 in lthfmask2:
       #---------------------------
-      name_loc_full = sodir[:-3] + "/loc.wb.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.M0_%3.2f.M2_%3.2f.join.png"%(year, mon, day, hour, plev*0.01, vtype, thfmask0, thfmask2)
+      name_loc_full = sodir[:-3] + "/loc.thetae.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.M0_%3.2f.M2_%3.2f.join.png"%(year, mon, day, hour, plev*0.01, vtype, thfmask0, thfmask2)
       #
       nsub_x    = 3
       nsub_y    = 3
@@ -329,21 +339,22 @@ for plev in lplev:
         ithfmask1 = ithfmask1 + 1
   
         #-- prep for jointed figs --
-        name_loc      = sodir + "/loc.wb.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.M0_%3.2f.M1_%3.2f.M2_%3.2f.temp.png"%(year, mon, day, hour, plev*0.01, vtype, thfmask0, thfmask1, thfmask2)
+        name_loc      = sodir + "/loc.thetae.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.M0_%3.2f.M1_%3.2f.M2_%3.2f.temp.png"%(year, mon, day, hour, plev*0.01, vtype, thfmask0, thfmask1, thfmask2)
         #
         #-- boundaries ----------
-        #bnd        = [0.1,0.2,0.3,0.4,0.5,0.6,0.8,0.9,1.0]
-        bnd        = [-0.4,-0.35, -0.3, -0.25, -0.2, -0.15, -0.1, -0.05, 0.05, 0.1, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+        #bnd        = [-0.4,-0.35, -0.3, -0.25, -0.2, -0.15, -0.1, -0.05, 0.05, 0.1, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+        bnd        = list(arange(-10.0, 10.0+1, 2.0))
+        #bnd        = [-1.0e+5, -4.0, 4.0, 1.0e+5]
         bnd_cbar   = [-1.0e+40] + bnd + [1.0e+40]
         #-- color ---------------
         #scm      = "gist_stern_r"
-        scm      = "OrRd"
-        #scm      = "Spectral_r"
-        cm_inst  = matplotlib.cm.get_cmap(scm, len(bnd)+1)
-        acm      = cm_inst( arange(len(bnd)+1) )
-        lcm      = acm.tolist()
-        mycm     = matplotlib.colors.ListedColormap( lcm )
-        #mycm     = "jet"
+        #scm      = "OrRd"
+        scm      = "Spectral_r"
+        #cm_inst  = matplotlib.cm.get_cmap(scm, len(bnd)+1)
+        #acm      = cm_inst( arange(len(bnd)+1) )
+        #lcm      = [[1,1,1,1]] + acm.tolist()
+        #mycm     = matplotlib.colors.ListedColormap( lcm )
+        mycm     = scm
       
         #------------------------
         # Basemap
@@ -357,42 +368,44 @@ for plev in lplev:
         #-- transform -----------
         print "transform"
         a2psl_trans    = M.transform_scalar( a2psl, a1lon, a1lat, nnx, nny)
+        a2fspeed_trans = M.transform_scalar( a2fspeed, a1lon, a1lat, nnx, nny)
+        a2psl_trans    = M.transform_scalar( a2psl, a1lon, a1lat, nnx, nny)
         a2loc_trans    = M.transform_scalar( a2loc,   a1lon, a1lat, nnx, nny)
         a2loc_trans    = dtanl_fsub.mk_a2contour_regional(a2loc_trans, 0.0, 0.0, -9999.0)
+        a2loc_trans    = ma.masked_where( a2loc_trans != 0.0, a2fspeed_trans).filled(-9999.0)
         a2v_trans      = M.transform_scalar( a2v,   a1lon, a1lat, nnx, nny)
         a2fmask1_trans = M.transform_scalar( a2fmask1, a1lon, a1lat, nnx, nny)
         a2fmask2_trans = M.transform_scalar( a2fmask2, a1lon, a1lat, nnx, nny)
         #-- value imshow --------
         #im       = M.imshow(a2v_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm, interpolation="nearest")
         #-- locator -----
-        #a2loc_trans = ma.masked_outside(a2loc_trans, -thfmask0, thfmask0).filled(-9999.0)
         a2loc_trans = ma.masked_where(a2fmask1_trans < thfmask1, a2loc_trans).filled(-9999.0)
         a2loc_trans = ma.masked_where(a2fmask2_trans < thfmask2, a2loc_trans).filled(-9999.0)
         #im          = M.contour(LONS, LATS, a2loc_trans, latlon=True, levels=[-10e+10, 0.0, 10e+10], colors="r")
-        im       = M.imshow(a2loc_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm, interpolation="nearest")
-      
-        #-- front mask M1 -------
-        #im       = M.imshow(a2fmask1_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm, interpolation="nearest")
-          
-      
+        im       = M.imshow(ma.masked_equal(a2loc_trans, -9999.0), origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm, interpolation="nearest")
+
+        #-- Mask -----------------
+        a2mask_trans = ma.masked_not_equal(a2loc_trans, -9999.0)
+        cmshade      = matplotlib.colors.ListedColormap([(0.8, 0.8, 0.8), (0.8, 0.8, 0.8)])
+        im           = M.imshow(a2mask_trans, origin="lower",cmap=cmshade)
         #-- contour PSL ----------
-        print "contour"
-        llevels  = arange(900.0, 1100.0, 2.0).tolist()
-        im       = M.contour(LONS, LATS, a2psl_trans, latlon=True, levels=llevels,  colors="k")
-        plt.clabel(im, fontsize=9, inline=1, fmt="%d")
+        #print "contour"
+        #llevels  = arange(900.0, 1100.0, 2.0).tolist()
+        #im       = M.contour(LONS, LATS, a2psl_trans, latlon=True, levels=llevels,  colors="k")
+        #plt.clabel(im, fontsize=9, inline=1, fmt="%d")
       
-        #-- plot cyclone centers ---
-        print "plot cyclone centers"
-        for iclass in lclass[1:]:
-          if (len(dcenter[iclass]) ==  0.0):
-            continue
-          #-----------
-          for latlon in dcenter[iclass]:
-            lat = latlon[0]
-            lon = latlon[1]
-            M.scatter( lon, lat, color="r", marker="o", s=100)
-            x_plot, y_plot = M(lon, lat+0.5)
-            plt.text(x_plot, y_plot, "%d"%(iclass), color="r", fontsize=15)
+        ##-- plot cyclone centers ---
+        #print "plot cyclone centers"
+        #for iclass in lclass[1:]:
+        #  if (len(dcenter[iclass]) ==  0.0):
+        #    continue
+        #  #-----------
+        #  for latlon in dcenter[iclass]:
+        #    lat = latlon[0]
+        #    lon = latlon[1]
+        #    M.scatter( lon, lat, color="r", marker="o", s=100)
+        #    x_plot, y_plot = M(lon, lat+0.5)
+        #    plt.text(x_plot, y_plot, "%d"%(iclass), color="r", fontsize=15)
       
         #-- coastline ---------------
         print "coastlines"
@@ -466,10 +479,9 @@ for plev in lplev:
       #print name_loc_full
 
       ##------------------
-      #-- wb   ---
+      #-- thetae   ---
       ithfmask1   = ithfmask1 + 1
-      #figname = sodir_root +"/%04d%02d/front"%(year,mon) + "/tenkizu.wb.%04d.%02d.%02d.%02d.0850hPa.png"%(year, mon, day, hour)
-      figname = sodir + "/tenkizu.wb.%04d.%02d.%02d.%02d.%04dhPa.png"%(year, mon, day, hour, plev*0.01)
+      figname = sodir + "/tenkizu.thetae.%04d.%02d.%02d.%02d.%04dhPa.png"%(year, mon, day, hour, plev*0.01)
       im_temp     = Image.open(figname)
       isub_x      = mod(ithfmask1, nsub_x)
       isub_y      = int(ithfmask1 / nsub_x)
@@ -512,7 +524,7 @@ for plev in lplev:
 
       #-- remove temp --
       for thfmask1 in lthfmask1:
-        name_loc      = sodir + "/loc.wb.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.M0_%3.2f.M1_%3.2f.M2_%3.2f.temp.png"%(year, mon, day, hour, plev*0.01, vtype, thfmask0, thfmask1, thfmask2)
+        name_loc      = sodir + "/loc.thetae.tenkizu.%04d.%02d.%02d.%02d.%04dhPa.%s.M0_%3.2f.M1_%3.2f.M2_%3.2f.temp.png"%(year, mon, day, hour, plev*0.01, vtype, thfmask0, thfmask1, thfmask2)
         os.remove(name_loc)
       #-----------------
 

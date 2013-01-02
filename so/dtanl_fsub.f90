@@ -1,9 +1,581 @@
 MODULE dtanl_fsub
 
 CONTAINS
+!*********************************************************
+SUBROUTINE chartfront2saone(a2front_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2front_saone)
+implicit none
+!----------------------
+integer                              nx_org, ny_org
+!------------------------
+! front : 1->warm   2->cold  3->occ
+!------------------------
+real,dimension(nx_org, ny_org)    :: a2front_org
+!f2py intent(in)                     a2front_org
+!
+real,dimension(nx_org, ny_org)    :: a2x_corres, a2y_corres
+!f2py intent(in)                     a2x_corres, a2y_corres
+real                                 miss
+!f2py intent(in)                     miss
+!--- out ----------
+real,dimension(360,180)           :: a2front_saone
+!f2py intent(out)                    a2front_saone
+!--- calc ---------
+integer                              ix, iy
+integer                              ix_corres, iy_corres
+integer                              ix_saone,  iy_saone
+integer                              ixt, iyt, idx, idy
+integer                              ixn,ixs,ixe,ixw
+integer                              iyn,iys,iye,iyw
+integer                              ixnw, ixne, ixsw, ixse
+integer                              iynw, iyne, iysw, iyse
+real                                 wcount, ecount, scount, ncount, occcount, occcount_8grids
+real                                 wcount_same, ecount_same, scount_same, ncount_same
+real                                 nwarm, ncold, nocc
+real                                 tv, cv
+real                                 vw, ve, vs, vn
+real                                 vnw, vne, vsw, vse
+real,dimension(360,180)           :: a2warm_saone, a2cold_saone, a2occ_saone
+real,dimension(360,180)           :: a2flag_saone
+real,dimension(360,180)           :: a2front_saone_temp
+!--- initialize ---------
+a2front_saone  = miss
+a2warm_saone   = 0.0
+a2cold_saone   = 0.0
+a2occ_saone    = 0.0
+a2flag_saone   = 0.0
+!------------------------
+! convert front resolution a2org -> a2saone
+!------------------------
+do iy = 1,ny_org
+  do ix = 1,nx_org
+    if (a2front_org(ix,iy) .eq. 1.0) then
+      ix_corres  = int(a2x_corres(ix,iy))
+      iy_corres  = int(a2y_corres(ix,iy))
+      a2warm_saone(ix_corres,iy_corres) = a2warm_saone(ix_corres,iy_corres) + 1.0
+      a2flag_saone(ix_corres,iy_corres) = 1.0
+    else if (a2front_org(ix,iy) .eq. 2.0 )then
+      ix_corres  = int(a2x_corres(ix,iy))
+      iy_corres  = int(a2y_corres(ix,iy))
+      a2cold_saone(ix_corres,iy_corres) = a2cold_saone(ix_corres,iy_corres) + 1.0
+      a2flag_saone(ix_corres,iy_corres) = 1.0
+
+    else if (a2front_org(ix,iy) .eq. 3.0 )then
+      ix_corres  = int(a2x_corres(ix,iy))
+      iy_corres  = int(a2y_corres(ix,iy))
+      a2occ_saone(ix_corres,iy_corres)  = a2occ_saone(ix_corres,iy_corres)  + 1.0
+      a2flag_saone(ix_corres,iy_corres) = 1.0
+    end if
+  end do 
+end do
+!------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    if (a2flag_saone(ix_saone,iy_saone) .eq. 1.0) then
+      nwarm   = a2warm_saone(ix_saone,iy_saone)
+      ncold   = a2cold_saone(ix_saone,iy_saone)
+      nocc    = a2occ_saone(ix_saone,iy_saone)
+      if ((nwarm .gt. ncold).and.(nwarm .gt. nocc))then
+        a2front_saone(ix_saone,iy_saone) = 1.0
+      else if ((ncold .gt. nocc).and.(ncold .gt. nwarm))then
+        a2front_saone(ix_saone,iy_saone) = 2.0
+      else if ((nocc .gt. nwarm).and.(nocc .gt. ncold))then
+        a2front_saone(ix_saone,iy_saone) = 3.0
+      end if
+    end if
+  end do
+end do
+!-----------
+
+a2front_saone_temp = a2front_saone
+
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv .gt. 0.0).and.(cv .ne. 3))then
+      !*********************************************
+      ! stationary front
+      !---------------------------------------------
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      occcount = 0.0
+      !----------------------------
+      ! check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount + 1
+            else if (tv.ne.cv)then
+              wcount = wcount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount +1
+            else if (tv.ne.cv)then
+              ecount = ecount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount +1
+            else if (tv.ne.cv)then
+              scount = scount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount +1
+            else if (tv.ne.cv)then
+              ncount = ncount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: all
+      !----------------------------
+      if ((occcount.eq.0).and.(wcount.gt.0).and.(ecount.gt.0))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      end if
+      if ((occcount.eq.0).and.(scount.gt.0).and.(ncount.gt.0))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      end if
+      !*********************************************
+      ! occluded front
+      !---------------------------------------------
+      if (occcount .gt. 0)then
+        occcount_8grids = 0
+        call ixy2iixy_saone(ix_saone, iy_saone+1, ixn, iyn)
+        call ixy2iixy_saone(ix_saone, iy_saone-1, ixs, iys)
+        call ixy2iixy_saone(ix_saone-1, iy_saone, ixw, iyw)
+        call ixy2iixy_saone(ix_saone+1, iy_saone, ixe, iye)
+
+        call ixy2iixy_saone(ix_saone-1, iy_saone+1, ixnw, iynw)
+        call ixy2iixy_saone(ix_saone+1, iy_saone+1, ixne, iyne)
+        call ixy2iixy_saone(ix_saone-1, iy_saone-1, ixsw, iysw)
+        call ixy2iixy_saone(ix_saone+1, iy_saone-1, ixse, iyse)
+
+        vs = a2front_saone(ixs,iys)
+        vn = a2front_saone(ixn,iyn)
+        vw = a2front_saone(ixw,iyw)
+        ve = a2front_saone(ixe,iye)
+
+        vne = a2front_saone(ixne,iyne)
+        vnw = a2front_saone(ixnw,iynw)
+        vse = a2front_saone(ixse,iyse)
+        vsw = a2front_saone(ixsw,iysw)
+
+        if (vs.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+        if (vn.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+        if (vw.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+        if (ve.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+
+        if (vsw.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+        if (vse.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+        if (vnw.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+        if (vne.eq.3)then
+          occcount_8grids = occcount_8grids + 1
+        end if
+
+        !-----
+        if (occcount_8grids .gt. 0)then
+          a2front_saone_temp(ix_saone,iy_saone) = 3.0
+        end if
+      end if
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+!**************************************************
+! 2nd check stationary front
+!---------------------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv.eq.1).or.(cv.eq.2))then
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      occcount = 0.0
+      !----------------------------
+      ! 2nd check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount + 1
+            else if (tv.ne.cv)then
+              wcount = wcount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 2nd check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount +1
+            else if (tv.ne.cv)then
+              ecount = ecount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 2nd check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount +1
+            else if (tv.ne.cv)then
+              scount = scount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 2nd check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.3)then
+              occcount = occcount +1
+            else if (tv.ne.cv)then
+              ncount = ncount +1.0  
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 2nd check stationary front: all
+      !----------------------------
+      if ((occcount.eq.0).and.(wcount.gt.0).and.(ecount.gt.0))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      end if
+      if ((occcount.eq.0).and.(scount.gt.0).and.(ncount.gt.0))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      end if
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+!**************************************************
+! 3rd check stationary front
+!---------------------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv.eq.1).or.(cv.eq.2))then
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      wcount_same = 0.0
+      ecount_same = 0.0
+      scount_same = 0.0
+      ncount_same = 0.0
+      !----------------------------
+      ! 3rd check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              wcount = wcount +1.0  
+            else if (tv.eq.cv)then
+              wcount_same = wcount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 3rd check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ecount = ecount +1.0  
+            else if (tv.eq.cv)then
+              ecount_same = ecount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 3rd check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              scount = scount +1.0  
+            else if (tv.eq.cv)then
+              scount_same = scount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 3rd check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ncount = ncount +1.0  
+            else if (tv.eq.cv)then
+              ncount_same = ncount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 3rd check stationary front: all
+      !----------------------------
+      if ((wcount.gt.0).and.(ecount_same.le.3))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      else if ((ecount.gt.0).and.(wcount_same.le.3))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      else if ((scount.gt.0).and.(ncount_same.lt.3))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      else if ((ncount.gt.0).and.(scount_same.lt.3))then
+        a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+      end if
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
 
 
 
+return
+END SUBROUTINE chartfront2saone
+!*********************************************************
+SUBROUTINE mk_a2rh(a2t, a2q, plev, nx, ny, a2rh)
+implicit none
+!--- in ------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2t, a2q
+!f2py intent(in)         a2t, a2q
+real                     plev
+!f2py intent(in)         plev
+!--- out -----
+real,dimension(nx,ny) :: a2rh
+!f2py intent(out)        a2rh
+!--- calc ----
+integer                    ix,  iy
+!-----------------
+do iy = 1,ny
+  do ix = 1, nx
+    a2rh(ix,iy)  = cal_RH(plev, a2t(ix,iy), a2q(ix,iy))
+  end do
+end do
+
+return
+END SUBROUTINE mk_a2rh
+!*********************************************************
+FUNCTION cal_es(rT)
+implicit none
+!-------------------------
+real  rT
+!f2py intent(in)  rT
+
+real  cal_es
+!f2py intent(out) cal_es
+real,parameter            ::  rT0 = 273.16
+real,parameter            ::  res0= 611.73 ![Pa]
+real,parameter            ::  Lv  = 2.5e6  ![J kg-1]
+real,parameter            ::  Rv  = 461.7 ![J K-1 kg -1]
+!
+cal_es = res0 * exp( Lv/Rv *(1.0/rT0 - 1.0/rT))
+RETURN
+END FUNCTION cal_es
+!*********************************************************
+FUNCTION cal_qs(rT, rP)
+implicit none
+real                 rT, rP
+!f2py intent(in)     rT, rP
+real                 res
+real                 cal_qs
+real,parameter    :: repsi = 0.62185
+!
+res = cal_es(rT)
+cal_qs = repsi * res / (rP - res)
+RETURN
+END FUNCTION cal_qs
+!*********************************************************
+FUNCTION cal_RH(rP, rT, rq)
+implicit none
+real                 rT, rP, rq
+!f2py intent(in)     rT, rP, rq
+!
+real                 res, re
+real,parameter    :: repsi = 0.62185
+real                 cal_RH
+!
+res = cal_es(rT)
+re  = rP *  rq /(rq + repsi)
+cal_RH = re / res *100.0
+RETURN
+END FUNCTION cal_RH
+!*********************************************************
+SUBROUTINE mk_a2thermoadv(a2thermo, a2uwind, a2vwind, nx, ny, a2thermoadv)
+implicit none
+!--- in ------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2thermo, a2uwind, a2vwind
+!f2py intent(in)      :: a2thermo, a2uwind, a2vwind
+!--- out -----
+real,dimension(nx,ny) :: a2thermoadv
+!f2py intent(out)     :: a2thermoadv
+!--- cal -----
+real,dimension(nx,ny) :: a2gradx, a2grady
+real,dimension(nx,ny) :: a2dot, a2graddotx, a2graddoty
+!-------------
+CALL mk_a2grad_saone(a2thermo, a2gradx, a2grady)
+a2dot        = a2gradx* a2uwind + a2grady*a2vwind
+CALL mk_a2grad_saone(a2dot, a2graddotx, a2graddoty)
+a2thermoadv  = a2graddotx*a2uwind + a2graddoty*a2vwind
+!-------------
+return
+END SUBROUTINE mk_a2thermoadv
+!*********************************************************
+SUBROUTINE mk_a2frontspeed(a2thermo, a2frontloc, a2uwind, a2vwind, miss, nx, ny, a2frontspeed)
+implicit none
+!--- in ------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2thermo, a2frontloc, a2uwind, a2vwind
+!f2py intent(in)         a2thermo, a2frontloc, a2uwind, a2vwind
+real                     miss
+!f2py intent(in)         miss
+!--- out -----
+real,dimension(nx,ny) :: a2frontspeed
+!f2py intent(out)        a2frontspeed
+!--- calc ----
+real,dimension(nx,ny) :: a2gradabs, a2gradx, a2grady
+real,dimension(nx,ny) :: a2grad2x, a2grad2y, a2grad2abs
+real,dimension(nx,ny) :: a2gradabs_n, a2gradabs_s, a2gradabs_e, a2gradabs_w
+real                       dn, ds, dew
+real                       lat
+real                       speedsign
+integer                    ix,  iy
+integer                    ixn, ixs, ixw, ixe
+integer                    iyn, iys, iyw, iye
+!--- para --------
+real                    :: lat_first = -89.5
+!-----------------
+CALL mk_a2grad_abs_saone(a2thermo, a2gradabs)
+CALL mk_a2grad_saone(a2thermo, a2gradx, a2grady)
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  do ix = 1, nx
+    if (a2frontloc(ix,iy) .eq. miss) then
+      a2frontspeed(ix,iy) = miss
+      cycle
+    end if 
+    !---
+    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+    !---
+    a2gradabs_n = a2gradabs(ixn, iyn)
+    a2gradabs_s = a2gradabs(ixs, iys)
+    a2gradabs_w = a2gradabs(ixw, iyw)
+    a2gradabs_e = a2gradabs(ixe, iye)
+    !---
+    a2grad2x(ix, iy) = (a2gradabs_e(ix,iy) - a2gradabs_w(ix,iy)) / (2.0*dew)
+    a2grad2y(ix, iy) = (a2gradabs_n(ix,iy) - a2gradabs_s(ix,iy)) / (dn + ds)
+    a2grad2abs(ix,iy)= ( (a2grad2x(ix,iy))**2.0 + (a2grad2y(ix,iy))**2.0 )**0.5
+    !---
+    speedsign           = -sign(1.0, a2uwind(ix,iy)*a2gradx(ix,iy)   &
+                            +a2vwind(ix,iy)*a2grady(ix,iy))
+
+    a2frontspeed(ix,iy) = abs( a2uwind(ix,iy)*a2grad2x(ix,iy)   &
+                           +a2vwind(ix,iy)*a2grad2y(ix,iy) ) &
+                           / a2grad2abs(ix,iy)               &
+                          * speedsign
+    !---       
+  end do
+end do
+
+return
+END SUBROUTINE mk_a2frontspeed
 !*********************************************************
 SUBROUTINE mk_a2frontogen_def(a2thermo, a2uwind, a2vwind, nx, ny, a2frontogen_def)
 implicit none
@@ -466,6 +1038,9 @@ do iy = 1,ny
     ve = a2frontmasksingle(ixe, iye)
     !---
     a2frontmask1(ix,iy) = (vn+vs+vw+ve)/4.0
+    if ( isnan(a2frontmask1(ix,iy)) )then
+      a2frontmask1(ix,iy) = 0.0
+    end if
     !---
   end do
 end do
@@ -535,7 +1110,6 @@ do iy = 1,ny
   end do
 end do
 !!--------------
-print *,"AAAA"
 !
 return
 END SUBROUTINE mk_a2axisgrad
@@ -663,6 +1237,32 @@ end do
 return
 END SUBROUTINE mk_a2meanunitaxis
 !*********************************************************
+SUBROUTINE mk_a2theta_e(plev, a2T, a2q, nx, ny, a2theta_e)
+implicit none
+!--- in ---------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2T, a2q
+!f2py intent(in)         a2T, a2q
+real                     plev       ! (Pa)
+!f2py intent(in)         plev
+!--- out --------
+real,dimension(nx,ny) :: a2theta_e
+!f2py intent(out)        a2theta_e
+!--- calc -------
+integer                  ix, iy
+real                     t,  q
+!----------------
+do iy = 1, ny
+  do ix = 1, nx
+    t  = a2T(ix,iy)
+    q  = a2q(ix,iy) 
+    a2theta_e(ix,iy) = cal_theta_e(Plev, t, q)
+  end do
+end do
+!
+return
+END SUBROUTINE mk_a2theta_e
+!*********************************************************
 SUBROUTINE mk_a2wetbulbtheta(plev, a2T, a2q, nx, ny, a2wetbulbtheta)
 implicit none
 !--- in ---------
@@ -685,7 +1285,6 @@ do iy = 1, ny
     a2wetbulbtheta(ix,iy) = cal_wetbulbtheta(Plev, t, q)
   end do
 end do
-
 return
 END SUBROUTINE mk_a2wetbulbtheta
 !*********************************************************
@@ -827,6 +1426,31 @@ end if
 return
 END SUBROUTINE ixy2iixy_saone
 !*********************************************************
+FUNCTION cal_theta_e(P, T, q)
+implicit none
+!----------------------------
+! estimate equivalent potential temperature
+!----------------------------
+!--- in ---------------
+real                 P, T, q  ! (Pa), (K), (kg/kg: mixing ratio)
+!f2py intent(in)     P, T, q
+!--- out --------------
+real                 cal_theta_e
+!f2py intent(out)    cal_theta_e
+!--- para -------------
+real              :: P1000 = 1000.0*100.0
+real              :: chi   = 0.286  ! Rd/cp
+real              :: Lv    = 2.5e6  ![J kg-1]
+real              :: cp    = 1004.0 ![J kg-1 K-1]
+!--- calc -------------
+real                 Tlcl, theta
+!----------------------
+theta   = T * (P1000/P)**chi
+Tlcl    = cal_tlcl(P, T, q)
+cal_theta_e = theta * exp(Lv*q/(cp*Tlcl))
+!
+return
+END FUNCTION cal_theta_e
 !*********************************************************
 FUNCTION cal_wetbulbtheta(P, T, q)
 implicit none

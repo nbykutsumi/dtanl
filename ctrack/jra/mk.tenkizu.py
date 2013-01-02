@@ -13,15 +13,38 @@ import datetime
 #vtype   = "GSMaP"
 #vtype   = "GPCP1DD"
 #lvtype   = ["JRA"]
-lvtype   = ["GSMaP"]
+lvtype   = ["GSMaP", "JRA"]
 #lvtype   = ["GSMaP","JRA"]
-iyear   = 2001
-eyear   = 2001
-imon    = 6
-emon    = 6
-iday    = 19
 
-thdura  = 24
+if len(sys.argv) >1:
+  year  = int(sys.argv[1])
+  mon   = int(sys.argv[2])
+  day   = int(sys.argv[3])
+  hour  = int(sys.argv[4])
+  lllat = float(sys.argv[5])
+  urlat = float(sys.argv[6])
+  lllon = float(sys.argv[7])
+  urlon = float(sys.argv[8])
+  plev = float(sys.argv[9])   #[Pa]
+  cbarflag = sys.argv[10]
+  thdura= float(sys.argv[11])
+else:
+  year   = 2004
+  mon    = 7
+  day    = 18
+  hour   = 0
+  #plev    = 850*100   #(Pa)
+  plev    = 925*100   #(Pa)
+  cbarflag = "True"
+  thdura  = 6
+  # local region ------
+  # corner points should be
+  # at the center of original grid box
+  lllat   = 20.
+  urlat   = 60.
+  lllon   = 110.
+  urlon   = 160.
+
 
 #**********************************************
 def shifttime(year, mon, day, hour, hour_inc):
@@ -35,38 +58,25 @@ def shifttime(year, mon, day, hour, hour_inc):
   return (year_target, mon_target, day_target, hour_target)
 #**********************************************
 
-
-def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
+for vtype in lvtype:
   ny      = 180
   nx      = 360
-  # local region ------
-  #
-  # corner points should be
-  # at the center of original grid box
-  lllat   = 20.
-  urlat   = 60.
-  lllon   = 110.
-  urlon   = 160.
-  
   miss_int= -9999
-
-
   stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
-
   sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh"%(thdura)
   sodir         = sodir_root + "/%04d%02d"%(year, mon)
   ctrack_func.mk_dir(sodir)
-
+  
   soname        = sodir + "/tenkizu.%04d.%02d.%02d.%02d.%s.png"%(year, mon, day, hour, vtype)
   #----------------------------
   dlat    = 1.0
   dlon    = 1.0
   a1lat   = arange(-89.5, 89.5  + dlat*0.1, dlat)
   a1lon   = arange(0.5,   359.5 + dlon*0.1, dlon)
-
+  
   meridians = 10.0
   parallels = 10.0
-
+  
   #----------------------------
   dpgradrange  = ctrack_para.ret_dpgradrange()
   lclass  = dpgradrange.keys()
@@ -96,25 +106,25 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
     a2v        = a2v*60*60*24.0
     a2v        = a2v.filled(-9999.0)
     a2mask     = a2v
-
-
+  
+  
     if day == 22:
       array(a2v,float32).tofile("./temp.sa.one")
       array(a2num, float32).tofile("./num.sa.one")
-
+  
   if vtype == "GPCP1DD":
     vdir_root     = "/media/disk2/data/GPCP1DD/data/1dd"
     vdir          = vdir_root + "/%04d"%(year)
     vname         = vdir + "/gpcp_1dd_v1.1_p1d.%04d%02d%02d.bn"%(year, mon, day)
     a2v           = fromfile(vname, float32).reshape(ny, nx)
     a2v           = flipud(a2v)
-
+  
   if vtype == "JRA":
     lhour_inc     = [0,6]
     for hour_inc in lhour_inc:
       (year_t, mon_t, day_t, hour_t) = shifttime(year, mon, day, hour, hour_inc)
       print day, year_t, mon_t, day_t, hour_t
-
+  
       vdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PR"
       vdir          = vdir_root + "/%04d%02d"%(year_t, mon_t)
       vname         = vdir + "/fcst_phy2m.PR.%04d%02d%02d%02d.sa.one"%(year_t, mon_t, day_t, hour_t)
@@ -123,7 +133,7 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
     #--
     a2v           = a2v / len(lhour_inc)
     a2v           = a2v * 60*60*24.0
-
+  
   #----------------------------
   
   psldir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL"
@@ -192,25 +202,25 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
   figmap   = plt.figure()
   axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
   M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
-
+  
   #-- transform -----------
   print "transform"
   if vtype in ["GSMaP"]:
     a2v_trans    = M.transform_scalar( ma.masked_equal(a2v, -9999.0),   a1lon, a1lat, nnx, nny).data
     a2mask_trans = M.transform_scalar( ma.masked_equal(a2mask, -9999.0), a1lon, a1lat, nnx, nny).data
-
+  
   else:
     a2v_trans    = M.transform_scalar( a2v,   a1lon, a1lat, nnx, nny) 
   #--- 
   a2psl_trans  = M.transform_scalar( a2psl, a1lon, a1lat, nnx, nny)
   #
-
+  
   #-- boundaries ----------
   if vtype in ["GSMaP", "GPCP1DD", "JRA"]:
     #bnd        = [1,3,5,7,9,11,13,15,17]
     bnd        = [1,5,10,15,20,25,30,35,40,45,50,55,60]
     bnd_cbar   = [-1.0e+40] + bnd + [1.0e+40]
-
+  
   #-- color ---------------
   #scm      = "gist_stern_r"
   #scm      = "gist_ncar_r"
@@ -224,7 +234,7 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
   mycm      = matplotlib.colors.ListedColormap( lcm )
   #-- value imshow --------
   im       = M.imshow(a2v_trans, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm, interpolation="nearest")
-
+  
   #-- superimpose shape (mask) ---
   if vtype in ["GSMaP"]:
     cmshade  = matplotlib.colors.ListedColormap([(0.8, 0.8, 0.8), (0.8, 0.8, 0.8)])
@@ -252,7 +262,7 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
   #-- coastline ---------------
   print "coastlines"
   M.drawcoastlines()
-
+  
   #-- meridians and parallels
   M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1]) 
   M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0]) 
@@ -260,14 +270,14 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
   stitle   = "%s"%(vtype)
   stitle   = stitle + "\n" +"%04d-%02d-%02d  UTC %02d:00 (JST %02d:00)"%(year, mon, day, hour, hour+9)
   axmap.set_title("%s"%(stitle))
-
+  
   #-- save --------------------
   print "save"
   plt.savefig(soname)
   plt.clf()
   print soname
   #-------------------
-
+  
   # for colorbar ---
   if cbarflag == True:
     figmap   = plt.figure()
@@ -284,28 +294,5 @@ def tenkizu_single(year, mon, day, hour, vtype, cbarflag=False):
   
     cbarname  = sodir + "/cbar.%s.png"%(vtype)
     figcbar.savefig(cbarname)
-    
-#***************************************
-
-for vtype in lvtype:
-  for year in range(iyear, eyear+1):
-    for mon in range(imon, emon+1):
-      ##############
-      # no leap
-      ##############
-      #if (mon==2)&(calendar.isleap(year)):
-      #  eday = calendar.monthrange(year,mon)[1] -1
-      #else:
-      #  eday = calendar.monthrange(year,mon)[1]
   
-      eday = calendar.monthrange(year,mon)[1]
-      #-------------
-      for day in range(iday, eday+1):
-        print year, mon
-        #for hour in [0]:
-        for hour in [0]:
-          if ((year==iyear)&(mon==imon)&(day==iday)):
-            cbarflag=True
-          else:
-            cbarflag=False
-          tenkizu_single(year, mon, day, hour, vtype, cbarflag)
+
