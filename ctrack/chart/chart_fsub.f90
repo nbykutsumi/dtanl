@@ -48,20 +48,21 @@ a2flag_saone   = 0.0
 !------------------------
 do iy = 1,ny_org
   do ix = 1,nx_org
+    !--------------------------------
+    ix_corres  = int(a2x_corres(ix,iy))
+    iy_corres  = int(a2y_corres(ix,iy))
+    if ((ix_corres.eq.miss).or.(iy_corres.eq.miss))then
+      cycle
+    end if
+    !--------------------------------
     if (a2front_org(ix,iy) .eq. 1.0) then
-      ix_corres  = int(a2x_corres(ix,iy))
-      iy_corres  = int(a2y_corres(ix,iy))
       a2warm_saone(ix_corres,iy_corres) = a2warm_saone(ix_corres,iy_corres) + 1.0
       a2flag_saone(ix_corres,iy_corres) = 1.0
     else if (a2front_org(ix,iy) .eq. 2.0 )then
-      ix_corres  = int(a2x_corres(ix,iy))
-      iy_corres  = int(a2y_corres(ix,iy))
       a2cold_saone(ix_corres,iy_corres) = a2cold_saone(ix_corres,iy_corres) + 1.0
       a2flag_saone(ix_corres,iy_corres) = 1.0
 
     else if (a2front_org(ix,iy) .eq. 3.0 )then
-      ix_corres  = int(a2x_corres(ix,iy))
-      iy_corres  = int(a2y_corres(ix,iy))
       a2occ_saone(ix_corres,iy_corres)  = a2occ_saone(ix_corres,iy_corres)  + 1.0
       a2flag_saone(ix_corres,iy_corres) = 1.0
     end if
@@ -74,12 +75,12 @@ do iy_saone = 1, 180
       nwarm   = a2warm_saone(ix_saone,iy_saone)
       ncold   = a2cold_saone(ix_saone,iy_saone)
       nocc    = a2occ_saone(ix_saone,iy_saone)
-      if ((nwarm .gt. ncold).and.(nwarm .gt. nocc))then
+      if (nocc .gt. 1)then
+        a2front_saone(ix_saone,iy_saone) = 3.0
+      else if ((nwarm .gt. ncold).and.(nwarm .gt. nocc))then
         a2front_saone(ix_saone,iy_saone) = 1.0
       else if ((ncold .gt. nocc).and.(ncold .gt. nwarm))then
         a2front_saone(ix_saone,iy_saone) = 2.0
-      else if ((nocc .gt. nwarm).and.(nocc .gt. ncold))then
-        a2front_saone(ix_saone,iy_saone) = 3.0
       end if
     end if
   end do
@@ -87,7 +88,6 @@ end do
 !-----------
 
 a2front_saone_temp = a2front_saone
-
 do iy_saone = 1, 180
   do ix_saone = 1, 360
     cv    = a2front_saone(ix_saone,iy_saone)
@@ -416,6 +416,7 @@ do iy_saone = 1, 180
     end if
   end do
 end do
+
 a2front_saone = a2front_saone_temp
 
 return

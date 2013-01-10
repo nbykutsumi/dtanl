@@ -6,6 +6,66 @@ CONTAINS
 !*****************************************************************
 !* SUBROUTINE & FUNCTION
 !*****************************************************************
+SUBROUTINE mk_territory_saone(a2in, thdist&
+                , miss, lat_first, dlat, dlon&
+                , nx, ny, a2territory )
+  implicit none
+  !-- input -------------------------------------
+  integer                                         nx, ny
+  real,dimension(nx,ny)                       ::  a2in
+!f2py intent(in)                                  a2in
+  real                                            thdist  ! [m]
+!f2py intent(in)                                  thdist
+  real                                            miss
+!f2py intent(in)                                  miss
+  real                                            lat_first, dlat, dlon
+!f2py intent(in)                                  lat_first, dlat, dlon
+
+
+  !-- output ------------------------------------
+  real,dimension(nx,ny)                       ::  a2territory
+!f2py intent(out)                                 a2territory
+  !-- calc --------------------------------------
+  integer                                         ix, iy, iix, iiy, ix_loop, iy_loop
+  real                                            ilat
+  integer,dimension(nx*ny)                     :: a1x, a1y
+  integer                                         icount
+  integer                                         itemp   ! for test
+  !--- para -------------------------------------
+  integer,parameter                            :: miss_int = -9999
+
+  !----------------------------------------------
+a2territory = miss
+
+itemp = 0
+do iy = 1, ny
+  do ix = 1, nx
+    !------------------------
+    ! check
+    !------------------------
+    if (a2in(ix,iy) .eq.miss) cycle
+    !------------------------
+    itemp = itemp + 1
+    ilat  = lat_first + (iy -1)*dlat
+    call circle_xy_real(ilat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1x, a1y) 
+    !-------------------------
+    ! search
+    !-------------------------
+    icount = 1
+    do while ( a1x(icount) .ne. miss_int )
+      ix_loop = ix + a1x(icount)
+      iy_loop = iy + a1y(icount) 
+      call ixy2iixy(ix_loop, iy_loop, nx, ny, iix, iiy)
+      !************************************
+      a2territory(iix,iiy) = 1.0
+      icount = icount + 1
+    end do
+  end do
+end do
+RETURN
+END SUBROUTINE mk_territory_saone
+
+!*****************************************************************
 SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, miss, ny_in, nx_in, a2sum, a2num)
   implicit none
   !-- input -------------------------------------
@@ -1156,6 +1216,67 @@ end do
 RETURN
 END SUBROUTINE circle_xy_light
 
+!*****************************************************************
+SUBROUTINE circle_xy_real(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1x, a1y)
+  implicit none
+  !-- input -----------------------------
+  integer                               nx, ny
+  real                                  lat, lat_first, dlon, dlat
+!f2py intent(in)                        lat, lat_first, dlon, dlat
+  real                                  thdist  ![m]
+!f2py intent(in)                        thdist  ![m]
+  integer                               miss_int
+!f2py intent(in)                        miss_int
+  !-- output ----------------------------
+  integer,dimension(nx*ny)           :: a1x, a1y
+!f2py intent(out)                       a1x, a1y
+  !-- calc ------------------------------
+  integer                               icount
+  integer                               x, y, ix, iy, ix_loop, iy_loop
+  integer                               ngrids, sgrids, xgrids, ygrids
+  real                                  idist, ilat, ilon
+  real                                  lon
+!****************************************
+! search
+!----------------------------------------
+lon       = 0.0
+x  = 1
+y  = int((lat - lat_first)/dlat) + 1
+!-----------
+! set range
+!***********
+call gridrange_real(lat, dlat, dlon, thdist, ngrids, sgrids, xgrids)
+if (sgrids .ge. ngrids )then
+  ygrids = sgrids
+else
+  ygrids = ngrids
+end if
+!--
+!-----------
+! search loop
+!***********
+icount = 0
+a1x    = miss_int
+a1y    = miss_int
+do iy_loop = -ygrids, ygrids
+  do ix_loop = -xgrids, xgrids
+
+    call ixy2iixy(ix_loop, iy_loop, nx, ny, ix, iy)
+    ilat        = lat + iy_loop *dlat
+    ilon        = lon + ix_loop *dlon
+    idist       = hubeny_real(lat, lon, ilat, ilon)
+
+    if (idist .lt. thdist) then
+      icount = icount + 1
+      a1x(icount) = ix_loop   ! not ix
+      a1y(icount) = iy_loop   ! not iy
+    end if
+  end do
+end do
+
+ 
+RETURN
+END SUBROUTINE circle_xy_real
 
 !*****************************************************************
 SUBROUTINE circle_xy(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1x, a1y)
@@ -1471,6 +1592,48 @@ do i = 1, 100000
 end do
 RETURN
 END FUNCTION longrids
+!*****************************************************************
+SUBROUTINE gridrange_real(lat, dlat, dlon, thdist, ngrids, sgrids, xgrids)
+  implicit none
+  !-- for input -----------
+  real                                  thdist   ! [km]
+!f2py intent(in)                        thdist
+  real                                  lat, dlat, dlon
+!f2py intent(in)                        lat, dlat, dlon
+  !-- for output ----------
+  integer                               ngrids, sgrids, xgrids
+!f2py intent(out)                       ngrids, sgrids, xgrids
+  !-- for calc  -----------
+  integer                               i
+  real                                  dist, lat2, lon2
+  !------------------------
+do i = 1, 100000
+  lat2 = lat + dlat * i
+  dist = hubeny_real(lat, 0.0, lat2, 0.0)
+  if (dist .gt. thdist) then
+    ngrids = i
+    exit
+  end if
+end do
+do i = 1, 100000
+  lat2 = lat - dlat * i
+  dist = hubeny_real(lat, 0.0, lat2, 0.0)
+  if (dist .gt. thdist) then
+    sgrids = i
+    exit
+  end if
+end do
+do i = 1, 100000
+  lon2 = dlon * i
+  dist = hubeny_real(lat, 0.0, lat, lon2)
+  if (dist .gt. thdist) then
+    xgrids = i
+    exit
+  end if 
+end do
+RETURN
+END SUBROUTINE gridrange_real
+
 !*****************************************************************
 SUBROUTINE gridrange(lat, dlat, dlon, thdist, ngrids, sgrids, xgrids)
   implicit none

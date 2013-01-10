@@ -1,7 +1,18 @@
 import calendar
 from numpy import *
 #----------------------------------------------------------
-
+def ret_days(season):
+  if season == "ALL":
+    days = 365
+  elif season == "MAM":
+    days = 92  # 31 + 30 + 31
+  elif season == "DFJ":
+    days = 90  # 31 + 31 + 28
+  elif season == "JJA":
+    days = 92  # 30 + 31 + 31
+  elif season == "SON":
+    days = 91  # 30 + 31 + 30
+  return days
 #--------------
 def ret_lcrad():
   #lcrad =  [500.0*1000.0, 1000.0*1000.0, 1500.0*1000.0, 2000.0*1000.0]
@@ -50,6 +61,8 @@ def ret_im_em(season):
 def ret_lmon(season):
   if season == "DJF":
     lmon  = [1,2, 12]
+  elif season == "JJA":
+    lmon  = [6,7,8]
   elif season == "ALL":
     lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
   return lmon

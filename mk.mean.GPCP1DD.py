@@ -3,11 +3,21 @@ import matplotlib.pyplot as plt
 from cf.plot import *
 from numpy import *
 import ctrack_para
+import ctrack_func
 import calendar
+import sys
 
-iyear    = 2001
-eyear    = 2004
-lseason   = ["DJF", "ALL"]
+if len(sys.argv) >1:
+  iyear = int(sys.argv[1])
+  eyear = int(sys.argv[2])
+  season= sys.argv[3] 
+  lseason= [season]
+else:
+  iyear    = 2001
+  eyear    = 2004
+  lseason  = ["DJF","ALL"]
+
+#-----------------
 prtype   = "GPCP1DD"
 ny       = 180
 nx       = 360
@@ -22,26 +32,29 @@ urlon    = 360.0
 for season in lseason:
   lmon     = ctrack_para.ret_lmon(season)
   idir_root = "/media/disk2/data/GPCP1DD/data/1dd"
-  soname = idir_root + "/gpcp_1dd_v1.1_p1d.%04d-%04d.%s.bn"%(iyear, eyear,season)
+  idir_root = "/media/disk2/data/GPCP1DD/v1.2/1dd"
+  sodir     = idir_root + "/mean"
+  ctrack_func.mk_dir(sodir)
+  soname = sodir + "/gpcp_1dd_v1.2_p1d.%04d-%04d.%s.bn"%(iyear, eyear,season)
   times  = 0
   a2out  = zeros([ny, nx], float32)
-  #for year in range(iyear, eyear+1):
-  #  for mon in lmon:
-  #    print year, mon
-  #    eday  = calendar.monthrange(year, mon)[1]
-  #    for day in range(1, eday+1):
-  #      times  = times + 1
-  #
-  #      symd   = "%04d%02d%02d"%(year, mon, day)
-  #      idir   = idir_root + "/%04d"%(year)
-  #      siname = idir + "/gpcp_1dd_v1.1_p1d.%s.bn"%(symd)
-  #      a2in   = fromfile(siname, float32).reshape(ny, nx)
-  #      a2in   = ma.masked_equal(a2in, miss_in).filled(0.0)
-  #      a2out  = a2out + a2in
-  ##------------------------
-  #a2out  = a2out / times
-  #a2out.tofile(soname)
-  #print soname
+  for year in range(iyear, eyear+1):
+    for mon in lmon:
+      print year, mon
+      eday  = calendar.monthrange(year, mon)[1]
+      for day in range(1, eday+1):
+        times  = times + 1
+  
+        symd   = "%04d%02d%02d"%(year, mon, day)
+        idir   = idir_root + "/%04d"%(year)
+        siname = idir + "/gpcp_1dd_v1.2_p1d.%s.bn"%(symd)
+        a2in   = fromfile(siname, float32).reshape(ny, nx)
+        a2in   = ma.masked_equal(a2in, miss_in).filled(0.0)
+        a2out  = a2out + a2in
+  #------------------------
+  a2out  = a2out / times
+  a2out.tofile(soname)
+  print soname
   
   #--- figure -------
   a2dat     = fromfile(soname, float32).reshape(ny, nx)
@@ -84,7 +97,7 @@ for season in lseason:
   bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
   plt.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar, orientation="horizontal")
 
-  cbarname  = soname[:-4] + ".cbar.png"
+  cbarname  = soname[:-3] + ".cbar.png"
   figcbar.savefig(cbarname)
   #-------------------
   plt.clf()
