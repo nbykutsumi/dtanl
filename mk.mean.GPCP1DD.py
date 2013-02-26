@@ -13,9 +13,9 @@ if len(sys.argv) >1:
   season= sys.argv[3] 
   lseason= [season]
 else:
-  iyear    = 2001
+  iyear    = 2000
   eyear    = 2004
-  lseason  = ["DJF","ALL"]
+  lseason  = [1,2,3,4,5,6,7,8,9,10,11,12]
 
 #-----------------
 prtype   = "GPCP1DD"
@@ -30,8 +30,12 @@ urlon    = 360.0
 
 #-----------------
 for season in lseason:
+  #----
+  if not season in ["DJF","MAM","JJA","SON","ALL"]:
+    season = int(season)
+  #----
   lmon     = ctrack_para.ret_lmon(season)
-  idir_root = "/media/disk2/data/GPCP1DD/data/1dd"
+  #idir_root = "/media/disk2/data/GPCP1DD/data/1dd"
   idir_root = "/media/disk2/data/GPCP1DD/v1.2/1dd"
   sodir     = idir_root + "/mean"
   ctrack_func.mk_dir(sodir)

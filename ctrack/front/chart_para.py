@@ -62,6 +62,17 @@ def ret_domain_corner_rect(region):
     urlat = 70.5
 
   return (lllon, lllat, urlon, urlat)
+#------------------------
+def ret_domain_corner_rect_forfig(region):
+  if region == "ASAS":
+    lllon = 66.0
+    lllat = 0.0
+    urlon = 210.0
+    urlat = 74.0
+
+  return (lllon, lllat, urlon, urlat)
+
+
 
 #------------------------
 def ret_xydom_first_last(region, year, mon):

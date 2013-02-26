@@ -1,6 +1,61 @@
 import calendar
 from numpy import *
 #----------------------------------------------------------
+def ret_tcregionlatlon(region):
+  if region=="PNW":
+    lllat = 0.0
+    lllon = 100.0
+    urlat = 50.0
+    urlon = 180.0
+  if region=="PNE":
+    lllat = 0.0
+    lllon = 180.0
+    urlon = 270.0
+    urlat = 40.0
+  if region=="INN":
+    lllat = 0.0
+    lllon = 45.0
+    urlat = 30.0
+    urlon = 100.0
+  if region=="INS":
+    lllat = -45.0
+    lllon = 30.0
+    urlat = 0.0
+    urlon = 140.0
+  if region=="PSW":
+    lllat = -45.0
+    lllon = 140.0
+    urlat = 0.0
+    urlon = 240.0
+  if region=="ATN":
+    lllat = 0.0
+    lllon = 270.0
+    urlat = 50.0
+    urlon = 360.0
+  #------------
+  return lllat, lllon, urlat, urlon
+#------------------------------------
+def ret_highsidedist():
+  highsidedist = 300*1000.0 #(m)
+  return highsidedist
+#-----------------------------------
+def ret_thorog():
+  thorog = 1500 # m
+  return thorog
+#-----------------------------------
+def ret_thgradorog():
+  thgradorog = 5.0 # m/km
+  return thgradorog
+#-----------------------------------
+def ret_totaldays(iyear, eyear, season):
+  lmon  = ret_lmon(season)
+  days  = 0
+  for year in range(iyear, eyear+1):
+    for mon in lmon:
+      days = days + calendar.monthrange(year,mon)[1]
+  #--
+  return days
+#-----------------------------------
 def ret_days(season):
   if season == "ALL":
     days = 365
@@ -61,10 +116,16 @@ def ret_im_em(season):
 def ret_lmon(season):
   if season == "DJF":
     lmon  = [1,2, 12]
+  elif season == "MAM":
+    lmon  = [3,4,5]
   elif season == "JJA":
     lmon  = [6,7,8]
+  elif season == "SON":
+    lmon  = [9,10,11]
   elif season == "ALL":
     lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
+  elif type(season) == int:
+    lmon  = [season]
   return lmon
 #-----------------------------------
 def ret_mons(season):

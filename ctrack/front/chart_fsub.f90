@@ -2,6 +2,7 @@ MODULE chart_fsub
 
 CONTAINS
 !*********************************************************
+!*********************************************************
 SUBROUTINE chartfront2saone(a2front_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2front_saone)
 implicit none
 !----------------------
@@ -498,6 +499,96 @@ FUNCTION hubeny_real(lat1, lon1, lat2, lon2)
 RETURN
 END FUNCTION hubeny_real
 !**************************************************************
+FUNCTION hubeny_real(lat1, lon1, lat2, lon2)
+  implicit none
+  !-- for input -----------
+  real                                  lat1, lon1, lat2, lon2
+!f2py intent(in)                        lat1, lon1, lat2, lon2
+  !-- for output-----------
+  real                                  hubeny_real
+!f2py intent(out)                       hubeny_real
+  !-- for calc ------------
+  real,parameter                     :: pi = atan(1.0)*4.0
+  real,parameter                     :: a  = 6378137
+  real,parameter                     :: b  = 6356752.314140
+  real,parameter                     :: e2 = 0.00669438002301188
+  real,parameter                     :: a_1_e2 = 6335439.32708317
+  real                                  M, N, W
+  real                                  latrad1, latrad2, lonrad1, lonrad2
+  real                                  latave, dlat, dlon
+  real                                  dlondeg
+  !------------------------
+  latrad1   = lat1 * pi / 180.0
+  latrad2   = lat2 * pi / 180.0
+  lonrad1   = lon1 * pi / 180.0
+  lonrad2   = lon2 * pi / 180.0
+  !
+  latave    = (latrad1 + latrad2)/2.0
+  dlat      = latrad2 - latrad1
+  dlon      = lonrad2 - lonrad1
+  !
+  dlondeg   = lon2 - lon1
+  if ( abs(dlondeg) .gt. 180.0) then
+    dlondeg = 180.0 - mod(abs(dlondeg), 180.0)
+    dlon    = dlondeg * pi / 180.0
+  end if
+  !-------
+  W  = sqrt(1.0 - e2 * sin(latave)**2.0 )
+  M  =  a_1_e2 / (W**3.0)
+  N  =  a / W
+  hubeny_real  = sqrt( (dlat * M)**2.0 + (dlon * N * cos(latave))**2.0 )
+RETURN
+END FUNCTION hubeny_real
+!**************************************************************
+SUBROUTINE mk_a2grad_saone(a2in, a2gradx, a2grady)
+!---------------------------------
+! data order should be South -> North, West -> East
+! returns two vector map (map of da/dx, map of da/dy)
+!---------------------------------
+implicit none
+!--- in ----------
+integer                 :: ny = 180
+integer                 :: nx = 360
+real,dimension(360,180) :: a2in
+!f2py intent(in)           a2in
+!--- out ---------
+real,dimension(360,180) :: a2gradx, a2grady
+!f2py intent(out)          a2gradx, a2grady
+!--- para --------
+real                    :: lat_first = -89.5
+!--- calc --------
+real                       dn, ds, dew
+real                       vn, vs, vw, ve
+real                       lat
+integer                    ix,  iy
+integer                    ixn, ixs, ixw, ixe
+integer                    iyn, iys, iyw, iye
+!-----------------
+do iy = 1, ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  do ix = 1, nx
+    !---
+    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+    !---
+    vn = a2in(ixn, iyn)
+    vs = a2in(ixs, iys)
+    vw = a2in(ixw, iyw)
+    ve = a2in(ixe, iye)
+    !---
+    a2gradx(ix, iy) = (ve - vw) / (2.0*dew)
+    a2grady(ix, iy) = (vn - vs) / (dn + ds)
+
+  end do
+end do
+!-----------------
+return
+END SUBROUTINE mk_a2grad_saone
 !**************************************************************
 !*********************************************************
 END MODULE chart_fsub

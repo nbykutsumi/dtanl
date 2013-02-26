@@ -2,6 +2,464 @@ MODULE dtanl_fsub
 
 CONTAINS
 !*********************************************************
+SUBROUTINE sum_9grids_saone(a2in, miss, nx, ny, a2out)
+implicit none
+!--- in --------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+real                     miss
+!f2py intent(in)         miss
+!--- out --------
+real,dimension(nx,ny) :: a2out
+!f2py intent(out)        a2out
+!--- calc -------
+integer                  ix,iy,ik
+integer                  iix,iiy
+integer                  ixn,ixs,ixe,ixw
+integer                  iyn,iys,iye,iyw
+integer,dimension(8)  :: a1x, a1y
+integer                  icount
+!----------------
+a2out = miss
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      a2out(ix,iy) = a2in(ix,iy)
+      a1x    = -9999
+      a1y    = -9999
+      !------
+      call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+      call ixy2iixy_saone(ix, iy-1, ixs, iys)
+      call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+      call ixy2iixy_saone(ix+1, iy, ixe, iye)
+      !------
+      a1x(1) = ixn
+      a1x(2) = ixe
+      a1x(3) = ixe
+      a1x(4) = ixe
+      a1x(5) = ixw
+      a1x(6) = ixw
+      a1x(7) = ixw
+      a1x(8) = ixs     
+      !------
+      a1y(1) = iyn
+      a1y(2) = iyn
+      a1y(3) = iy
+      a1y(4) = iys
+      a1y(5) = iyn
+      a1y(6) = iy
+      a1y(7) = iys
+      a1y(8) = iys     
+      !------
+      icount = 1
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in(iix,iiy).ne.miss)then
+          icount = icount + 1
+          a2out(ix,iy) = a2out(ix,iy) + a2in(iix,iiy)
+        end if        
+      end do
+      a2out(ix,iy) = a2out(ix,iy)
+    end if
+  end do
+end do
+END SUBROUTINE sum_9grids_saone
+!*********************************************************
+SUBROUTINE mean_9grids_saone(a2in, miss, nx, ny, a2out)
+implicit none
+!--- in --------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+real                     miss
+!f2py intent(in)         miss
+!--- out --------
+real,dimension(nx,ny) :: a2out
+!f2py intent(out)        a2out
+!--- calc -------
+integer                  ix,iy,ik
+integer                  iix,iiy
+integer                  ixn,ixs,ixe,ixw
+integer                  iyn,iys,iye,iyw
+integer,dimension(8)  :: a1x, a1y
+integer                  icount
+!----------------
+a2out = miss
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      a2out(ix,iy) = a2in(ix,iy)
+      a1x    = -9999
+      a1y    = -9999
+      !------
+      call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+      call ixy2iixy_saone(ix, iy-1, ixs, iys)
+      call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+      call ixy2iixy_saone(ix+1, iy, ixe, iye)
+      !------
+      a1x(1) = ixn
+      a1x(2) = ixe
+      a1x(3) = ixe
+      a1x(4) = ixe
+      a1x(5) = ixw
+      a1x(6) = ixw
+      a1x(7) = ixw
+      a1x(8) = ixs     
+      !------
+      a1y(1) = iyn
+      a1y(2) = iyn
+      a1y(3) = iy
+      a1y(4) = iys
+      a1y(5) = iyn
+      a1y(6) = iy
+      a1y(7) = iys
+      a1y(8) = iys     
+      !------
+      icount = 1
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in(iix,iiy).ne.miss)then
+          icount = icount + 1
+          a2out(ix,iy) = a2out(ix,iy) + a2in(iix,iiy)
+        end if        
+      end do
+      a2out(ix,iy) = a2out(ix,iy) / icount
+    end if
+  end do
+end do
+
+
+END SUBROUTINE mean_9grids_saone
+!*********************************************************
+SUBROUTINE mk_8gridsxy(ix,iy, a1x, a1y)
+implicit none
+!--- in ---------
+integer                  ix, iy
+!f2py intent(in)         ix, iy
+!--- out --------
+integer,dimension(8)  :: a1x, a1y
+!f2py intent(in)         a1x, a1y
+!--- calc -------
+integer                  ixn, ixs, ixe, ixw
+integer                  iyn, iys, iye, iyw
+!----------------
+call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+call ixy2iixy_saone(ix, iy-1, ixs, iys)
+call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+call ixy2iixy_saone(ix+1, iy, ixe, iye)
+!------
+a1x(1) = ixn
+a1x(2) = ixe
+a1x(3) = ixe
+a1x(4) = ixe
+a1x(5) = ixw
+a1x(6) = ixw
+a1x(7) = ixw
+a1x(8) = ixs     
+!------
+a1y(1) = iyn
+a1y(2) = iyn
+a1y(3) = iy
+a1y(4) = iys
+a1y(5) = iyn
+a1y(6) = iy
+a1y(7) = iys
+a1y(8) = iys     
+!------
+return
+END SUBROUTINE mk_8gridsxy
+!*********************************************************
+SUBROUTINE del_front_3grids(a2in, miss, nx, ny, a2out)
+implicit none
+!--- in ---------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+real                     miss
+!f2py intent(in)         miss
+!--- out --------
+real,dimension(nx,ny) :: a2out
+!f2py intent(out)        a2out
+!--- calc -------
+integer                  ix,iy,ik
+integer                  ixc, iyc
+integer                  iix,iiy,iik
+integer,dimension(8)  :: a1x, a1y
+integer,dimension(9)  :: a1xx1, a1yy1
+integer,dimension(9)  :: a1xx2, a1yy2
+
+integer                  fcount1, fcount2, fcount3
+integer                  flag_type2
+!------
+!5!1!2!
+!6! !3!
+!7!8!4l
+!------
+!-- initialize ---
+a2out = a2in
+!----------------
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      !-- init ----------
+      a1xx1 = -9999
+      a1yy1 = -9999
+      a1xx2 = -9999
+      a1yy2 = -9999
+      !-- 1st search ----
+      ixc   = ix
+      iyc   = iy
+      a1xx1(9) = ixc
+      a1yy1(9) = iyc
+      call mk_8gridsxy(ixc,iyc, a1x, a1y)
+      !---
+      fcount1 = 0
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in(iix,iiy).ne.miss)then
+          fcount1 = fcount1 + 1
+          a1xx1(fcount1) = iix
+          a1yy1(fcount1) = iiy
+        end if        
+      end do
+      if (fcount1.eq.0)then
+        a2out(ix,iy) = miss
+        a2in(ix,iy)  = miss
+      else if (fcount1 .ge. 3)then
+        cycle
+      else if (fcount1.eq.1)then
+        !******************************
+        ! type 1  
+        !        "*"**
+        !
+        !******************************
+        !----- 2nd search -------
+        ixc          = a1xx1(1)
+        iyc          = a1yy1(1)
+        a1xx2(9)     = ixc
+        a1yy2(9)     = iyc
+
+        call mk_8gridsxy(ixc,iyc, a1x, a1y)
+        fcount2 = 0
+        do ik = 1,8
+          iix = a1x(ik)
+          iiy = a1y(ik)
+          if (a2in(iix,iiy).ne.miss)then
+            fcount2 = fcount2 + 1
+            a1xx2(fcount2) = iix
+            a1yy2(fcount2) = iiy
+          end if
+        end do
+        if (fcount2 .eq. 1)then
+          a2out(ix,iy) = miss
+          a2in(ix,iy)  = miss
+          a2out(ixc,iyc) = miss
+          a2in(ixc,iyc)  = miss
+        else if (fcount2 .ge. 3)then
+          cycle
+        else if (fcount2 .eq. 2)then
+          do iik = 1,2
+            if ((a1xx2(iik).ne.a1xx1(9)).or.(a1yy2(iik).ne.a1yy1(9)))then
+              !--- 3rd search for type1 ---
+              ixc          = a1xx2(iik)
+              iyc          = a1yy2(iik)
+              call mk_8gridsxy(ixc,iyc, a1x, a1y)
+              fcount3 = 0
+              do ik = 1,8
+                iix = a1x(ik)
+                iiy = a1y(ik)
+                if (a2in(iix,iiy).ne.miss)then
+                  fcount3 = fcount3 + 1
+                end if
+              end do
+              if (fcount3 .le.1)then
+                a2out(ix,iy)   = miss
+                a2in(ix,iy)    = miss
+                a2out(ixc,iyc) = miss
+                a2in(ixc,iyc)  = miss
+              end if
+            end if
+          end do
+        end if
+      else if (fcount1 .eq. 2)then
+        !******************************
+        ! type 2  
+        !        *"*"*   "*"*     *"*"*
+        !                 *
+        !
+        !******************************
+        flag_type2 = 0
+        do iik = 1,2
+          !-- 2nd and 3rd search ----
+          ixc = a1xx1(iik)
+          iyc = a1yy1(iik)
+          call mk_8gridsxy(ixc,iyc, a1x, a1y)
+          fcount2 = 0
+          do ik = 1,8
+            iix = a1x(ik)
+            iiy = a1y(ik)
+            if (a2in(iix,iiy).ne.miss)then
+              fcount2 = fcount2 + 1
+              a1xx2(fcount2)  = iix
+              a1yy2(fcount2)  = iiy
+            end if
+          end do
+          if (fcount2.ge.3)then
+            flag_type2 = flag_type2+1
+          else if (fcount2.eq.2)then
+            if ( ((a1xx2(1).eq.a1xx2(2)).and.(a1xx2(1).eq.ixc)) &
+               .or. (a1yy2(1).eq.a1yy2(2).and.(a1yy2(1).eq.iyc)) )then
+              flag_type2 = flag_type2 +1
+            end if
+          end if
+          !--------------------------
+        end do
+        if (flag_type2.eq.0)then
+          a2out(ix,iy)   = miss
+          a2in(ix,iy)    = miss
+          do iik =1,2
+            ixc = a1xx1(iik)
+            iyc = a1yy1(iik)
+            a2out(ixc,iyc) = miss
+            a2in(ixc,iyc)  = miss
+          end do
+        end if
+      end if
+    end if
+  end do
+end do
+
+END SUBROUTINE del_front_3grids
+!
+!*********************************************************
+SUBROUTINE del_front_2grids(a2in, miss, nx, ny, a2out)
+implicit none
+!--- in ---------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+real                     miss
+!f2py intent(in)         miss
+!--- out --------
+real,dimension(nx,ny) :: a2out
+!f2py intent(out)        a2out
+!--- calc -------
+integer                  ix,iy,ik
+integer                  iix,iiy,iik
+integer                  iiix,iiiy
+integer                  ixn,ixs,ixe,ixw
+integer                  iyn,iys,iye,iyw
+integer                  iixn,iixs,iixe,iixw
+integer                  iiyn,iiys,iiye,iiyw
+integer,dimension(8)  :: a1x, a1y
+integer,dimension(8)  :: a1xx, a1yy
+integer                  fcount
+!------
+!5!1!2!
+!6! !3!
+!7!8!4l
+!------
+!-- initialize ---
+a2out = a2in
+!----------------
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      a1x    = -9999
+      a1y    = -9999
+      !------
+      call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+      call ixy2iixy_saone(ix, iy-1, ixs, iys)
+      call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+      call ixy2iixy_saone(ix+1, iy, ixe, iye)
+      !------
+      a1x(1) = ixn
+      a1x(2) = ixe
+      a1x(3) = ixe
+      a1x(4) = ixe
+      a1x(5) = ixw
+      a1x(6) = ixw
+      a1x(7) = ixw
+      a1x(8) = ixs     
+      !------
+      a1y(1) = iyn
+      a1y(2) = iyn
+      a1y(3) = iy
+      a1y(4) = iys
+      a1y(5) = iyn
+      a1y(6) = iy
+      a1y(7) = iys
+      a1y(8) = iys     
+      !------
+      fcount = 1
+
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in(iix,iiy).ne.miss)then
+          fcount = fcount + 1
+        end if        
+      end do
+      if (fcount.eq.1)then
+        a2out(ix,iy) = miss
+      else if (fcount.ge.3)then
+        continue
+      else
+        !qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+        do ik = 1,8
+          iix = a1x(ik)
+          iiy = a1y(ik)
+          if (a2in(iix,iiy).ne.miss)then
+            call ixy2iixy_saone(iix, iiy+1, iixn, iiyn)
+            call ixy2iixy_saone(iix, iiy-1, iixs, iiys)
+            call ixy2iixy_saone(iix-1, iiy, iixw, iiyw)
+            call ixy2iixy_saone(iix+1, iiy, iixe, iiye)
+            !------
+            a1xx(1) = iixn
+            a1xx(2) = iixe
+            a1xx(3) = iixe
+            a1xx(4) = iixe
+            a1xx(5) = iixw
+            a1xx(6) = iixw
+            a1xx(7) = iixw
+            a1xx(8) = iixs     
+            !------
+            a1yy(1) = iiyn
+            a1yy(2) = iiyn
+            a1yy(3) = iiy
+            a1yy(4) = iiys
+            a1yy(5) = iiyn
+            a1yy(6) = iiy
+            a1yy(7) = iiys
+            a1yy(8) = iiys     
+            !------
+            do iik = 1,8
+              iiix = a1xx(iik)
+              iiiy = a1yy(iik)
+              if (a2in(iiix,iiiy).ne.miss)then
+                if ((iiix.eq.ix).and.(iiiy.eq.iy))then
+                  continue
+                else
+                  fcount = fcount + 1
+                end if
+              end if
+            end do
+            if (fcount.le.2)then
+              a2out(ix,iy)=miss
+            endif
+          end if
+        end do 
+        !qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+      end if
+    end if
+  end do
+end do
+
+END SUBROUTINE del_front_2grids
 !*********************************************************
 SUBROUTINE mk_a2rh(a2t, a2q, plev, nx, ny, a2rh)
 implicit none
@@ -130,6 +588,7 @@ do iy = 1,ny
     end if 
     !---
     call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+
     call ixy2iixy_saone(ix, iy-1, ixs, iys)
     call ixy2iixy_saone(ix-1, iy, ixw, iyw)
     call ixy2iixy_saone(ix+1, iy, ixe, iye)
@@ -543,7 +1002,81 @@ do iy = 1,ny
 end do
 
 return
-END SUBROUTINE 
+END SUBROUTINE mk_a2divergence
+!*********************************************************
+SUBROUTINE mk_a2adj_multigrids(a2in, grids, nx, ny, a2adj)
+implicit none
+!--- in -------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+integer                  grids
+!f2py intent(in)         grids
+!--- out ------
+real,dimension(nx,ny) :: a2adj
+!f2py intent(out)        a2adj
+!--- calc -----
+integer                  iy
+real,dimension(nx,ny) :: a2gradinabs
+real                     dns, dew, meangridlen
+real                     coef
+real                     lat
+!--- para --------
+real                    :: lat_first = -89.5
+!-----------------
+CALL mk_a2grad_abs_saone(a2in, a2gradinabs)
+!-----------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dns = hubeny_real(lat-1.0, 0.0, lat+1.0, 0.0) *0.5
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  meangridlen  = (dns + dew)*0.5
+  !coef         = meangridlen / (2**0.5)
+  coef         = meangridlen *grids
+  a2adj(:,iy) = a2in(:,iy) &
+                + coef * a2gradinabs(:,iy)
+
+end do
+
+return
+!--------------
+END SUBROUTINE mk_a2adj_multigrids
+!*********************************************************
+SUBROUTINE mk_a2adj(a2in, nx, ny, a2adj)
+implicit none
+!--- in -------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+!--- out ------
+real,dimension(nx,ny) :: a2adj
+!f2py intent(out)        a2adj
+!--- calc -----
+integer                  iy
+real,dimension(nx,ny) :: a2gradinabs
+real                     dns, dew, meangridlen
+real                     coef
+real                     lat
+!--- para --------
+real                    :: lat_first = -89.5
+!-----------------
+CALL mk_a2grad_abs_saone(a2in, a2gradinabs)
+!-----------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dns = hubeny_real(lat-1.0, 0.0, lat+1.0, 0.0) *0.5
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  meangridlen  = (dns + dew)*0.5
+  !coef         = meangridlen / (2**0.5)
+  coef         = meangridlen 
+  a2adj(:,iy) = a2in(:,iy) &
+                + coef * a2gradinabs(:,iy)
+
+end do
+
+return
+!--------------
+END SUBROUTINE mk_a2adj
 !*********************************************************
 SUBROUTINE mk_a2frontmask2(a2tau, nx, ny, a2frontmask2)
 implicit none

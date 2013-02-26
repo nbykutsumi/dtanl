@@ -30,8 +30,8 @@ if len(sys.argv) >1:
   thdura= float(sys.argv[11])
 else:
   year   = 2004
-  mon    = 7
-  day    = 18
+  mon    = 9
+  day    = 29
   hour   = 0
   #plev    = 850*100   #(Pa)
   plev    = 925*100   #(Pa)
@@ -64,7 +64,8 @@ for vtype in lvtype:
   miss_int= -9999
   stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
   sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh"%(thdura)
-  sodir         = sodir_root + "/%04d%02d"%(year, mon)
+  #sodir         = sodir_root + "/%04d%02d"%(year, mon)
+  sodir         = "/home/utsumi/temp"
   ctrack_func.mk_dir(sodir)
   
   soname        = sodir + "/tenkizu.%04d.%02d.%02d.%02d.%s.png"%(year, mon, day, hour, vtype)

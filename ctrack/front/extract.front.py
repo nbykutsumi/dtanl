@@ -13,11 +13,16 @@ from cf.plot import *
 import datetime
 #***************************************
 region   = "ASAS"
-lyear    = [2000,2001,2002,2003,2004,2005,2006,2007,2008]
+#lyear    = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011]
+#lyear    = [2004,2005,2006,2007,2008,2009,2010,2011]
+#lyear    = [2000,2001,2002,2003]
+lyear    = [2011]
 lmon     = [1,2,3,4,5,6,7,8,9,10,11,12]
-#lmon     = [1,3]
+#lmon     = [1,2,3,4,5,6,8,9,10,11,12]
+#lmon     = [7]
 iday     = 1
-lhour    = [12]
+#lhour    = [0]
+lhour    = [0, 6,12, 18]
 #---------------------------------------
 #pdfdir_root = "/home/utsumi/mnt/export/nas_d/data/WeatherChart"
 pdfdir_root = "/media/disk2/data/JMAChart/ASAS"

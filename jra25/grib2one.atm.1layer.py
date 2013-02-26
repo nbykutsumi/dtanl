@@ -7,27 +7,26 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2004
-eyear    = 2004
+iyear    = 2000
+eyear    = 2003
 #lmon     = [1,2,3,4,5,6,8,9,10,11,12]
 lmon     = arange(1,12+1)
 tstp     = "6hr"
 idir_root   =  "/home/utsumi/mnt/export/nas12/JRA25"
 odir_root   =  "/media/disk2/data/JRA25/sa.one/%s"%(tstp)
+#odir_root   =  "/media/disk2/data/JRA25/sa.one/%s/temp"%(tstp)
 singleday   = False  # True or False
 miss_out    = -9999.0
 #lplev       = [250]   # pressure level (hPa)
-lplev       = [500]
-#lplev       = [925]
+#lplev       = [850,500]
+#lplev       = [850]
+lplev       = [250, 850]
 
 #lvar   = ["HGT"]
-lvar   = ["TMP", "SPFH"]
-#lvar   = ["SPFH","TMP","UGRD", "VGRD"]
+#lvar   = ["TMP"]
 #lvar   = ["UGRD", "VGRD"]
+lvar    = ["VGRD"]
 dtype  = {}
-dtype["ACPCP"] = "fcst_phy2m"
-dtype["NCPCP"] = "fcst_phy2m"
-dtype["PRMSL"] = "fcst_phy2m"
 dtype["UGRD" ] = "anal_p25"
 dtype["VGRD" ] = "anal_p25"
 dtype["SPFH" ] = "anal_p25"
@@ -84,6 +83,7 @@ for plev in lplev:
         odir_temp = odir_root  +  "/%s"%(var)
         odir      = odir_temp  +  "/%04d%02d"%(year, mon)
         #-- make directory ---
+        mk_dir(odir_root)
         mk_dir(odir_temp)
         mk_dir(odir)
     
@@ -140,7 +140,7 @@ for plev in lplev:
             #-- grib --> binary -----
     
             args      = "wgrib %s | grep %s | grep '%d mb' | wgrib %s -i -nh -o %s"%(gribname, var, plev, gribname, tempname)
-    
+             
             #print args
             ptemp     = subprocess.call(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             
