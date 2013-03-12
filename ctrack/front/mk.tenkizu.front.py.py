@@ -40,8 +40,8 @@ for year in range(iyear, eyear+1):
         if (day == iday):
           cbarflag= "True"
         ##************************
-        #frontdir    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh/%04d%02d/front"%(thdura, year, mon)
-        #tenkizudir = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh/%04d%02d"%(thdura, year, mon)
+        frontdir    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh/%04d%02d/front"%(thdura, year, mon)
+        tenkizudir = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh/%04d%02d"%(thdura, year, mon)
         ##************************
         ## precipitation
         #scmd = "python mk.tenkizu.py %s %s %s %s %s %s %s %s %s %s %s"\
@@ -73,6 +73,17 @@ for year in range(iyear, eyear+1):
         #tempfront3= frontdir + "/%02d/front.%s.%04d.%02d.%02d.%02d.M1-%3.2f.M2-%3.2f.png"%(day, vtype, year, mon, day, hour, thfmasktheta1, thfmasktheta2)
         #os.rename(iname, tempfront3)
 
+        #************************
+        # front loc 
+        thfmasktheta1  = 0.6
+        thfmasktheta2  = 2.0
+        vtype= "loc.theta_e"
+        scmd = "python mk.tenkizu.front.py %s %s %s %s %s %s %s %s %s %s %s %s %s"\
+                   %(year, mon, day, hour, lllat, urlat, lllon, urlon, plev, cbarflag, thdura, thfmasktheta1, thfmasktheta2)
+        subprocess.call(scmd, shell=True)
+        iname     = frontdir + "/%02d/front.%s.%04d.%02d.%02d.%02d.png"%(day, vtype, year, mon, day, hour)
+        tempfront3= frontdir + "/%02d/front.%s.%04d.%02d.%02d.%02d.M1-%3.2f.M2-%3.2f.png"%(day, vtype, year, mon, day, hour, thfmasktheta1, thfmasktheta2)
+        os.rename(iname, tempfront3)
 
 
 

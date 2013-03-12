@@ -9,17 +9,19 @@ import cf.util
 #------------------------------------------------------
 iyear  = 2000
 eyear  = 2010
-lseason = ["DJF","MAM","JJA","SON","ALL"]
+lseason = ["ALL","DJF","MAM","JJA","SON"]
 ny     = 180
 nx     = 360
 miss   = -9999.0
 region = "ASAS"
+
+region_draw = "JPN"
 #---------------------
 #lllat  = 0.0
 #lllon  = 60.0
 #urlat  = 80.0
 #urlon  = 210.0
-lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
+lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region_draw)
 thorog = 1500.0 # (m)
 #------------------------------------------------------
 idir_root  = "/media/disk2/out/chart/ASAS/front/agg"

@@ -47,15 +47,16 @@ percent  = 99 # (%)
 
 #-- para for objective locator -------------
 plev     = 850*100.0 # (Pa)
-thfmasks = (0.4,2.0)
+#thfmasks = (0.4,2.0)
 #thfmasks = (0.5,2.0)
+thfmasks = (0.6,2.0)
 
 thorog  = ctrack_para.ret_thorog()
 thgradorog=ctrack_para.ret_thgradorog()
 
 #-- para for baroclinic --------------------
-thbc     = 0.7 /1000.0/100.0  # (K/100km)
-#thbc     = 0.5 /1000.0/100.0  # (K/100km)
+#thbc     = 0.7 /1000.0/100.0  # (K/100km)
+thbc     = 0.9 /1000.0/100.0  # (K/100km)
 
 #-------------------------------------------
 #----------------------------

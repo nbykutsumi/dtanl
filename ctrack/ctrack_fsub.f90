@@ -5,6 +5,708 @@ module ctrack_fsub
 CONTAINS
 !*****************************************************************
 !* SUBROUTINE & FUNCTION
+
+!*****************************************************************
+!*****************************************************************
+SUBROUTINE find_tc_saone_sst(a2pgrad, a2life, a2lastpos, a2lastflag, a2tlow, a2tmid, a2tup&
+                        &, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea&
+                        &, thpgrad, thdura, thsst, thwind, thrvort, initflag, miss&
+                        &, nx, ny, a2tcloc, a2nowflag)
+
+implicit none
+!---- in ------
+integer                              nx, ny
+real,dimension(nx,ny)             :: a2pgrad, a2lastflag, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea
+!f2py intent(in)                     a2pgrad, a2lastflag, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea
+integer,dimension(nx,ny)          :: a2life, a2lastpos
+!f2py intent(in)                     a2life, a2lastpos
+real                                 thpgrad, thdura, thsst, thwind, thrvort
+!f2py intent(in)                     thpgrad, thdura, thsst, thwind, thrvort
+integer                              initflag
+!f2py intent(in)                     initflag
+real                                 miss
+!f2py intent(in)                     miss
+!---- out -----
+real,dimension(nx,ny)             :: a2tcloc, a2nowflag
+!f2py intent(out)                    a2tcloc, a2nowflag
+!---- para ----
+integer,parameter                 :: miss_int  = -9999
+real,parameter                    :: lat_first = -89.5
+!---- calc ----
+integer                              ix, iy
+integer                              ix_last, iy_last
+integer                              ixw,ixe,ixs,ixn
+integer                              iyw,iye,iys,iyn
+integer                              life, lastpos, dura, pgmax
+integer,dimension(7,7)            :: a1xt, a1yt
+integer                              xt_temp, yt_temp
+integer                              dix, diy, ixt, iyt
+integer                              icount
+real                                 pgrad
+real                                 rvort
+real                                 lat, lat_last
+real                                 dn, ds, dns, dew
+real                                 us, un, uw, ue, vs, vn, vw, ve
+real                                 wmaxlow, wmeanlow, wmeanup
+real                                 ulow, vlow, uup, vup
+real                                 wlow, wup
+real                                 tlow, tmid, tup
+real                                 tmeanlow, tmeanmid, tmeanup
+real                                 dtlow, dtmid, dtup
+
+!--- init ------
+a2tcloc   = miss
+a2nowflag = miss
+!---------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dns = (dn + ds)/2.0
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  !-----------------------------
+  do ix = 1,nx
+    !-- pgrad ----------
+    pgrad  = a2pgrad(ix,iy)
+    if (pgrad .lt. thpgrad)then
+      cycle
+    end if
+    !-- dura -----------
+    life   = a2life(ix,iy)
+    call solvelife_point(life, miss_int, dura, pgmax)
+    if (real(dura) .lt. thdura)then
+      cycle
+    end if
+
+    !-- relative vorticity ---
+    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+    !---
+    us  = a2ulow(ixs, iys)
+    un  = a2ulow(ixn, iyn)
+    uw  = a2ulow(ixw, iyw)
+    ue  = a2ulow(ixe, iye)
+    vs  = a2vlow(ixs, iys)
+    vn  = a2vlow(ixn, iyn)
+    vw  = a2vlow(ixw, iyw)
+    ve  = a2vlow(ixe, iye)
+    !-
+    if ( (us.eq.miss).or.(un.eq.miss).or.(uw.eq.miss).or.(ue.eq.miss) )then
+      cycle
+    end if
+    !
+    rvort  = (ve - vw)/(dew*2.0) - (un - us)/(dns*2.0)
+    !
+    if (abs(rvort) .lt. thrvort)then
+      cycle
+    endif
+    !-- check last step -----------
+    if (initflag .eq. 0)then
+      if (a2sst(ix,iy).lt.thsst)then
+        cycle
+      else if (a2landsea(ix,iy).gt.0.0)then
+        cycle
+      endif
+    else
+      lastpos = a2lastpos(ix,iy)
+      if (lastpos .eq. miss_int)then
+        if (a2sst(ix,iy).lt.thsst)then
+          cycle
+        else if (a2landsea(ix,iy).gt.0.0)then
+          cycle
+        end if
+      else
+        iy_last = int(lastpos/nx) +1
+        ix_last = lastpos - nx*(iy_last-1)
+        lat_last= lat_first + (iy_last-1)*1.0
+        if (a2lastflag(ix_last,iy_last).gt.0.0)then
+          a2nowflag(ix,iy)   = 1.0
+        else if (a2sst(ix,iy).lt.thsst)then
+          cycle
+        else if (a2landsea(ix,iy).gt.0.0)then
+          cycle
+        endif
+      end if
+    end if
+
+    !print *,"AAA",ix_last, iy_last, ix,iy
+
+    !-- 7x7 grid box ---------
+    do diy = 1,7
+      do dix = 1,7
+        call ixy2iixy_saone(ix+dix-4, iy+diy-4, xt_temp, yt_temp)
+        a1xt(dix, diy) = xt_temp
+        a1yt(dix, diy) = yt_temp
+      end do
+    end do
+    !-- vmax & vmean ----------
+    wmaxlow  = 0.0
+    wmeanlow = 0.0
+    wmeanup  = 0.0
+    !--
+    icount = 7*7
+    do diy = 1,7
+      do dix = 1,7
+        ixt = a1xt(dix, diy)
+        iyt = a1yt(dix, diy)
+        !--
+        ulow = a2ulow(ixt,iyt)
+        vlow = a2vlow(ixt,iyt)
+        uup  = a2uup(ixt,iyt)
+        vup  = a2vup(ixt,iyt)
+        !--
+        if (ulow.eq.miss)then
+          icount = icount -1
+          cycle
+        end if
+        !--
+        wlow = ((ulow)**2.0 + (vlow)**2.0)**0.5
+        wup  = ((uup)**2.0  + (vup)**2.0)**0.5
+        !--
+        wmaxlow   = max(wmaxlow, wlow)
+        wmeanlow  = wmeanlow + wlow
+        wmeanup   = wmeanup  + wup
+        !--
+      end do
+    end do
+    if (icount.eq.0)then
+      cycle
+    endif
+    wmeanlow = wmeanlow / icount
+    wmeanup  = wmeanup  / icount
+    !-- check wmaxlow ---
+    if (wmaxlow .lt. thwind)then
+      cycle
+    end if
+    !-- check wmean low and up --
+    if (wmeanlow.le.wmeanup)then
+      cycle
+    endif
+    !-- temperature anomaly -----
+    icount = 7*7
+    tmeanlow = 0.0
+    tmeanmid = 0.0
+    tmeanup  = 0.0
+    do diy = 1,7
+      do dix = 1,7
+        ixt = a1xt(dix, diy)
+        iyt = a1yt(dix, diy)
+        !--
+        tlow = a2tlow(ixt,iyt)
+        tmid = a2tmid(ixt,iyt)
+        tup  = a2tup(ixt,iyt)
+        !--
+        if (tlow.eq.miss)then
+          icount = icount -1
+          cycle
+        end if
+        !--
+        tmeanlow  = tmeanlow + tlow
+        tmeanmid  = tmeanmid + tmid
+        tmeanup   = tmeanup  + tup
+        !--
+      end do
+    end do
+    if (icount.eq.0)then
+      cycle
+    endif
+    tmeanlow  = tmeanlow / icount
+    tmeanmid  = tmeanmid / icount
+    tmeanup   = tmeanup  / icount
+    !-------
+    dtlow     = a2tlow(ix,iy) - tmeanlow  
+    dtmid     = a2tmid(ix,iy) - tmeanmid
+    dtup      = a2tup(ix,iy)  - tmeanup  
+    !!-------
+    !if ((dtlow.lt.0.0).or.(dtmid.lt.0.0).or.(dtup.lt.0.0))then
+    !  cycle
+    !end if
+    !!-------
+    !if (dtlow.gt. dtup)then
+    !  cycle
+    !end if
+    !-------
+    !-------
+    a2tcloc(ix,iy)   = dtlow + dtmid + dtup
+    a2nowflag(ix,iy) = 1.0
+  end do
+end do
+
+!--------------
+END SUBROUTINE find_tc_saone_sst
+
+
+
+
+
+
+!*****************************************************************
+SUBROUTINE find_tc_saone_dt_sst(a2pgrad, a2life, a2lastpos, a2lastflag, a2tlow, a2tmid, a2tup&
+                        &, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea&
+                        &, thpgrad, thdura, thsst, thwind, thrvort, initflag, miss&
+                        &, nx, ny, a2tcloc, a2nowflag)
+
+implicit none
+!---- in ------
+integer                              nx, ny
+real,dimension(nx,ny)             :: a2pgrad, a2lastflag, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea
+!f2py intent(in)                     a2pgrad, a2lastflag, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea
+integer,dimension(nx,ny)          :: a2life, a2lastpos
+!f2py intent(in)                     a2life, a2lastpos
+real                                 thpgrad, thdura, thsst, thwind, thrvort
+!f2py intent(in)                     thpgrad, thdura, thsst, thwind, thrvort
+integer                              initflag
+!f2py intent(in)                     initflag
+real                                 miss
+!f2py intent(in)                     miss
+!---- out -----
+real,dimension(nx,ny)             :: a2tcloc, a2nowflag
+!f2py intent(out)                    a2tcloc, a2nowflag
+!---- para ----
+integer,parameter                 :: miss_int  = -9999
+real,parameter                    :: lat_first = -89.5
+!---- calc ----
+integer                              ix, iy
+integer                              ix_last, iy_last
+integer                              ixw,ixe,ixs,ixn
+integer                              iyw,iye,iys,iyn
+integer                              life, lastpos, dura, pgmax
+integer,dimension(7,7)            :: a1xt, a1yt
+integer                              xt_temp, yt_temp
+integer                              dix, diy, ixt, iyt
+integer                              icount
+real                                 pgrad
+real                                 rvort
+real                                 lat, lat_last
+real                                 dn, ds, dns, dew
+real                                 us, un, uw, ue, vs, vn, vw, ve
+real                                 wmaxlow, wmeanlow, wmeanup
+real                                 ulow, vlow, uup, vup
+real                                 wlow, wup
+real                                 tlow, tmid, tup
+real                                 tmeanlow, tmeanmid, tmeanup
+real                                 dtlow, dtmid, dtup
+
+!--- init ------
+a2tcloc   = miss
+a2nowflag = miss
+!---------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dns = (dn + ds)/2.0
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  !-----------------------------
+  do ix = 1,nx
+    !-- pgrad ----------
+    pgrad  = a2pgrad(ix,iy)
+    if (pgrad .lt. thpgrad)then
+      cycle
+    end if
+    !-- dura -----------
+    life   = a2life(ix,iy)
+    call solvelife_point(life, miss_int, dura, pgmax)
+    if (real(dura) .lt. thdura)then
+      cycle
+    end if
+
+    !-- relative vorticity ---
+    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+    !---
+    us  = a2ulow(ixs, iys)
+    un  = a2ulow(ixn, iyn)
+    uw  = a2ulow(ixw, iyw)
+    ue  = a2ulow(ixe, iye)
+    vs  = a2vlow(ixs, iys)
+    vn  = a2vlow(ixn, iyn)
+    vw  = a2vlow(ixw, iyw)
+    ve  = a2vlow(ixe, iye)
+    !-
+    if ( (us.eq.miss).or.(un.eq.miss).or.(uw.eq.miss).or.(ue.eq.miss) )then
+      cycle
+    end if
+    !
+    rvort  = (ve - vw)/(dew*2.0) - (un - us)/(dns*2.0)
+    !
+    if (abs(rvort) .lt. thrvort)then
+      cycle
+    endif
+    !-- check last step -----------
+    if (initflag .eq. 0)then
+      if (a2sst(ix,iy).lt.thsst)then
+        cycle
+      else if (a2landsea(ix,iy).gt.0.0)then
+        cycle
+      endif
+    else
+      lastpos = a2lastpos(ix,iy)
+      if (lastpos .eq. miss_int)then
+        if (a2sst(ix,iy).lt.thsst)then
+          cycle
+        else if (a2landsea(ix,iy).gt.0.0)then
+          cycle
+        end if
+      else
+        iy_last = int(lastpos/nx) +1
+        ix_last = lastpos - nx*(iy_last-1)
+        lat_last= lat_first + (iy_last-1)*1.0
+        if (a2lastflag(ix_last,iy_last).gt.0.0)then
+          a2nowflag(ix,iy)   = 1.0
+        else if (a2sst(ix,iy).lt.thsst)then
+          cycle
+        else if (a2landsea(ix,iy).gt.0.0)then
+          cycle
+        endif
+      end if
+    end if
+
+    !print *,"AAA",ix_last, iy_last, ix,iy
+
+    !-- 7x7 grid box ---------
+    do diy = 1,7
+      do dix = 1,7
+        call ixy2iixy_saone(ix+dix-4, iy+diy-4, xt_temp, yt_temp)
+        a1xt(dix, diy) = xt_temp
+        a1yt(dix, diy) = yt_temp
+      end do
+    end do
+    !-- vmax & vmean ----------
+    wmaxlow  = 0.0
+    wmeanlow = 0.0
+    wmeanup  = 0.0
+    !--
+    icount = 7*7
+    do diy = 1,7
+      do dix = 1,7
+        ixt = a1xt(dix, diy)
+        iyt = a1yt(dix, diy)
+        !--
+        ulow = a2ulow(ixt,iyt)
+        vlow = a2vlow(ixt,iyt)
+        uup  = a2uup(ixt,iyt)
+        vup  = a2vup(ixt,iyt)
+        !--
+        if (ulow.eq.miss)then
+          icount = icount -1
+          cycle
+        end if
+        !--
+        wlow = ((ulow)**2.0 + (vlow)**2.0)**0.5
+        wup  = ((uup)**2.0  + (vup)**2.0)**0.5
+        !--
+        wmaxlow   = max(wmaxlow, wlow)
+        wmeanlow  = wmeanlow + wlow
+        wmeanup   = wmeanup  + wup
+        !--
+      end do
+    end do
+    if (icount.eq.0)then
+      cycle
+    endif
+    wmeanlow = wmeanlow / icount
+    wmeanup  = wmeanup  / icount
+    !-- check wmaxlow ---
+    if (wmaxlow .lt. thwind)then
+      cycle
+    end if
+    !-- check wmean low and up --
+    if (wmeanlow.le.wmeanup)then
+      cycle
+    endif
+    !-- temperature anomaly -----
+    icount = 7*7
+    tmeanlow = 0.0
+    tmeanmid = 0.0
+    tmeanup  = 0.0
+    do diy = 1,7
+      do dix = 1,7
+        ixt = a1xt(dix, diy)
+        iyt = a1yt(dix, diy)
+        !--
+        tlow = a2tlow(ixt,iyt)
+        tmid = a2tmid(ixt,iyt)
+        tup  = a2tup(ixt,iyt)
+        !--
+        if (tlow.eq.miss)then
+          icount = icount -1
+          cycle
+        end if
+        !--
+        tmeanlow  = tmeanlow + tlow
+        tmeanmid  = tmeanmid + tmid
+        tmeanup   = tmeanup  + tup
+        !--
+      end do
+    end do
+    if (icount.eq.0)then
+      cycle
+    endif
+    tmeanlow  = tmeanlow / icount
+    tmeanmid  = tmeanmid / icount
+    tmeanup   = tmeanup  / icount
+    !-------
+    dtlow     = a2tlow(ix,iy) - tmeanlow  
+    dtmid     = a2tmid(ix,iy) - tmeanmid
+    dtup      = a2tup(ix,iy)  - tmeanup  
+    !!-------
+    !if ((dtlow.lt.0.0).or.(dtmid.lt.0.0).or.(dtup.lt.0.0))then
+    !  cycle
+    !end if
+    !!-------
+    if (dtlow.gt. dtup)then
+      cycle
+    end if
+    !-------
+    !-------
+    a2tcloc(ix,iy)   = dtlow + dtmid + dtup
+    a2nowflag(ix,iy) = 1.0
+  end do
+end do
+
+!--------------
+END SUBROUTINE find_tc_saone_dt_sst
+
+
+
+
+!*****************************************************************
+SUBROUTINE find_tc_saone_dt(a2pgrad, a2life, a2lastpos, a2lastflag, a2tlow, a2tmid, a2tup&
+                        &, a2ulow, a2uup, a2vlow, a2vup, a2landsea&
+                        &, thpgrad, thdura, thlat, thwind, thrvort, initflag, miss&
+                        &, nx, ny, a2tcloc, a2nowflag)
+
+implicit none
+!---- in ------
+integer                              nx, ny
+real,dimension(nx,ny)             :: a2pgrad, a2lastflag, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup, a2landsea
+!f2py intent(in)                     a2pgrad, a2lastflag, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup, a2landsea
+integer,dimension(nx,ny)          :: a2life, a2lastpos
+!f2py intent(in)                     a2life, a2lastpos
+real                                 thpgrad, thdura, thlat, thwind, thrvort
+!f2py intent(in)                     thpgrad, thdura, thlat, thwind, thrvort
+integer                              initflag
+!f2py intent(in)                     initflag
+real                                 miss
+!f2py intent(in)                     miss
+!---- out -----
+real,dimension(nx,ny)             :: a2tcloc, a2nowflag
+!f2py intent(out)                    a2tcloc, a2nowflag
+!---- para ----
+integer,parameter                 :: miss_int  = -9999
+real,parameter                    :: lat_first = -89.5
+!---- calc ----
+integer                              ix, iy
+integer                              ix_last, iy_last
+integer                              ixw,ixe,ixs,ixn
+integer                              iyw,iye,iys,iyn
+integer                              life, lastpos, dura, pgmax
+integer,dimension(7,7)            :: a1xt, a1yt
+integer                              xt_temp, yt_temp
+integer                              dix, diy, ixt, iyt
+integer                              icount
+real                                 pgrad
+real                                 rvort
+real                                 lat, lat_last
+real                                 dn, ds, dns, dew
+real                                 us, un, uw, ue, vs, vn, vw, ve
+real                                 wmaxlow, wmeanlow, wmeanup
+real                                 ulow, vlow, uup, vup
+real                                 wlow, wup
+real                                 tlow, tmid, tup
+real                                 tmeanlow, tmeanmid, tmeanup
+real                                 dtlow, dtmid, dtup
+
+!--- init ------
+a2tcloc   = miss
+a2nowflag = miss
+!---------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dns = (dn + ds)/2.0
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  !-----------------------------
+  do ix = 1,nx
+    !-- pgrad ----------
+    pgrad  = a2pgrad(ix,iy)
+    if (pgrad .lt. thpgrad)then
+      cycle
+    end if
+    !-- dura -----------
+    life   = a2life(ix,iy)
+    call solvelife_point(life, miss_int, dura, pgmax)
+    if (real(dura) .lt. thdura)then
+      cycle
+    end if
+
+    !-- relative vorticity ---
+    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+    !---
+    us  = a2ulow(ixs, iys)
+    un  = a2ulow(ixn, iyn)
+    uw  = a2ulow(ixw, iyw)
+    ue  = a2ulow(ixe, iye)
+    vs  = a2vlow(ixs, iys)
+    vn  = a2vlow(ixn, iyn)
+    vw  = a2vlow(ixw, iyw)
+    ve  = a2vlow(ixe, iye)
+    !-
+    if ( (us.eq.miss).or.(un.eq.miss).or.(uw.eq.miss).or.(ue.eq.miss) )then
+      cycle
+    end if
+    !
+    rvort  = (ve - vw)/(dew*2.0) - (un - us)/(dns*2.0)
+    !
+    if (abs(rvort) .lt. thrvort)then
+      cycle
+    endif
+    !-- check last step -----------
+    if (initflag .eq. 0)then
+      if (abs(lat).gt.thlat)then
+        cycle
+      else if (a2landsea(ix,iy).gt.0.0)then
+        cycle
+      endif
+    else
+      lastpos = a2lastpos(ix,iy)
+      if (lastpos .eq. miss_int)then
+        if (abs(lat).gt.thlat)then
+          cycle
+        else if (a2landsea(ix,iy).gt.0.0)then
+          cycle
+        end if
+      else
+        iy_last = int(lastpos/nx) +1
+        ix_last = lastpos - nx*(iy_last-1)
+        lat_last= lat_first + (iy_last-1)*1.0
+        if (a2lastflag(ix_last,iy_last).gt.0.0)then
+          a2nowflag(ix,iy)   = 1.0
+        else if (abs(lat).gt.thlat)then
+          cycle
+        else if (a2landsea(ix,iy).gt.0.0)then
+          cycle
+        endif
+      end if
+    end if
+
+    !print *,"AAA",ix_last, iy_last, ix,iy
+
+    !-- 7x7 grid box ---------
+    do diy = 1,7
+      do dix = 1,7
+        call ixy2iixy_saone(ix+dix-4, iy+diy-4, xt_temp, yt_temp)
+        a1xt(dix, diy) = xt_temp
+        a1yt(dix, diy) = yt_temp
+      end do
+    end do
+    !-- vmax & vmean ----------
+    wmaxlow  = 0.0
+    wmeanlow = 0.0
+    wmeanup  = 0.0
+    !--
+    icount = 7*7
+    do diy = 1,7
+      do dix = 1,7
+        ixt = a1xt(dix, diy)
+        iyt = a1yt(dix, diy)
+        !--
+        ulow = a2ulow(ixt,iyt)
+        vlow = a2vlow(ixt,iyt)
+        uup  = a2uup(ixt,iyt)
+        vup  = a2vup(ixt,iyt)
+        !--
+        if (ulow.eq.miss)then
+          icount = icount -1
+          cycle
+        end if
+        !--
+        wlow = ((ulow)**2.0 + (vlow)**2.0)**0.5
+        wup  = ((uup)**2.0  + (vup)**2.0)**0.5
+        !--
+        wmaxlow   = max(wmaxlow, wlow)
+        wmeanlow  = wmeanlow + wlow
+        wmeanup   = wmeanup  + wup
+        !--
+      end do
+    end do
+    if (icount.eq.0)then
+      cycle
+    endif
+    wmeanlow = wmeanlow / icount
+    wmeanup  = wmeanup  / icount
+    !-- check wmaxlow ---
+    if (wmaxlow .lt. thwind)then
+      cycle
+    end if
+    !-- check wmean low and up --
+    if (wmeanlow.le.wmeanup)then
+      cycle
+    endif
+    !-- temperature anomaly -----
+    icount = 7*7
+    tmeanlow = 0.0
+    tmeanmid = 0.0
+    tmeanup  = 0.0
+    do diy = 1,7
+      do dix = 1,7
+        ixt = a1xt(dix, diy)
+        iyt = a1yt(dix, diy)
+        !--
+        tlow = a2tlow(ixt,iyt)
+        tmid = a2tmid(ixt,iyt)
+        tup  = a2tup(ixt,iyt)
+        !--
+        if (tlow.eq.miss)then
+          icount = icount -1
+          cycle
+        end if
+        !--
+        tmeanlow  = tmeanlow + tlow
+        tmeanmid  = tmeanmid + tmid
+        tmeanup   = tmeanup  + tup
+        !--
+      end do
+    end do
+    if (icount.eq.0)then
+      cycle
+    endif
+    tmeanlow  = tmeanlow / icount
+    tmeanmid  = tmeanmid / icount
+    tmeanup   = tmeanup  / icount
+    !-------
+    dtlow     = a2tlow(ix,iy) - tmeanlow  
+    dtmid     = a2tmid(ix,iy) - tmeanmid
+    dtup      = a2tup(ix,iy)  - tmeanup  
+    !-------
+    if ((dtlow.lt.0.0).or.(dtmid.lt.0.0).or.(dtup.lt.0.0))then
+      cycle
+    end if
+    !-------
+    if (dtlow .gt. dtup)then
+      cycle
+    end if
+    !-------
+    a2tcloc(ix,iy)   = dtlow + dtmid + dtup
+    a2nowflag(ix,iy) = 1.0
+  end do
+end do
+
+!--------------
+END SUBROUTINE find_tc_saone_dt
+
+
+
+
 !*****************************************************************
 SUBROUTINE find_tc_saone(a2pgrad, a2life, a2lastpos, a2lastflag, a2tlow, a2tmid, a2tup&
                         &, a2ulow, a2uup, a2vlow, a2vup, a2landsea&
@@ -650,6 +1352,7 @@ end do
 
 !--------------
 END SUBROUTINE find_tc_saone_old
+!*****************************************************************
 !*****************************************************************
 SUBROUTINE find_circle_mean(a2in, a2loc, dist, miss, nx, ny, a2out)
 implicit none
@@ -2171,6 +2874,72 @@ end do
  
 RETURN
 END SUBROUTINE circle_xy
+!*****************************************************************
+SUBROUTINE vorticity_real(a2u, a2v, lat_first, dlon, dlat, miss, nx, ny, a2vort)
+  implicit none
+  !-- input -------------------------
+  integer                      nx, ny
+  real,dimension(nx,ny)     :: a2u, a2v
+!f2py intent(in)               a2u, a2v
+  real                         lat_first
+!f2py intent(in)               lat_first
+  real                         dlon, dlat
+!f2py intent(in)               dlon, dlat
+  real                         miss
+!f2py intent(in)               miss
+  !-- output ------------------------
+  real,dimension(nx,ny)     :: a2vort
+!f2py intent(out)              a2vort
+  !-- calc  -------------------------
+  integer                      ix, iy
+  integer                      ix_nxt, ix_pre, iy_nxt, iy_pre
+  integer                      iix_nxt, iix_pre, iiy_nxt, iiy_pre
+  real                         dx, dy
+  real                         lat, lat1, lat2, lon1, lon2
+  !----------------------------------
+lat1 = 90.0
+lat2 = lat1 + dlat
+dy = hubeny_real(lat1, 0.0, lat2, 0.0)
+!---------------------
+do iy = 1, ny
+  !-------------------
+  ! make dx
+  !--------
+  lat = lat_first + (iy -1) *dlat
+  lon1 = 0.0
+  lon2 = dlon
+  dx = hubeny_real(lat, lon1, lat, lon2)
+  !-------------------
+  iy_nxt = iy + 1
+  iy_pre = iy - 1
+  !-------------------
+  do ix = 1, nx
+    ix_nxt = ix + 1
+    ix_pre = ix - 1
+    call ixy2iixy(ix_nxt, iy_nxt, nx, ny, iix_nxt, iiy_nxt) 
+    call ixy2iixy(ix_pre, iy_pre, nx, ny, iix_pre, iiy_pre)
+    !----------------
+    ! make vorticity
+    !----------------
+    if (   ( a2u(ix, iy) .eq. miss ) &
+      .or. ( a2u(ix_nxt, iy) .eq. miss)&
+      .or. ( a2u(ix, iy_nxt) .eq. miss)&
+      .or. ( a2u(ix_pre, iy) .eq. miss)&
+      .or. ( a2u(ix, iy_pre) .eq. miss)&
+      .or. ( a2u(ix_nxt, iy_nxt) .eq. miss)&
+      .or. ( a2u(ix_pre, iy_pre) .eq. miss) ) then
+      a2vort(ix, iy) = miss
+    else
+      a2vort(ix, iy) = &
+        ( a2v(iix_nxt, iiy_nxt) - a2v(iix_pre, iiy_pre))*0.5 / dx&
+      - ( a2u(iix_nxt, iiy_nxt) - a2u(iix_pre, iiy_pre))*0.5 / dy
+    end if
+    !----------------
+  end do
+end do
+
+RETURN
+END SUBROUTINE vorticity_real
 !*****************************************************************
 SUBROUTINE vorticity(a2u, a2v, lat_first, dlon, dlat, miss_dbl, nx, ny, a2vort)
   implicit none

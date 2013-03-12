@@ -9,9 +9,9 @@ from ctrack_fsub import *
 #----------------------------------------------------
 #singleday =True
 singleday = False
-figflag   = True
-#figflag   = False
-iyear = 2004
+#figflag   = True
+figflag   = False
+iyear = 2000
 eyear = 2004
 lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lseason = [7]
@@ -216,46 +216,46 @@ for season in lseason:
             #ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, soname=figname, a2shade=a2chart, miss=miss, bnd=bnd)
 
 
-##***********************************
-##  warmside 
-##---------------------------
-#for season in lseason:
-#  for ftype in lftype:
-#    if dcount[season, ftype] !=0.0:
-#      dmhighside[season, ftype] = dshighside[season, ftype] /dcount[season, ftype]
-#      n    = dcount[season, ftype]
-#      sv2  = dshighside2[season, ftype]
-#      sv   = dshighside[season, ftype]
-#      mv   = sv  / n
-#      std  = ((sv2 - 2.0*mv*sv + n*mv*mv)/n)**0.5
-#      dstdhighside[season, ftype] = std
-##--- write to file -----------
-#sodir   = "/home/utsumi/temp"
-#soname  = sodir + "/chart.lon.highside.%03d-%03d.lat.%03d-%03d.wside%03d.grad.csv"%(lllon,urlon,lllat,urlat,dist*0.001)
-#sout    = ""
-##-- label ---
-#sout    = sout + "season,"
-#for ftype in lftype:
-#  sout  = sout + "highside.%02d,"%(ftype)
-#for ftype in lftype:
-#  sout  = sout + "std.%02d,"%(ftype)
-#
-#sout    = sout[:-1] + "\n"
-##------------
-#for season in lseason:
-#  sout  = sout  + "%s,"%(season)
-#  for ftype in lftype:
-#    sout = sout + "%s,"%(dmhighside[season, ftype])
-#  for ftype in lftype:
-#    sout = sout + "%s,"%(dstdhighside[season, ftype])
-#  #---
-#  sout   = sout[:-1] + "\n"
-##--------------
-#if singleday != True:
-#  f = open(soname, "w")
-#  f.write(sout)
-#  f.close()
-#  print soname
+#***********************************
+#  warmside 
+#---------------------------
+for season in lseason:
+  for ftype in lftype:
+    if dcount[season, ftype] !=0.0:
+      dmhighside[season, ftype] = dshighside[season, ftype] /dcount[season, ftype]
+      n    = dcount[season, ftype]
+      sv2  = dshighside2[season, ftype]
+      sv   = dshighside[season, ftype]
+      mv   = sv  / n
+      std  = ((sv2 - 2.0*mv*sv + n*mv*mv)/n)**0.5
+      dstdhighside[season, ftype] = std
+#--- write to file -----------
+sodir   = "/home/utsumi/temp"
+soname  = sodir + "/chart.lon.highside.%03d-%03d.lat.%03d-%03d.wside%03d.grad.csv"%(lllon,urlon,lllat,urlat,dist*0.001)
+sout    = ""
+#-- label ---
+sout    = sout + "season,"
+for ftype in lftype:
+  sout  = sout + "highside.%02d,"%(ftype)
+for ftype in lftype:
+  sout  = sout + "std.%02d,"%(ftype)
+
+sout    = sout[:-1] + "\n"
+#------------
+for season in lseason:
+  sout  = sout  + "%s,"%(season)
+  for ftype in lftype:
+    sout = sout + "%s,"%(dmhighside[season, ftype])
+  for ftype in lftype:
+    sout = sout + "%s,"%(dstdhighside[season, ftype])
+  #---
+  sout   = sout[:-1] + "\n"
+#--------------
+if singleday != True:
+  f = open(soname, "w")
+  f.write(sout)
+  f.close()
+  print soname
 #
 #
 ##***********************************

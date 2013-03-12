@@ -8,7 +8,7 @@ thdist  = 500
 thbc    = 0.7 /1000/100.0
 #thbc    = 0.5 /1000/100.0
 odir  = "/home/utsumi/oekaki/pict"
-llthfmask = [(0.4, 2.0), (0.5, 2.0)]
+llthfmask = [(0.5, 2.0),(0.6,2.0)]
 #llthfmask = [(0.5,2.0)]
 #----------------------------------
 for lthfmask in llthfmask:

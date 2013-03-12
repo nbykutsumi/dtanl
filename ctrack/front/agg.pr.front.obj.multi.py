@@ -39,8 +39,9 @@ dprdir_root["GPCP1DD"] = "/media/disk2/data/GPCP1DD/v1.2/1dd"
 dprdir_root["JRA25"]  = "/media/disk2/data/JRA25/sa.one/6hr/PR"
 #-- para for objective locator -------------
 plev     = 850*100.0 # (Pa)
-llthfmask = [(0.4,2.0)]
-#llthfmask = [(0.5,2.0)]
+#llthfmask = [(0.4,2.0)]
+llthfmask = [(0.5,2.0)]
+#llthfmask = [(0.6,2.0)]
 
 thorog  = ctrack_para.ret_thorog()
 thgradorog=ctrack_para.ret_thgradorog()
@@ -60,8 +61,8 @@ thbmask1 = 0.0
 thbmask2 = 0.6
 
 #-- para for baroclinic --------------------
-thbc     = 0.7 /1000.0/100.0  # (K/m)
-#thbc     = 0.5 /1000.0/100.0  # (K/m)
+#thbc     = 0.7 /1000.0/100.0  # (K/m)
+thbc     = 0.9 /1000.0/100.0  # (K/m)
 
 #-------------------------------------------
 a2one    = ones([ny,nx],float32)

@@ -24,7 +24,9 @@ lseason=["ALL", "DJF","MAM","JJA","SON"]
 #lseason=["ALL"]
 iday  = 1
 #lhour = [12]
-region= "ASAS"
+#region= "ASAS"
+region= "GLOB"
+#region= "JPN"
 ny    = 180
 nx    = 360
 prtype = "GPCP1DD"
@@ -40,13 +42,14 @@ lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 plev     = 850*100.0 # (Pa)
 #llthfmask = [(0.4,2.0)]
 #llthfmask = [(0.5,2.0)]
-llthfmask = [(0.5,2.0), (0.4,2.0)]
-#llthfmask = [(0.4,2.0)]
+#llthfmask = [(0.5,2.0), (0.6,2.0)]
+llthfmask = [(0.6,2.0)]
 
 thorog  = ctrack_para.ret_thorog()
 thgradorog=ctrack_para.ret_thgradorog()
 #--- para for baroclinicity --------------
 thbc       = 0.7/1000/100.0
+#thbc       = 0.9/1000/100.0
 
 #----------------------------
 #-- orog --------------------

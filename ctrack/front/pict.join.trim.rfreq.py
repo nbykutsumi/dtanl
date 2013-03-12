@@ -4,11 +4,11 @@ import os, sys
 idir_root  = "/home/utsumi/temp"
 objdir_root= "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/06h"
 lseason = ["ALL","DJF","MAM","JJA","SON"]
-percent = 99
+percent = 90
 thbc    = 0.7 /1000/100.0
 #thbc    = 0.5 /1000/100.0
 odir  = "/home/utsumi/oekaki/pict"
-llthfmask = [(0.4, 2.0), (0.5, 2.0)]
+llthfmask = [(0.5, 2.0), (0.6, 2.0)]
 #----------------------------------
 for lthfmask in llthfmask:
   thfmask1, thfmask2 = lthfmask

@@ -8,7 +8,7 @@ import jra_func
 import ctrack_func
 
 iyear    = 2000
-eyear    = 2003
+eyear    = 2004
 #lmon     = [1,2,3,4,5,6,8,9,10,11,12]
 lmon     = arange(1,12+1)
 tstp     = "6hr"
@@ -19,13 +19,12 @@ singleday   = False  # True or False
 miss_out    = -9999.0
 #lplev       = [250]   # pressure level (hPa)
 #lplev       = [850,500]
-#lplev       = [850]
-lplev       = [250, 850]
+lplev       = [700,300]
 
 #lvar   = ["HGT"]
-#lvar   = ["TMP"]
+lvar   = ["TMP"]
 #lvar   = ["UGRD", "VGRD"]
-lvar    = ["VGRD"]
+#lvar    = ["VGRD"]
 dtype  = {}
 dtype["UGRD" ] = "anal_p25"
 dtype["VGRD" ] = "anal_p25"

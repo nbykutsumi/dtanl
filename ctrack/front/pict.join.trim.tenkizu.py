@@ -23,8 +23,8 @@ for year in range(iyear, eyear+1):
       for hour in lhour:
         siname1 = prdir + "/tenkizu.%04d.%02d.%02d.%02d.JRA.png"%(year, mon, day, hour)
         siname2 = tvdir + "/highside.highside.300.gradtv.%04d.%02d.%02d.%02d.png"%(year, mon, day, hour)
-        siname3 = locdir + "/front.loc.theta_e.%04d.%02d.%02d.%02d.M1-0.40.M2-2.00.png"%(year,mon,day,hour)   
-        siname4 = locdir + "/front.loc.theta_e.%04d.%02d.%02d.%02d.M1-0.50.M2-2.00.png"%(year,mon,day,hour)   
+        siname3 = locdir + "/front.loc.theta_e.%04d.%02d.%02d.%02d.M1-0.50.M2-2.00.png"%(year,mon,day,hour)   
+        siname4 = locdir + "/front.loc.theta_e.%04d.%02d.%02d.%02d.M1-0.60.M2-2.00.png"%(year,mon,day,hour)   
         siname5 = locdir + "/tenkizu.thetae.%04d.%02d.%02d.%02d.0850hPa.png"%(year,mon,day,hour)   
         #*********************************************
         for sname in [siname1, siname2, siname3, siname4, siname5]:

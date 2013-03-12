@@ -69,6 +69,18 @@ def ret_domain_corner_rect_forfig(region):
     lllat = 0.0
     urlon = 210.0
     urlat = 74.0
+  if region == "GLOB":
+    lllon = 0.0
+    lllat = -80.0
+    urlon = 360.0
+    urlat = 80.0
+  if region == "JPN":
+    lllon = 120.0
+    lllat = 22.0
+    urlon = 155
+    urlat = 50.0
+
+
 
   return (lllon, lllat, urlon, urlat)
 

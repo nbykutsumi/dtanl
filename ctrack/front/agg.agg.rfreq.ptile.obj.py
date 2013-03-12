@@ -11,7 +11,8 @@ lseason    = ["ALL","DJF","MAM","JJA","SON"]
 lftype     = ["front","bcf","nobc"]
 thdist     = 500
 percent    = 99  # (%)
-region     = "ASAS"
+#region     = "ASAS"
+region     = "JPN"
 miss       = -9999.0
 thorog     = 1500 # (m)
 
@@ -21,8 +22,9 @@ thorog     = 1500 # (m)
 #urlon  = 210.0
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 
-lthfmask =(0.4, 2.0)
+#lthfmask =(0.4, 2.0)
 #lthfmask =(0.5, 2.0)
+lthfmask =(0.6, 2.0)
 thbc     = 0.7/1000/100.0
 #thbc     = 0.5/1000/100.0
 
@@ -36,7 +38,8 @@ a2one    = ones([ny,nx], float32)
 orogname = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
 a2orog   = fromfile(orogname, float32).reshape(ny,nx)
 #-- domain ------------------
-domname  = "/media/disk2/out/chart/%s/const/domainmask_saone.%s.2000-2006.bn"%(region,region)
+#domname  = "/media/disk2/out/chart/%s/const/domainmask_saone.%s.2000-2006.bn"%(region,region)
+domname  = "/media/disk2/out/chart/%s/const/domainmask_saone.%s.2000-2006.bn"%("ASAS","ASAS")
 a2domain = fromfile(domname , float32).reshape(ny,nx)
 #-- shade  ------------------
 a2shade  = ma.masked_where( a2orog > thorog, a2one).filled(miss)
