@@ -126,6 +126,10 @@ def ret_lmon(season):
     lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
   elif type(season) == int:
     lmon  = [season]
+  elif season == "NDJFMA":
+    lmon  = [11,12,1,2,3,4]
+  elif season == "JJASON":
+    lmon  = [6,7,8,9,10,11]
   return lmon
 #-----------------------------------
 def ret_mons(season):

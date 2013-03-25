@@ -7,10 +7,10 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2004
-eyear    = 2004
-imon     = 1
-emon     = 1
+iyear    = 2000
+eyear    = 2000
+imon     = 2
+emon     = 2
 tstp     = "6hr"
 idir_root   =  "/home/utsumi/mnt/export/nas12/JRA25"
 odir_root   =  "/media/disk2/data/JRA25/sa.one/%s"%(tstp)
@@ -19,8 +19,8 @@ singleday   = False  # True or False
 miss_out    = -9999.0
 
 #lvar = ["PRMSL", "ACPCP", "NCPCP"]
-#lvar = ["ACPCP", "NCPCP"]
-lvar = ["WTMP"]
+lvar = ["ACPCP", "NCPCP"]
+#lvar = ["WTMP"]
 for var in lvar:
   dtype  = {}
   dtype["ACPCP"] = "fcst_phy2m"
