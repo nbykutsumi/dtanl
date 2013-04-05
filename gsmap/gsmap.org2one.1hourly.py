@@ -12,9 +12,9 @@ import cf
 import cf.util
 
 iyear      = 2005
-eyear      = 2008
+eyear      = 2005
 imon       = 1
-emon       = 12
+emon       = 1
 
 miss_out   = -9999.0
 sunit      = "kg m-2 s-1"
@@ -108,9 +108,10 @@ for year in range(iyear , eyear+1):
           #-- check file --
           if os.access(orgname, os.F_OK):
             print  "XXX", orgname
-            continue
+            #continue
+            lhour_inc = [1]
           else:
-            lhour_inc = [0]
+            lhour_inc = [1]
             print  "YYY", orgname
           #----------------
         else:
