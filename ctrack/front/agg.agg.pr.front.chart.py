@@ -17,6 +17,7 @@ lseason=["ALL","DJF","MAM","JJA","SON"]
 iday  = 1
 lhour = [0,6,12,18]
 region= "ASAS"
+region_draw = "JPN"
 ny    = 180
 nx    = 360
 prtype = "GPCP1DD"
@@ -29,8 +30,8 @@ dprdir_root  = {}
 dprdir_root["GPCP1DD"] = "/media/disk2/data/GPCP1DD/v1.2/1dd"
 dprdir_root["JRA25"]  = "/media/disk2/data/JRA25/sa.one/6hr/PR"
 thorog       = 1500.0  # (m)
-calcflag = True
-#calcflag = False
+#calcflag = True
+calcflag = False
 meanflag = True
 #----------------------------
 a2one    = ones([ny,nx], float32)
@@ -122,18 +123,26 @@ for thdist in lthdist:
     fracname_occ    = figdir + "/frac.rad%04d.occ.png"%(thdist)
     fracname_stat   = figdir + "/frac.rad%04d.stat.png"%(thdist)
     fracname_all    = figdir + "/frac.rad%04d.all.png"%(thdist)
+
+    fracname_cwo    = figdir + "/frac.rad%04d.cwo.png"%(thdist)
+
     #-- fig: mask 2nd -
     a2ptot_warm     = ma.masked_where(a2ptotplain==0.0, a2ptot_warm) 
     a2ptot_cold     = ma.masked_where(a2ptotplain==0.0, a2ptot_cold) 
     a2ptot_occ      = ma.masked_where(a2ptotplain==0.0, a2ptot_occ) 
     a2ptot_stat     = ma.masked_where(a2ptotplain==0.0, a2ptot_stat) 
     a2ptot_all      = ma.masked_where(a2ptotplain==0.0, a2ptot_all) 
+
+    a2ptot_cwo      = a2ptot_cold + a2ptot_warm + a2ptot_occ
+
     #-- fig: make frac data -
     a2frac_warm     = (a2ptot_warm / a2ptotplain).filled(0.0)
     a2frac_cold     = (a2ptot_cold / a2ptotplain).filled(0.0)
     a2frac_occ      = (a2ptot_occ / a2ptotplain).filled(0.0)
     a2frac_stat     = (a2ptot_stat / a2ptotplain).filled(0.0)
     a2frac_all      = (a2ptot_all / a2ptotplain).filled(0.0)
+
+    a2frac_cwo      = (a2ptot_cwo / a2ptotplain).filled(0.0)
     
     #-- name: fractin data
     fracdatname_warm   = odir + "/frac.rad%04d.warm.saone"%(thdist)
@@ -141,6 +150,8 @@ for thdist in lthdist:
     fracdatname_occ    = odir + "/frac.rad%04d.occ.saone"%(thdist)
     fracdatname_stat   = odir + "/frac.rad%04d.stat.saone"%(thdist)
     fracdatname_all    = odir + "/frac.rad%04d.all.saone"%(thdist)
+
+    fracdatname_cwo    = odir + "/frac.rad%04d.cwo.saone"%(thdist)
     
     #-- write data ----
     a2frac_warm.tofile(fracdatname_warm)
@@ -149,8 +160,11 @@ for thdist in lthdist:
     a2frac_stat.tofile(fracdatname_stat)
     a2frac_all.tofile(fracdatname_all)
     
+    a2frac_cwo.tofile(fracdatname_cwo)
+
     #-- fig: frac prep -
-    bnd      = range(6, 60+1, 6)
+    bnd      = range(6, 70+1, 8)
+    #bnd      = [10,20,30,40,50,60,70,80,90]
     bnd_all  = [10,20,30,40,50,60,70,80,90]
     cbarname = figdir + "/frac.cbar.png" 
     cbarname_all = figdir + "/frac.cbar.all.png" 
@@ -159,7 +173,7 @@ for thdist in lthdist:
     coef     = 100.0
     stitle   = "proportion (%%), %s "%(season)
     mycm     = "Spectral"
-    lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect(region)
+    lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region_draw)
     
     #-- fig: frac draw -
     ctrack_fig.mk_pict_saone_reg(a2frac_warm, bnd, mycm, fracname_warm, stitle+"warm", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
@@ -171,6 +185,9 @@ for thdist in lthdist:
     ctrack_fig.mk_pict_saone_reg(a2frac_stat, bnd, mycm, fracname_stat, stitle+"stat", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
     
     ctrack_fig.mk_pict_saone_reg(a2frac_all, bnd_all, mycm, fracname_all, stitle+"all", cbarname_all, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
+
+
+    ctrack_fig.mk_pict_saone_reg(a2frac_cwo, bnd, mycm, fracname_cwo, stitle+"cwo", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
       
     print fracname_all
 

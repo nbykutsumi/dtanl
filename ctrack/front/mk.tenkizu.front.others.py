@@ -24,9 +24,10 @@ if len(sys.argv) >1:
   cbarflag = sys.argv[10]
   thdura= float(sys.argv[11])
   singletime = True
+  sresol     = sys.argv[12]
 else:
   singletime = True
-  year   = 2004
+  year   = 2001
   mon    = 1
   day    = 5
   hour   = 0
@@ -46,7 +47,7 @@ else:
   urlat   = 80.0
   lllon   = 60.0
   urlon   = 190.0
-
+  sresol  = "anl_p"
 #-----------------------------------------
 
 miss_int= -9999
@@ -71,7 +72,7 @@ nx      = 360
 
 stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
 
-sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh"%(thdura)
+sodir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/tenkizu/%02dh"%(sresol, thdura)
 sodir         = sodir_root + "/%04d%02d/front/%02d"%(year, mon, day)
 ctrack_func.mk_dir(sodir)
 
@@ -90,9 +91,9 @@ lclass  = dpgradrange.keys()
 nclass  = len(lclass)
 thpgrad = dpgradrange[0][0]
 #----------------------------
-psldir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL"
-pgraddir_root   = "/media/disk2/out/JRA25/sa.one/6hr/pgrad"
-lifedir_root    = "/media/disk2/out/JRA25/sa.one/6hr/life"
+psldir_root     = "/media/disk2/data/JRA25/sa.one.anl_p25/6hr/PRMSL"
+pgraddir_root   = "/media/disk2/out/JRA25/sa.one.anl_p25/6hr/pgrad"
+lifedir_root    = "/media/disk2/out/JRA25/sa.one.anl_p25/6hr/life"
 
 psldir          = psldir_root   + "/%04d%02d"%(year, mon)
 pgraddir        = pgraddir_root + "/%04d%02d"%(year, mon)
@@ -153,8 +154,8 @@ LONS, LATS = meshgrid( a1lon_loc, a1lat_loc)
 #**************************************************************
 # equivalent potential temperature
 #**************************************************************
-tname = "/media/disk2/data/JRA25/sa.one/6hr/TMP/%04d%02d/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
-qname = "/media/disk2/data/JRA25/sa.one/6hr/SPFH/%04d%02d/anal_p25.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
+tname = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol, year, mon, sresol, plev*0.01, year, mon, day, hour)
+qname = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol, year, mon, sresol, plev*0.01, year, mon, day, hour)
 a2t    = fromfile(tname, float32).reshape(180,360)
 a2q    = fromfile(qname, float32).reshape(180,360)
 a2thermo   = dtanl_fsub.mk_a2theta_e(plev, a2t.T, a2q.T).T

@@ -8,9 +8,9 @@ def gsmap2global_one(a2org_one, miss):
   return a2glob
 #**********************************************
 def timeave_gsmap_backward_saone(year,mon,day,hour, hlen):
-  lhlen = [1,3,6,12,24]
+  lhlen = [1,2,3,6,12,24]
   if not hlen in lhlen:
-    print "'hlen' should be" ,lhours
+    print "'hlen' should be" ,lhlen
     sys.exit()
   #-------------
   lh_inc     = range(hlen)

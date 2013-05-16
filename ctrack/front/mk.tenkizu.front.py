@@ -29,9 +29,9 @@ if len(sys.argv) > 1:
   thdura    = float(sys.argv[11])
   thfmasktheta1 = float(sys.argv[12])
   thfmasktheta2 = float(sys.argv[13])
-
+  resol     = sys.argv[14]
 else:
-  year  = 2004
+  year  = 2001
   mon   = 1
   day   = 18
   hour  = 0
@@ -58,7 +58,7 @@ else:
   thdura   = 6
   thfmasktheta1 = 0.5
   thfmasktheta2 = 2.0
-
+  resol    = "anl_p"
 #-----------------------------
 #-----------------------------
 miss_out  = -9999.0
@@ -66,8 +66,8 @@ ny  = 180
 nx  = 360
 highsidedist  = ctrack_para.ret_highsidedist()
 
-stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
-sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh"%(thdura)
+stime         = "%04d%02d%02d%02d"%(year, mon, day, hour)
+sodir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/tenkizu/%02dh"%(resol,thdura)
 sodir         = sodir_root + "/%04d%02d/front/%02d"%(year, mon, day)
 #sodir         = "/home/utsumi/temp"
 cbardir       = sodir[:-3]
@@ -256,19 +256,12 @@ def mk_regmap_contour(a2in, bnd, scm, stitle, soname, cbarname, miss_out):
     figcbar.savefig(cbarname)
    
 #******************************************************
-#-- U wind at 850hPa ---------------------------
-plev_temp  = 850*100.0
-idir_root  = "/media/disk2/data/JRA25/sa.one/6hr"
-idir       = idir_root + "/UGRD/%04d%02d"%(year, mon)
-uname850   = idir + "/anal_p25.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_temp*0.01, year, mon, day, hour)
-a2u850     = fromfile(uname850, float32).reshape(ny,nx)
-
 #-- q: mixing ratio --------------------------
-qname = "/media/disk2/data/JRA25/sa.one/6hr/SPFH/%04d%02d/anal_p25.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
+qname = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(resol,year, mon, resol, plev*0.01, year, mon, day, hour)
 a2q   = fromfile(qname, float32).reshape(ny,nx)
 
 #-- t: ---------------------------------------
-tname = "/media/disk2/data/JRA25/sa.one/6hr/TMP/%04d%02d/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
+tname = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(resol, year, mon, resol, plev*0.01, year, mon, day, hour)
 a2t   = fromfile(tname, float32).reshape(ny,nx)
 
 #-- tv: --------------------------------------
@@ -302,29 +295,30 @@ scm        = "jet"
 stitle     = "%s (K 100km-1)\n"%(vtype)
 stitle     = stitle + "M1:%3.2f M2:%3.2f\n"%(thfmask1, thfmask2)
 stitle     = stitle + "%04d-%02d-%02d  UTC %02d:00 (JST %02d:00)"%(year, mon, day, hour, hour+9)
-soname     = sodir + "/front.%s.%04d.%02d.%02d.%02d.png"%(vtype, year, mon, day, hour)
+#soname     = sodir + "/front.%s.%04d.%02d.%02d.%02d.png"%(vtype, year, mon, day, hour)
+soname     = sodir + "/front.%s.%04d.%02d.%02d.%02d.M1-%04.2f.M2-%04.2f.png"%(vtype, year, mon, day, hour, thfmasktheta1, thfmasktheta2)
 cbarname   = cbardir + "/cbar.%s.png"%(vtype)
 
 #******************************************************
 #-- orog & grad orog ----
-orogname   = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
-gradorogadjname= "/media/disk2/data/JRA25/sa.one/const/topo/grad.topo.adj.twogrids.sa.one"
+orogname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
+#gradorogadjname= "/media/disk2/data/JRA25/sa.one/const/topo/grad.topo.adj.twogrids.sa.one"
 a2orog     = fromfile(orogname, float32).reshape(ny,nx)
-a2gradorogmask = fromfile(gradorogadjname, float32).reshape(ny,nx)
+#a2gradorogmask = fromfile(gradorogadjname, float32).reshape(ny,nx)
 
 #
 #------
 if contflag == "True":
   a2loc    = mk_front_loc_contour(a2thermo, a2gradthermo, thfmask1, thfmask2)
   a2loc    = ma.masked_where(a2orog > thorog, a2loc).filled(miss_out)
-  a2loc    = ma.masked_where(a2gradorogmask > thgradorog, a2loc).filled(miss_out)
+  #a2loc    = ma.masked_where(a2gradorogmask > thgradorog, a2loc).filled(miss_out)
   a2loc    = dtanl_fsub.del_front_2grids(a2loc.T, miss_out).T
   a2loc    = ctrack_fsub.find_highsidevalue_saone(a2gradtheta_e.T, a2loc.T, a2gradtv.T, highsidedist, miss_out).T
   mk_regmap(a2loc, bnd, scm, stitle, soname, cbarname, miss_out)
 else:
   a2loc    = mk_front_loc(a2thermo, a2gradthermo, thfmask1, thfmask2)
   a2loc    = ma.masked_where(a2orog > thorog, a2loc).filled(miss_out)
-  a2loc    = ma.masked_where(a2gradorogmask > thgradorog, a2loc).filled(miss_out)
+  #a2loc    = ma.masked_where(a2gradorogmask > thgradorog, a2loc).filled(miss_out)
   a2loc    = dtanl_fsub.del_front_2grids(a2loc.T, miss_out).T
   a2loc    = ctrack_fsub.find_highsidevalue_saone(a2gradtheta_e.T, a2loc.T, a2gradtv.T, highsidedist, miss_out).T
   mk_regmap(a2loc, bnd, scm, stitle, soname, cbarname, miss_out)

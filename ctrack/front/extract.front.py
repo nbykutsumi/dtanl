@@ -8,18 +8,26 @@ from numpy import *
 from chart_fsub import *
 import calendar
 import subprocess
-import os
+import os, sys
 from cf.plot import *
 import datetime
 #***************************************
+#singleday = True
+singleday = False
 region   = "ASAS"
-#lyear    = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011]
-#lyear    = [2004,2005,2006,2007,2008,2009,2010,2011]
-#lyear    = [2000,2001,2002,2003]
-lyear    = [2011]
+#--------------------------
+if len(sys.argv) >1:
+  iyear   = int(sys.argv[1])
+  lyear   = [iyear]
+else:
+  #lyear    = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011]
+  #lyear    = [2006,2007,2008,2009,2010,2011]
+  #lyear    = [2000,2001,2002,2003]
+  lyear    = [2010]
+#--------------------------
 lmon     = [1,2,3,4,5,6,7,8,9,10,11,12]
-#lmon     = [1,2,3,4,5,6,8,9,10,11,12]
-#lmon     = [7]
+#lmon     = [10,11,12]
+#lmon     = [12]
 iday     = 1
 #lhour    = [0]
 lhour    = [0, 6,12, 18]
@@ -69,7 +77,10 @@ for year in lyear:
     ctrack_func.mk_dir(figdir)
     #-----
     eday    = calendar.monthrange(year, mon)[1]
-    #eday = iday
+    #-----
+    if singleday == True:
+      eday = iday
+    #-----
     for day in range(iday,eday+1):
       for hour in lhour:
         #-----
@@ -131,16 +142,27 @@ for year in lyear:
         a2front  = ma.masked_where(a2mask != miss, a2front).filled(2.0)
         #
         ##-- occ front
-        a2mask   = ma.masked_where(a2r < 160, a2one)
+        #a2mask   = ma.masked_where(a2r < 160, a2one)
+        #a2mask   = ma.masked_where(a2g > 80, a2mask)
+        #a2mask   = ma.masked_where(a2b < 160, a2mask)
+
+        a2mask   = ma.masked_where(a2r < 120, a2one)
         a2mask   = ma.masked_where(a2g > 80, a2mask)
         a2mask   = ma.masked_where(a2b < 160, a2mask)
+
         a2mask   = a2mask.filled(miss)
         a2front  = ma.masked_where(a2mask != miss, a2front).filled(3.0)
         
         #--
-        a2front_saone = chart_fsub.chartfront2saone(\
+        a2front_saone = chart_fsub.chartfront2saone_new(\
                           a2front.T, a2xfort_corres.T, a2yfort_corres.T,\
                           miss).T
+
+        #a2front_saone = chart_fsub.chartfront2saone(\
+        #                  a2front.T, a2xfort_corres.T, a2yfort_corres.T,\
+        #                  miss).T
+
+
         a2front_saone.tofile(bnname)
         print bnname
         #** remove jpg file ********************
@@ -163,8 +185,8 @@ for year in lyear:
         lllon_rect, lllat_rect, urlon_rect, urlat_rect \
                    = chart_para.ret_domain_corner_rect(region)
         xdom_saone_first, xdom_saone_last, ydom_saone_first, ydom_saone_last = chart_para.ret_xydom_saone_rect_first_last(region)
-        #M   = Basemap( resolution="l", llcrnrlat=lllat_rect+2.0, llcrnrlon=lllon_rect, urcrnrlat=urlat_rect+2.0, urcrnrlon=urlon_rect, ax=axmap)
-        M   = Basemap( resolution="l", llcrnrlat=lllat_rect-0.5, llcrnrlon=lllon_rect-0.5, urcrnrlat=urlat_rect+0.5, urcrnrlon=urlon_rect+0.5, ax=axmap)
+        #M   = Basemap( resolution="l", llcrnrlat=lllat_rect-0.5, llcrnrlon=lllon_rect-0.5, urcrnrlat=urlat_rect+0.5, urcrnrlon=urlon_rect+0.5, ax=axmap)
+        M   = Basemap( resolution="l", llcrnrlat=lllat_rect, llcrnrlon=lllon_rect, urcrnrlat=urlat_rect, urcrnrlon=urlon_rect, ax=axmap)
         # transform #
         a2front_saone_trans  = a2front_saone[ydom_saone_first:ydom_saone_last +1, xdom_saone_first:xdom_saone_last+1]
 

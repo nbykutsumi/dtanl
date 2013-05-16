@@ -1,51 +1,60 @@
 from numpy import *
 import calendar
 import subprocess
-import os
+import os, sys
 import matplotlib.pyplot as plt
 import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2000
+iyear    = 2004
 eyear    = 2004
-#lmon     = [1,2,3,4,5,6,8,9,10,11,12]
-lmon     = arange(1,12+1)
+#lmon     = [1]
+#lmon     = arange(1,12+1)
+#lmon     = [7,6,1,2,3,4,5,8,9,10,11,12]
+lmon     = [1,2,3,4,5,8,9,10,11,12]
+#lmon     = [7,6]
 tstp     = "6hr"
-idir_root   =  "/home/utsumi/mnt/export/nas12/JRA25"
-odir_root   =  "/media/disk2/data/JRA25/sa.one/%s"%(tstp)
-#odir_root   =  "/media/disk2/data/JRA25/sa.one/%s/temp"%(tstp)
 singleday   = False  # True or False
 miss_out    = -9999.0
 #lplev       = [250]   # pressure level (hPa)
+#lplev       = [850]
+#lplev       = [850,700,500,300,250]
+#lplev       = [250,300,500,600,700,850,925]
+#lplev       = [300,500,700,850,925]
 #lplev       = [850,500]
-lplev       = [700,300]
+lplev       = [250]
 
 #lvar   = ["HGT"]
-lvar   = ["TMP"]
+lvar   = ["SPFH","TMP"]
 #lvar   = ["UGRD", "VGRD"]
 #lvar    = ["VGRD"]
 dtype  = {}
-dtype["UGRD" ] = "anal_p25"
-dtype["VGRD" ] = "anal_p25"
-dtype["SPFH" ] = "anal_p25"
-dtype["TMP"  ] = "anal_p25"
-dtype["HGT" ] = "anal_p25"
+dtype["UGRD" ] = "anl_p"
+dtype["VGRD" ] = "anl_p"
+dtype["SPFH" ] = "anl_p"
+dtype["TMP"  ] = "anl_p"
+dtype["HGT" ]  = "anl_p"
 
 lvar_nonegative = ["PRMSL", "ACPCP", "NCPCP"]
 lvar_prec  = ["ACPCP", "NCPCP"]
 
 #--- LAT & LON & NX, NY : Original  ------------------------------
-dlat_org      = 2.5
-dlon_org      = 2.5
+dlat_org      = 1.25
+dlon_org      = 1.25
 
 lat_first_org = -90.0
 lat_last_org  = 90.0
 lon_first_org = 0.0
-lon_last_org  = 360.0 - 2.5
+lon_last_org  = 360.0 - 1.25
 a1lat_org     = arange(lat_first_org, lat_last_org + dlat_org*0.1, dlat_org)  
 #-----------
 a1lon_org     = arange(lon_first_org, lon_last_org + dlon_org*0.1, dlon_org)
+
+#-----------
+#idir_root   =  "/media/disk2/temp"
+idir_root   =  "/home/utsumi/mnt/iis.data2/JRA25"
+
 
 #---------------------------------------------------------------
 ny_org     = len(a1lat_org)
@@ -68,23 +77,23 @@ ny_fin     = len(a1lat_fin)
 nx_fin     = len(a1lon_fin)
 nz_fin     = 1
 #********************************************
-def mk_dir(sdir):
-  if not os.access(sdir , os.F_OK):
-    os.mkdir(sdir)
 #********************************************
-for plev in lplev:
-  for var in lvar:
-    ctlname    = idir_root + "/%04d01/%s.ctl"%(iyear, dtype[var])
-    stype      = dtype[var]
-    for year in range(iyear, eyear + 1):
-      for mon in lmon:
-        idir      = idir_root  +  "/%04d%02d"%(year, mon)
+for year in range(iyear, eyear + 1):
+  for mon in lmon:
+    for plev in lplev:
+      for var in lvar:
+        #ctlname    = idir_root + "/%04d01/%s.ctl"%(iyear, dtype[var])
+        ctlname    = idir_root + "/%s/%04d01/%s.ctl"%(dtype[var], iyear, dtype[var])
+        stype      = dtype[var]
+        idir      = idir_root  +  "/%s/%04d%02d"%(dtype[var], year, mon)
+
+        odir_root =  "/media/disk2/data/JRA25/sa.one.%s/%s"%(dtype[var], tstp)
         odir_temp = odir_root  +  "/%s"%(var)
         odir      = odir_temp  +  "/%04d%02d"%(year, mon)
         #-- make directory ---
-        mk_dir(odir_root)
-        mk_dir(odir_temp)
-        mk_dir(odir)
+        ctrack_func.mk_dir(odir_root)
+        ctrack_func.mk_dir(odir_temp)
+        ctrack_func.mk_dir(odir)
     
     
         #-- discription file ----------------
@@ -134,8 +143,10 @@ for plev in lplev:
             oname     = odir + "/%s.%s.%04dhPa.%s.sa.one"%(stype, var, plev, stime)
     
             print gribname
-    
-    
+            if not os.access(gribname, os.F_OK): 
+              print "no file"
+              print gribname
+              sys.exit()
             #-- grib --> binary -----
     
             args      = "wgrib %s | grep %s | grep '%d mb' | wgrib %s -i -nh -o %s"%(gribname, var, plev, gribname, tempname)

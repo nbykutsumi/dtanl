@@ -353,6 +353,120 @@ end do
 RETURN
 END SUBROUTINE find_circle_max
 !*********************************************************
+SUBROUTINE mk_a2highsidevector_saone(a2iso, a2loc, dist, miss, nx, ny, a2vecx, a2vecy)
+implicit none
+!---- in ------
+integer                              nx, ny
+real,dimension(nx,ny)             :: a2iso, a2loc
+!f2py intent(in)                     a2iso, a2loc
+real                                 dist, miss
+
+!---- out -----
+real,dimension(nx,ny)             :: a2vecx, a2vecy
+!f2py intent(out)                    a2vecx, a2vecy
+!---- para ----
+real,parameter                    :: lat_first = -89.5
+!---- calc ----
+integer                              ix, iy
+integer                              dx, dy
+integer                              iix, iiy
+integer                              ixw,ixe,ixs,ixn
+integer                              iyw,iye,iys,iyn
+real                                 dn, ds, dns, dew
+real                                 lat
+real                                 gradisox, gradisoy, gradisoabs
+real                                 vecx, vecy
+!--------------
+a2vecx = 0.0
+a2vecy = 0.0
+!--------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dns = (dn + ds)/2.0
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  do ix = 1,nx
+    if (a2loc(ix,iy).ne. miss) then
+      call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+      call ixy2iixy_saone(ix, iy-1, ixs, iys)
+      call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+      call ixy2iixy_saone(ix+1, iy, ixe, iye)
+      gradisox  = (a2iso(ixe,iye)-a2iso(ixw,iyw)) / (2.0*dew)
+      gradisoy  = (a2iso(ixn,iyn)-a2iso(ixs,iys)) / (2.0*dns)
+      gradisoabs= (gradisox**2.0+gradisoy**2.0)**0.5
+      vecx      = gradisox / gradisoabs * dist
+      vecy      = gradisoy / gradisoabs * dist
+      dx        = int(sign(1.0, vecx))* int((abs(vecx) + 0.5*dew)/ dew)
+      dy        = int(sign(1.0, vecy))* int((abs(vecy) + 0.5*dns)/ dns)
+      call ixy2iixy_saone(ix+dx, iy+dy, iix, iiy)
+      a2vecx(ix,iy) = dx
+      a2vecy(ix,iy) = dy
+      !a2vecx(ix,iy) = vecx
+      !a2vecy(ix,iy) = vecy
+    end if
+  end do
+end do
+
+return
+END SUBROUTINE mk_a2highsidevector_saone
+
+!*********************************************************
+SUBROUTINE mk_a2highsidemask_saone(a2iso, a2loc, dist, miss, nx, ny, a2out)
+implicit none
+!---- in ------
+integer                              nx, ny
+real,dimension(nx,ny)             :: a2iso, a2loc
+!f2py intent(in)                     a2iso, a2loc
+real                                 dist, miss
+
+!---- out -----
+real,dimension(nx,ny)             :: a2out
+!f2py intent(out)                    a2out
+!---- para ----
+real,parameter                    :: lat_first = -89.5
+!---- calc ----
+integer                              ix, iy
+integer                              dx, dy
+integer                              iix, iiy
+integer                              ixw,ixe,ixs,ixn
+integer                              iyw,iye,iys,iyn
+real                                 dn, ds, dns, dew
+real                                 lat
+real                                 gradisox, gradisoy, gradisoabs
+real                                 vecx, vecy
+!--------------
+a2out = miss
+!--------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dns = (dn + ds)/2.0
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  do ix = 1,nx
+    if (a2loc(ix,iy).ne. miss) then
+      call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+      call ixy2iixy_saone(ix, iy-1, ixs, iys)
+      call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+      call ixy2iixy_saone(ix+1, iy, ixe, iye)
+      gradisox  = (a2iso(ixe,iye)-a2iso(ixw,iyw)) / (2.0*dew)
+      gradisoy  = (a2iso(ixn,iyn)-a2iso(ixs,iys)) / (2.0*dns)
+      gradisoabs= (gradisox**2.0+gradisoy**2.0)**0.5
+      vecx      = gradisox / gradisoabs * dist
+      vecy      = gradisoy / gradisoabs * dist
+      dx        = int(sign(1.0, vecx))* int((abs(vecx) + 0.5*dew)/ dew)
+      dy        = int(sign(1.0, vecy))* int((abs(vecy) + 0.5*dns)/ dns)
+      call ixy2iixy_saone(ix+dx, iy+dy, iix, iiy)
+      a2out(iix,iiy) = 1.0
+    end if
+  end do
+end do
+
+return
+END SUBROUTINE mk_a2highsidemask_saone
+
+!*****************************************************************
 SUBROUTINE find_highsidevalue_saone(a2iso, a2loc, a2in, dist, miss, nx, ny, a2out)
 implicit none
 !---- in ------
@@ -396,8 +510,8 @@ do iy = 1,ny
       gradisoabs= (gradisox**2.0+gradisoy**2.0)**0.5
       vecx      = gradisox / gradisoabs * dist
       vecy      = gradisoy / gradisoabs * dist
-      dx        = int(sign(1.0, vecx))* int((abs(vecx) - 0.5*dew)/ dew)
-      dy        = int(sign(1.0, vecy))* int((abs(vecy) - 0.5*dns)/ dns)
+      dx        = int(sign(1.0, vecx))* int((abs(vecx) + 0.5*dew)/ dew)
+      dy        = int(sign(1.0, vecy))* int((abs(vecy) + 0.5*dns)/ dns)
       call ixy2iixy_saone(ix+dx, iy+dy, iix, iiy)
       a2out(ix,iy) = a2in(iix,iiy)
     end if

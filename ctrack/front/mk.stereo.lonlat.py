@@ -7,8 +7,8 @@ region = "ASAS"
 #ydom_last  = 834
 miss       = -9999.0
 
-lperiod    = [[2000,1],[2006,1],[2006,3]]
-#lperiod    = [[2006,1],[2006,3]]
+#lperiod    = [[2000,1],[2006,1],[2006,3]]
+lperiod    = [[2000,1]]
 
 #-------------------
 #odir  = "/home/utsumi/bin/dtanl/ctrack/chart"
@@ -54,9 +54,10 @@ for period in lperiod:
   a2lon_dom  = a2lon_dom.data
   
   
-  #m.imshow(a2lon_dom, interpolation="nearest")
-  #plt.colorbar()
-  #plt.savefig(figname_lon)
+  m.imshow(a2lon_dom, interpolation="nearest")
+  plt.colorbar()
+  plt.savefig(figname_lon)
+  print figname_lon
   #**********************
   a2lon     = ones([ny,nx],float32)*miss
   a2lat     = ones([ny,nx],float32)*miss

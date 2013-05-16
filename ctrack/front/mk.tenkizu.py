@@ -13,7 +13,7 @@ import datetime
 #vtype   = "GSMaP"
 #vtype   = "GPCP1DD"
 #lvtype   = ["JRA"]
-lvtype   = ["GSMaP", "JRA"]
+lvtype   = ["JRA"]
 #lvtype   = ["GSMaP","JRA"]
 
 if len(sys.argv) >1:
@@ -28,6 +28,7 @@ if len(sys.argv) >1:
   plev = float(sys.argv[9])   #[Pa]
   cbarflag = sys.argv[10]
   thdura= float(sys.argv[11])
+  sresol= sys.argv[12]
 else:
   year   = 2004
   mon    = 9
@@ -44,7 +45,7 @@ else:
   urlat   = 60.
   lllon   = 110.
   urlon   = 160.
-
+  sresol  = "anl_p"
 
 #**********************************************
 def shifttime(year, mon, day, hour, hour_inc):
@@ -63,9 +64,9 @@ for vtype in lvtype:
   nx      = 360
   miss_int= -9999
   stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
-  sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/%02dh"%(thdura)
-  #sodir         = sodir_root + "/%04d%02d"%(year, mon)
-  sodir         = "/home/utsumi/temp"
+  sodir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/tenkizu/%02dh"%(sresol, thdura)
+  sodir         = sodir_root + "/%04d%02d"%(year, mon)
+  #sodir         = "/home/utsumi/temp"
   ctrack_func.mk_dir(sodir)
   
   soname        = sodir + "/tenkizu.%04d.%02d.%02d.%02d.%s.png"%(year, mon, day, hour, vtype)
@@ -126,7 +127,7 @@ for vtype in lvtype:
       (year_t, mon_t, day_t, hour_t) = shifttime(year, mon, day, hour, hour_inc)
       print day, year_t, mon_t, day_t, hour_t
   
-      vdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PR"
+      vdir_root     = "/media/disk2/data/JRA25/sa.one.fcst_phy2m/6hr/PR"
       vdir          = vdir_root + "/%04d%02d"%(year_t, mon_t)
       vname         = vdir + "/fcst_phy2m.PR.%04d%02d%02d%02d.sa.one"%(year_t, mon_t, day_t, hour_t)
       a2v_t         = fromfile(vname, float32).reshape(ny, nx)
@@ -137,15 +138,15 @@ for vtype in lvtype:
   
   #----------------------------
   
-  psldir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL"
-  pgraddir_root   = "/media/disk2/out/JRA25/sa.one/6hr/pgrad"
-  lifedir_root    = "/media/disk2/out/JRA25/sa.one/6hr/life"
+  psldir_root     = "/media/disk2/data/JRA25/sa.one.anl_p25/6hr/PRMSL"
+  pgraddir_root   = "/media/disk2/out/JRA25/sa.one.anl_p25/6hr/pgrad"
+  lifedir_root    = "/media/disk2/out/JRA25/sa.one.anl_p25/6hr/life"
   
   psldir          = psldir_root   + "/%04d%02d"%(year, mon)
   pgraddir        = pgraddir_root + "/%04d%02d"%(year, mon)
   lifedir         = lifedir_root  + "/%04d%02d"%(year, mon)
   
-  pslname         = psldir   + "/fcst_phy2m.PRMSL.%s.sa.one"%(stime)
+  pslname         = psldir   + "/anl_p25.PRMSL.%s.sa.one"%(stime)
   pgradname       = pgraddir + "/pgrad.%s.sa.one"%(stime)
   lifename        = lifedir  + "/life.%s.sa.one"%(stime)
   

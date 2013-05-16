@@ -11,10 +11,10 @@ import subprocess
 import cf
 import cf.util
 
-iyear      = 2005
-eyear      = 2005
+iyear      = 2009
+eyear      = 2010
 imon       = 1
-emon       = 1
+emon       = 12
 
 miss_out   = -9999.0
 sunit      = "kg m-2 s-1"
@@ -68,7 +68,8 @@ def mk_readme(odir):
   f.close()
 #-----------------------------
 
-idir_root  = "/home/utsumi/mnt/nasd/data/GSMaP/standard/v5/hourly"
+#idir_root  = "/home/utsumi/mnt/nasd/data/GSMaP/standard/v5/hourly"
+idir_root  = "/home/utsumi/mnt/iid.data2/GSMaP/standard/v5/hourly"
 odir_root  = "/media/disk2/data/GSMaP/sa.one/1hr/ptot"
 
 for year in range(iyear , eyear+1):

@@ -18,9 +18,11 @@ lhour  = [0,6,12,18]
 #local region ------
 plev     = 850 *100.0   #(Pa)
 cbarflag = "True"
-thfmasktheta1 = 0.6
-thfmasktheta2 = 2.0
+#thfmasktheta1 = 0.6
+#thfmasktheta2 = 2.0
 
+sresol   = "anl_p"
+thfmasktheta1, thfmasktheta2  = front_para.ret_thfmask(sresol)
 #-----------------------------
 miss_out  = -9999.0
 ny  = 180
@@ -75,7 +77,7 @@ def mk_front_loc(a2thermo, a2gradthermo, thfmask1, thfmask2):
 for year in range(iyear, eyear+1):
   for mon in lmon:
     #-----------
-    sodir_root    = "/media/disk2/out/JRA25/sa.one/6hr/front"
+    sodir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/front"%(sresol)
     sodir         = sodir_root + "/%04d%02d"%(year, mon)
     ctrack_func.mk_dir(sodir)
     #-----------
@@ -85,19 +87,12 @@ for year in range(iyear, eyear+1):
       for hour in lhour:
         stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
         #******************************************************
-        #-- U wind at 850hPa ---------------------------
-        plev_temp  = 850*100.0
-        idir_root  = "/media/disk2/data/JRA25/sa.one/6hr"
-        idir       = idir_root + "/UGRD/%04d%02d"%(year, mon)
-        uname850   = idir + "/anal_p25.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_temp*0.01, year, mon, day, hour)
-        a2u850     = fromfile(uname850, float32).reshape(ny,nx)
-        
         #-- q: mixing ratio --------------------------
-        qname = "/media/disk2/data/JRA25/sa.one/6hr/SPFH/%04d%02d/anal_p25.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
+        qname = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/anal_p25.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
         a2q   = fromfile(qname, float32).reshape(ny,nx)
         
         #-- t: ---------------------------------------
-        tname = "/media/disk2/data/JRA25/sa.one/6hr/TMP/%04d%02d/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
+        tname = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
         a2t   = fromfile(tname, float32).reshape(ny,nx)
         
         #-- tv: --------------------------------------
@@ -128,15 +123,15 @@ for year in range(iyear, eyear+1):
         
         #******************************************************
         #-- orog & grad orog ----
-        orogname   = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
-        gradorogadjname= "/media/disk2/data/JRA25/sa.one/const/topo/grad.topo.adj.twogrids.sa.one"
+        orogname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
+        #gradorogadjname= "/media/disk2/data/JRA25/sa.one.125/const/topo/grad.topo.adj.twogrids.sa.one"
         a2orog     = fromfile(orogname, float32).reshape(ny,nx)
-        a2gradorogmask = fromfile(gradorogadjname, float32).reshape(ny,nx)
+        #a2gradorogmask = fromfile(gradorogadjname, float32).reshape(ny,nx)
         
         #------
         a2loc    = mk_front_loc_contour(a2thermo, a2gradthermo, thfmask1, thfmask2)
         a2loc    = ma.masked_where(a2orog > thorog, a2loc).filled(miss_out)
-        a2loc    = ma.masked_where(a2gradorogmask > thgradorog, a2loc).filled(miss_out)
+        #a2loc    = ma.masked_where(a2gradorogmask > thgradorog, a2loc).filled(miss_out)
         a2loc    = dtanl_fsub.del_front_2grids(a2loc.T, miss_out).T
         a2loc    = ctrack_fsub.find_highsidevalue_saone(a2gradtheta_e.T, a2loc.T, a2gradtv.T, highsidedist, miss_out).T
         #------

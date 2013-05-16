@@ -540,12 +540,9 @@ real,dimension(nx,ny) :: a2thermoadv
 !f2py intent(out)     :: a2thermoadv
 !--- cal -----
 real,dimension(nx,ny) :: a2gradx, a2grady
-real,dimension(nx,ny) :: a2dot, a2graddotx, a2graddoty
 !-------------
 CALL mk_a2grad_saone(a2thermo, a2gradx, a2grady)
-a2dot        = a2gradx* a2uwind + a2grady*a2vwind
-CALL mk_a2grad_saone(a2dot, a2graddotx, a2graddoty)
-a2thermoadv  = a2graddotx*a2uwind + a2graddoty*a2vwind
+a2thermoadv  = a2gradx* a2uwind + a2grady*a2vwind
 !-------------
 return
 END SUBROUTINE mk_a2thermoadv

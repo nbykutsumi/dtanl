@@ -150,7 +150,7 @@ LONS, LATS = meshgrid( a1lon_loc, a1lat_loc)
 #vname     = "front.t"
 #themoname = "/media/disk2/data/JRA25/sa.one/6hr/TMP/%04d%02d/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(year, mon, plev*0.01, year, mon, day, hour)
 #a2thermo = fromfile(thermoname, float32).reshape(180,360)
-#a2grad   = dtanl_fsub,mka2grad_abs_saone(a2thermo.T).T
+#a2grad   = dtanl_fsub.mka2grad_abs_saone(a2thermo.T).T
 #
 ##-- locator ----
 #(a2grad2x, a2grad2y) = dtanl_fsub.mk_a2grad_saone(a2grad.T)

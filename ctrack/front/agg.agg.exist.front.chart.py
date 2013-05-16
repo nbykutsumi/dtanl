@@ -157,8 +157,10 @@ for season in lseason:
   #  figure stat 
   #---------------------------
   #bnd        = [2,3,4,5,6,7,8,9,10]
-  bnd        = [4,8,12,16,20,24,28,32,36]
-  cbarname = figdir + "/freq.cbar.png"
+  #bnd        = [4,8,12,16,20,24,28,32,36]
+  #bnd        = [4,10,16,22,28,34,40,46,52,58,64,70,76,82,88,94]
+  bnd        = [4,10,16,22,28,34,40,46,52,58,64]
+  cbarname = figdir + "/freq.cbar.stat.png"
   stitle   = "freq. stat: season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
   datname  = soname_stat

@@ -36,7 +36,7 @@ def ret_tcregionlatlon(region):
   return lllat, lllon, urlat, urlon
 #------------------------------------
 def ret_highsidedist():
-  highsidedist = 300*1000.0 #(m)
+  highsidedist = 100*1000.0 #(m)
   return highsidedist
 #-----------------------------------
 def ret_thorog():

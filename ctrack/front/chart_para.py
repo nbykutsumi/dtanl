@@ -36,10 +36,17 @@ def ret_domain_corner(region,year,mon):
   today = datetime.date(year, mon, 1)
   if region == "ASAS":
     if (today < datetime.date(2006,1,1)):
+      #lllon = 106.5
+      #lllat = 0.5
+      #urlon = 208.0
+      #urlat = 41.0
+
+      # better?
       lllon = 106.5
       lllat = 0.5
-      urlon = 208.0
-      urlat = 41.0
+      urlon = 208.5
+      urlat = 40.5
+
     if ( datetime.date(2006,1,1)<=today<datetime.date(2006,3,1)):
       lllon = 109.5
       lllat = -5.5

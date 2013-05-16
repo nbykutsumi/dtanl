@@ -28,6 +28,1027 @@ integer                              ixn,ixs,ixe,ixw
 integer                              iyn,iys,iye,iyw
 integer                              ixnw, ixne, ixsw, ixse
 integer                              iynw, iyne, iysw, iyse
+real                                 wcount, ecount, scount, ncount, occcount_8grids, occcount_9x9, statcount_9x9
+real                                 wcount_3opp, ecount_3opp, scount_3opp, ncount_3opp
+real                                 wcount_same, ecount_same, scount_same, ncount_same
+real                                 nwarm, ncold, nocc
+real                                 tv, cv, cv_opp
+real                                 vw, ve, vs, vn
+real                                 vnw, vne, vsw, vse
+real,dimension(360,180)           :: a2warm_saone, a2cold_saone, a2occ_saone
+real,dimension(360,180)           :: a2flag_saone
+real,dimension(360,180)           :: a2front_saone_temp
+!--- parameter  ---------
+real,parameter                    :: th_count_same = 4.0
+
+!--- initialize ---------
+a2front_saone  = miss
+a2warm_saone   = 0.0
+a2cold_saone   = 0.0
+a2occ_saone    = 0.0
+a2flag_saone   = 0.0
+!------------------------
+! convert front resolution a2org -> a2saone
+!------------------------
+do iy = 1,ny_org
+  do ix = 1,nx_org
+    !--------------------------------
+    ix_corres  = int(a2x_corres(ix,iy))
+    iy_corres  = int(a2y_corres(ix,iy))
+    if ((ix_corres.eq.miss).or.(iy_corres.eq.miss))then
+      cycle
+    end if
+    !--------------------------------
+    if (a2front_org(ix,iy) .eq. 1.0) then
+      a2warm_saone(ix_corres,iy_corres) = a2warm_saone(ix_corres,iy_corres) + 1.0
+      a2flag_saone(ix_corres,iy_corres) = 1.0
+    else if (a2front_org(ix,iy) .eq. 2.0 )then
+      a2cold_saone(ix_corres,iy_corres) = a2cold_saone(ix_corres,iy_corres) + 1.0
+      a2flag_saone(ix_corres,iy_corres) = 1.0
+
+    else if (a2front_org(ix,iy) .eq. 3.0 )then
+      a2occ_saone(ix_corres,iy_corres)  = a2occ_saone(ix_corres,iy_corres)  + 1.0
+      a2flag_saone(ix_corres,iy_corres) = 1.0
+    end if
+  end do 
+end do
+!------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    if (a2flag_saone(ix_saone,iy_saone) .eq. 1.0) then
+      nwarm   = a2warm_saone(ix_saone,iy_saone)
+      ncold   = a2cold_saone(ix_saone,iy_saone)
+      nocc    = a2occ_saone(ix_saone,iy_saone)
+      if (nocc .gt. 1)then
+        a2front_saone(ix_saone,iy_saone) = 3.0
+      else if ((nwarm .gt. ncold).and.(nwarm .gt. nocc))then
+        a2front_saone(ix_saone,iy_saone) = 1.0
+      else if ((ncold .gt. nocc).and.(ncold .gt. nwarm))then
+        a2front_saone(ix_saone,iy_saone) = 2.0
+      end if
+    end if
+  end do
+end do
+!-----------
+!***************************************************
+! stationary front 1st
+!---------------------------------------------------
+a2front_saone_temp = a2front_saone
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv .eq.1).or.(cv.eq.2))then
+      !*********************************************
+      ! opposite color
+      !---------------------------------------------
+      if (cv .eq. 1)then
+        cv_opp = 2
+      else if (cv .eq. 2)then
+        cv_opp = 1
+      end if
+      !*********************************************
+      ! stationary front
+      !---------------------------------------------
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      wcount_same = 0.0
+      ecount_same = 0.0
+      scount_same = 0.0
+      ncount_same = 0.0
+      wcount_3opp = 0.0
+      ecount_3opp = 0.0
+      scount_3opp = 0.0
+      ncount_3opp = 0.0
+
+      occcount_9x9 = 0.0
+      !----------------------------
+      ! check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.cv_opp)then
+            wcount = wcount +1.0  
+          else if (tv.eq.cv)then
+            wcount_same = wcount_same + 1.0
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.cv_opp)then
+            ecount = ecount +1.0  
+          else if (tv.eq.cv)then
+            ecount_same = ecount_same + 1.0
+          end if
+
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.cv_opp)then
+            scount = scount +1.0  
+          else if (tv.eq.cv)then
+            scount_same = scount_same + 1.0
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.cv_opp)then
+            ncount = ncount +1.0  
+          else if (tv.eq.cv)then
+            ncount_same = ncount_same + 1.0
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.3)then
+            occcount_9x9 = occcount_9x9 +1
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! adjacent 3 grids
+      !----------------------------
+      ! North ----------
+      idy = 1
+      do idx = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          ncount_3opp  = ncount_3opp +1
+        end if
+      end do 
+
+      ! South -----------
+      idy = -1
+      do idx = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          scount_3opp  = scount_3opp +1
+        end if
+      end do 
+
+      ! West -----------
+      idx = -1
+      do idy = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          wcount_3opp  = wcount_3opp +1
+        end if
+      end do 
+
+      ! East -----------
+      idx = 1
+      do idy = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          ecount_3opp  = ecount_3opp +1
+        end if
+      end do 
+      !----------------------------
+      if ((ncount_same .lt.th_count_same )&
+         .and.(scount_same.lt.th_count_same)&
+         .and.(wcount_same.lt.th_count_same)&
+         .and.(ecount_same.lt.th_count_same)) then
+        if ((occcount_9x9.eq.0).and.(wcount.gt.0).and.(ecount.gt.0))then
+          if ((ncount_3opp.lt.3).and.(scount_3opp.lt.3))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+        if ((occcount_9x9.eq.0).and.(scount.gt.0).and.(ncount.gt.0))then
+          if ((wcount_3opp.lt.3).and.(ecount_3opp.lt.3))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+      end if
+      !----------------------------
+    end if
+  end do
+end do
+!-- filter stationary front: continued a2front_saone_temp ---
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone_temp(ix_saone,iy_saone)
+    if (cv .eq.4)then
+      !*********************************************
+      ! stationary front
+      !---------------------------------------------
+      statcount_9x9 = 0.0
+      !----------------------------
+      ! check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone_temp(ixt,iyt)
+          if (tv.eq.4)then
+            statcount_9x9 = statcount_9x9 +1
+          end if
+        end do 
+      end do          
+      !----------------------------
+      if (statcount_9x9.le.2)then
+        a2front_saone_temp(ix_saone, iy_saone) = a2front_saone(ix_saone, iy_saone)
+      end if
+      !----------------------------
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+
+!**************************************************
+! 2nd check stationary front
+!---------------------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    !if ((cv.eq.1).or.(cv.eq.2).or.(cv.eq.4))then
+    if ((cv.eq.1).or.(cv.eq.2))then
+      !*********************************************
+      ! opposite color
+      !---------------------------------------------
+      if (cv .eq. 1)then
+        cv_opp = 2
+      else if (cv .eq. 2)then
+        cv_opp = 1
+      end if
+      !---------------------------------------------
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      wcount_same = 0.0
+      ecount_same = 0.0
+      scount_same = 0.0
+      ncount_same = 0.0
+      wcount_3opp = 0.0
+      ecount_3opp = 0.0
+      scount_3opp = 0.0
+      ncount_3opp = 0.0
+
+      occcount_9x9 = 0.0
+      !----------------------------
+      ! 2nd check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if ((cv.ne.4).and.(tv.eq.cv_opp))then
+            wcount = wcount +1.0  
+          else if (tv.eq.cv)then
+            wcount_same = wcount_same + 1.0
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 2nd check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if ((cv.ne.4).and.(tv.eq.cv_opp))then
+            ecount = ecount +1.0  
+          else if (tv.eq.cv)then
+            ecount_same = ecount_same + 1.0
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 2nd check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if ((cv.ne.4).and.(tv.eq.cv_opp))then
+            scount = scount +1.0  
+          else if (tv.eq.cv)then
+            scount_same = scount_same + 1.0
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 2nd check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if ((cv.ne.4).and.(tv.eq.cv_opp))then
+            ncount = ncount +1.0  
+          else if (tv.eq.cv)then
+            ncount_same = ncount_same + 1.0
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.3)then
+            occcount_9x9 = occcount_9x9 +1
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! adjacent 3 grids
+      !----------------------------
+      ! North ----------
+      idy = 1
+      do idx = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          ncount_3opp  = ncount_3opp +1
+        end if
+      end do 
+
+      ! South -----------
+      idy = -1
+      do idx = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          scount_3opp  = scount_3opp +1
+        end if
+      end do 
+
+      ! West -----------
+      idx = -1
+      do idy = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          wcount_3opp  = wcount_3opp +1
+        end if
+      end do 
+
+      ! East -----------
+      idx = 1
+      do idy = -1,1
+        CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+        tv = a2front_saone(ixt,iyt)
+        if (tv.eq.cv_opp)then
+          ecount_3opp  = ecount_3opp +1
+        end if
+      end do 
+      !----------------------------
+      ! 2nd check stationary front: all
+      !----------------------------
+      if ((ncount_same .lt.th_count_same )&
+         .and.(scount_same.lt.th_count_same)&
+         .and.(wcount_same.lt.th_count_same)&
+         .and.(ecount_same.lt.th_count_same)) then
+        if ((occcount_9x9.eq.0).and.(wcount.gt.0).and.(ecount.gt.0))then
+          if ((ncount_3opp.lt.3).and.(scount_3opp.lt.3))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+        if ((occcount_9x9.eq.0).and.(scount.gt.0).and.(ncount.gt.0))then
+          if ((wcount_3opp.lt.3).and.(ecount_3opp.lt.3))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+      end if
+    end if
+  end do
+end do
+!-- filter stationary front: continued a2front_saone_temp ---
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone_temp(ix_saone,iy_saone)
+    if (cv .eq.4)then
+      !*********************************************
+      ! stationary front
+      !---------------------------------------------
+      statcount_9x9 = 0.0
+      !----------------------------
+      ! check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone_temp(ixt,iyt)
+          if (tv.eq.4)then
+            statcount_9x9 = statcount_9x9 +1
+          end if
+        end do 
+      end do          
+      !----------------------------
+      if (statcount_9x9.le.2)then
+        a2front_saone_temp(ix_saone, iy_saone) = a2front_saone(ix_saone, iy_saone)
+      end if
+      !----------------------------
+    end if
+  end do
+end do
+
+
+
+a2front_saone = a2front_saone_temp
+!**************************************************
+! 3rd check stationary front
+!---------------------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv.eq.1).or.(cv.eq.2).or.(cv.eq.4))then
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      wcount_same = 0.0
+      ecount_same = 0.0
+      scount_same = 0.0
+      ncount_same = 0.0
+      occcount_9x9 = 0.0
+      !----------------------------
+      ! 3rd check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              wcount = wcount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              wcount_same = wcount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 3rd check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ecount = ecount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ecount_same = ecount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 3rd check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              scount = scount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              scount_same = scount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 3rd check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ncount = ncount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ncount_same = ncount_same + 1.0
+            end if
+          end if
+        end do 
+      end do 
+      !----------------------------
+      ! check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.3)then
+            occcount_9x9 = occcount_9x9 +1
+          end if
+        end do 
+      end do          
+
+      !----------------------------
+      ! 3rd check stationary front: all
+      !----------------------------
+      if ((ncount_same .lt.th_count_same )&
+         .and.(scount_same.lt.th_count_same)&
+         .and.(wcount_same.lt.th_count_same)&
+         .and.(ecount_same.lt.th_count_same)) then
+        if (occcount_9x9 .eq. 0)then
+          if      ((wcount.gt.0).and.(ecount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ecount.gt.0).and.(wcount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((scount.gt.0).and.(ncount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ncount.gt.0).and.(scount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+      end if
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+
+!**************************************************
+! 4th check stationary front
+!---------------------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv.eq.1).or.(cv.eq.2).or.(cv.eq.4))then
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      wcount_same = 0.0
+      ecount_same = 0.0
+      scount_same = 0.0
+      ncount_same = 0.0
+      occcount_9x9 = 0.0
+      !----------------------------
+      ! 4th check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              wcount = wcount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              wcount_same = wcount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 4th check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ecount = ecount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ecount_same = ecount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 4th check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              scount = scount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              scount_same = scount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 4th check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ncount = ncount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ncount_same = ncount_same + 1.0
+            end if
+          end if
+        end do 
+      end do 
+      !----------------------------
+      ! 4th check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.3)then
+            occcount_9x9 = occcount_9x9 +1
+          end if
+        end do 
+      end do          
+
+      !----------------------------
+      ! 4th check stationary front: all
+      !----------------------------
+      if ((ncount_same .lt.th_count_same )&
+         .and.(scount_same.lt.th_count_same)&
+         .and.(wcount_same.lt.th_count_same)&
+         .and.(ecount_same.lt.th_count_same)) then
+        if (occcount_9x9 .eq. 0)then
+          if      ((wcount.gt.0).and.(ecount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ecount.gt.0).and.(wcount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((scount.gt.0).and.(ncount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ncount.gt.0).and.(scount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+      end if 
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+!**************************************************
+! 5th check stationary front
+!---------------------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv.eq.1).or.(cv.eq.2).or.(cv.eq.4))then
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      wcount_same = 0.0
+      ecount_same = 0.0
+      scount_same = 0.0
+      ncount_same = 0.0
+      occcount_9x9 = 0.0
+      !----------------------------
+      ! 5th check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              wcount = wcount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              wcount_same = wcount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 5th check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ecount = ecount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ecount_same = ecount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 5th check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              scount = scount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              scount_same = scount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 5th check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ncount = ncount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ncount_same = ncount_same + 1.0
+            end if
+          end if
+        end do 
+      end do 
+      !----------------------------
+      ! 5th check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.3)then
+            occcount_9x9 = occcount_9x9 +1
+          end if
+        end do 
+      end do          
+
+      !----------------------------
+      ! 5th check stationary front: all
+      !----------------------------
+      if ((ncount_same .lt.th_count_same )&
+         .and.(scount_same.lt.th_count_same)&
+         .and.(wcount_same.lt.th_count_same)&
+         .and.(ecount_same.lt.th_count_same)) then
+        if (occcount_9x9 .eq. 0)then
+          if      ((wcount.gt.0).and.(ecount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ecount.gt.0).and.(wcount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((scount.gt.0).and.(ncount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ncount.gt.0).and.(scount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+      end if
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+
+!**************************************************
+! 6th check stationary front
+!---------------------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv.eq.1).or.(cv.eq.2).or.(cv.eq.4))then
+      wcount = 0.0
+      ecount = 0.0
+      scount = 0.0
+      ncount = 0.0
+      wcount_same = 0.0
+      ecount_same = 0.0
+      scount_same = 0.0
+      ncount_same = 0.0
+      occcount_9x9 = 0.0
+      !----------------------------
+      ! 6th check stationary front: west-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = -3,-1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              wcount = wcount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              wcount_same = wcount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 6th check stationary front: east-direction
+      !----------------------------
+      do idy = -1,1
+        do idx = 1,3
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ecount = ecount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ecount_same = ecount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 6th check stationary front: south-direction
+      !----------------------------
+      do idy = -3,-1
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              scount = scount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              scount_same = scount_same + 1.0
+            end if
+          end if
+        end do 
+      end do          
+      !----------------------------
+      ! 6th check stationary front: north-direction
+      !----------------------------
+      do idy = 1,3
+        do idx = -1,1
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.gt.0.0)then
+            if (tv.eq.4)then
+              ncount = ncount +1.0  
+            else if ((cv.ne.4).and.(tv.eq.cv))then
+              ncount_same = ncount_same + 1.0
+            end if
+          end if
+        end do 
+      end do 
+      !----------------------------
+      ! 6th check stationary front: surrounding 9x9 grids
+      !----------------------------
+      do idy = -4,4
+        do idx = -4,4
+          CALL ixy2iixy_saone(ix_saone+idx, iy_saone+idy, ixt, iyt)
+          tv = a2front_saone(ixt,iyt)
+          if (tv.eq.3)then
+            occcount_9x9 = occcount_9x9 +1
+          end if
+        end do 
+      end do          
+
+      !----------------------------
+      ! 6th check stationary front: all
+      !----------------------------
+      if ((ncount_same .lt.th_count_same )&
+         .and.(scount_same.lt.th_count_same)&
+         .and.(wcount_same.lt.th_count_same)&
+         .and.(ecount_same.lt.th_count_same)) then
+        if (occcount_9x9 .eq. 0)then
+          if      ((wcount.gt.0).and.(ecount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ecount.gt.0).and.(wcount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((scount.gt.0).and.(ncount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          else if ((ncount.gt.0).and.(scount_same.le.2))then
+            a2front_saone_temp(ix_saone,iy_saone)  = 4.0
+          end if
+        end if
+      end if
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+
+
+
+!**********************************************
+! occluded front
+!----------------------------------------------
+a2front_saone_temp = a2front_saone
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    cv    = a2front_saone(ix_saone,iy_saone)
+    if ((cv.eq.1).or.(cv.eq.2).or.(cv.eq.4))then
+      !*********************************************
+      occcount_8grids = 0
+      call ixy2iixy_saone(ix_saone, iy_saone+1, ixn, iyn)
+      call ixy2iixy_saone(ix_saone, iy_saone-1, ixs, iys)
+      call ixy2iixy_saone(ix_saone-1, iy_saone, ixw, iyw)
+      call ixy2iixy_saone(ix_saone+1, iy_saone, ixe, iye)
+
+      call ixy2iixy_saone(ix_saone-1, iy_saone+1, ixnw, iynw)
+      call ixy2iixy_saone(ix_saone+1, iy_saone+1, ixne, iyne)
+      call ixy2iixy_saone(ix_saone-1, iy_saone-1, ixsw, iysw)
+      call ixy2iixy_saone(ix_saone+1, iy_saone-1, ixse, iyse)
+
+      vs = a2front_saone(ixs,iys)
+      vn = a2front_saone(ixn,iyn)
+      vw = a2front_saone(ixw,iyw)
+      ve = a2front_saone(ixe,iye)
+
+      vne = a2front_saone(ixne,iyne)
+      vnw = a2front_saone(ixnw,iynw)
+      vse = a2front_saone(ixse,iyse)
+      vsw = a2front_saone(ixsw,iysw)
+
+      if (vs.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+      if (vn.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+      if (vw.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+      if (ve.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+
+      if (vsw.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+      if (vse.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+      if (vnw.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+      if (vne.eq.3)then
+        occcount_8grids = occcount_8grids + 1
+      end if
+
+      !-----
+      if (occcount_8grids .gt. 0)then
+        a2front_saone_temp(ix_saone,iy_saone) = 3.0
+      end if
+    end if
+  end do
+end do
+a2front_saone = a2front_saone_temp
+!---------------------------------------------------------
+return
+END SUBROUTINE chartfront2saone_new
+!*********************************************************
+
+
+
+
+
+!*********************************************************
+SUBROUTINE chartfront2saone(a2front_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2front_saone)
+implicit none
+!----------------------
+integer                              nx_org, ny_org
+!------------------------
+! front : 1->warm   2->cold  3->occ
+!------------------------
+real,dimension(nx_org, ny_org)    :: a2front_org
+!f2py intent(in)                     a2front_org
+!
+real,dimension(nx_org, ny_org)    :: a2x_corres, a2y_corres
+!f2py intent(in)                     a2x_corres, a2y_corres
+real                                 miss
+!f2py intent(in)                     miss
+!--- out ----------
+real,dimension(360,180)           :: a2front_saone
+!f2py intent(out)                    a2front_saone
+!--- calc ---------
+integer                              ix, iy
+integer                              ix_corres, iy_corres
+integer                              ix_saone,  iy_saone
+integer                              ixt, iyt, idx, idy
+integer                              ixn,ixs,ixe,ixw
+integer                              iyn,iys,iye,iyw
+integer                              ixnw, ixne, ixsw, ixse
+integer                              iynw, iyne, iysw, iyse
 real                                 wcount, ecount, scount, ncount, occcount, occcount_8grids
 real                                 wcount_same, ecount_same, scount_same, ncount_same
 real                                 nwarm, ncold, nocc
@@ -678,12 +1699,12 @@ end do
 a2front_saone = a2front_saone_temp
 !---------------------------------------------------------
 return
-END SUBROUTINE chartfront2saone_new
+END SUBROUTINE chartfront2saone
 !*********************************************************
 
 
 !*********************************************************
-SUBROUTINE chartfront2saone(a2front_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2front_saone)
+SUBROUTINE chartfront2saone_old(a2front_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2front_saone)
 implicit none
 !----------------------
 integer                              nx_org, ny_org
@@ -1101,7 +2122,7 @@ end do
 a2front_saone = a2front_saone_temp
 
 return
-END SUBROUTINE chartfront2saone
+END SUBROUTINE chartfront2saone_old
 !*********************************************************
 SUBROUTINE ixy2iixy_saone(ix, iy, iix, iiy)
 !--------------------------
