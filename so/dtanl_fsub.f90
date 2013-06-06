@@ -2,6 +2,91 @@ MODULE dtanl_fsub
 
 CONTAINS
 !*********************************************************
+SUBROUTINE check_exist_3deg_saone(a2in, miss, nx, ny, a2out)
+implicit none
+!------------------------------------------
+! input: 1.0 deg array
+! output: 1.0 deg array, but informations are reduced on 3.0 deg resol
+! check whether any non-miss 1.0deg grid exists in 3.0 deg grid box.
+! if any non-miss value exists in 3.0 degree grid box,
+! fill the 3.0 grid box with 1.0
+!-------------------------------------------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+real                     miss
+!f2py intent(in)         miss
+!--- out --------
+real,dimension(nx,ny) :: a2out
+!f2py intent(out)        a2out
+!--- calc -------
+integer                  ix,iy,ik
+integer                  iix,iiy
+integer                  ixn,ixs,ixe,ixw
+integer                  iyn,iys,iye,iyw
+integer,dimension(8)  :: a1x, a1y
+integer                  icount
+real                     fillv
+!----------------
+a2out = miss
+do iy = 2, ny-1, 3
+  do ix = 2,nx-1, 3
+    a1x    = -9999
+    a1y    = -9999
+    !------
+    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+    !------
+    a1x(1) = ixn
+    a1x(2) = ixe
+    a1x(3) = ixe
+    a1x(4) = ixe
+    a1x(5) = ixw
+    a1x(6) = ixw
+    a1x(7) = ixw
+    a1x(8) = ixs     
+    !------
+    a1y(1) = iyn
+    a1y(2) = iyn
+    a1y(3) = iy
+    a1y(4) = iys
+    a1y(5) = iyn
+    a1y(6) = iy
+    a1y(7) = iys
+    a1y(8) = iys     
+    !------
+    icount = 0
+    if (a2in(ix,iy).ne.miss)then
+      icount = 1
+    else
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in(iix,iiy).ne.miss)then
+          icount = icount + 1
+        end if        
+      end do
+    end if
+    !----
+    if (icount .ge. 1)then
+      fillv = 1.0
+    else
+      fillv = 0.0
+    end if
+    !----
+    a2out(ix,iy) = fillv
+    do ik = 1,8
+      iix = a1x(ik)
+      iiy = a1y(ik)
+      a2out(iix,iiy) = fillv
+    end do
+  end do
+end do
+return
+END SUBROUTINE check_exist_3deg_saone
+!*********************************************************
 SUBROUTINE sum_9grids_saone(a2in, miss, nx, ny, a2out)
 implicit none
 !--- in --------
@@ -1347,6 +1432,34 @@ end do
 return
 END SUBROUTINE mk_a2meanunitaxis
 !*********************************************************
+SUBROUTINE mk_a2theta(plev, a2T, nx, ny, a2theta)
+implicit none
+!--- in ---------
+integer                  nx, ny
+real,dimension(nx,ny) :: a2T
+!f2py intent(in)         a2T
+real                     plev       ! (Pa)
+!f2py intent(in)         plev
+!--- out --------
+real,dimension(nx,ny) :: a2theta
+!f2py intent(out)        a2theta
+!--- para -------------
+real              :: P1000 = 1000.0*100.0
+real              :: chi   = 0.286  ! Rd/cp
+!--- calc -------
+integer                  ix, iy
+real                     t
+!----------------
+do iy = 1, ny
+  do ix = 1, nx
+    t  = a2T(ix,iy)
+    a2theta(ix,iy) = t*(P1000/plev)**(chi)
+  end do
+end do
+!
+return
+END SUBROUTINE mk_a2theta
+!*********************************************************
 SUBROUTINE mk_a2theta_e(plev, a2T, a2q, nx, ny, a2theta_e)
 implicit none
 !--- in ---------
@@ -1355,7 +1468,6 @@ real,dimension(nx,ny) :: a2T, a2q
 !f2py intent(in)         a2T, a2q
 real                     plev       ! (Pa)
 !f2py intent(in)         plev
-!--- out --------
 real,dimension(nx,ny) :: a2theta_e
 !f2py intent(out)        a2theta_e
 !--- calc -------

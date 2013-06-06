@@ -17,7 +17,7 @@ elif len(sys.argv) ==5:
   eyear   = int(sys.argv[2])
   mon     = int(sys.argv[3])
   plev    = float(sys.argv[4])
-  lmon    = [mon]
+  lseason = [mon]
   lplev   = [plev]
   figflag = False
 else:

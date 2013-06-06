@@ -52,7 +52,7 @@ for root, dirs, files in os.walk(idir):
         nplev  = len(a1plev)
         #
         sline  = smodel + "," + svar + "," + "(%d %d %d)"%(nplev, nlat, nlon)\
-                + "," + str(mdlat) + "," + str(mdlat) \
+                + "," + str(mdlat) + "," + str(mdlon) \
                 + "," + splev + "," + slat + "," + slon \
                 + "," + sdlat + "," + sdlon + "\n"
         #
@@ -95,7 +95,7 @@ for root, dirs, files in os.walk(idir):
         nlon   = len(a1lon)
         #
         sline  = smodel + "," + svar + "," + "(%d %d)"%(nlat, nlon)\
-                + "," + str(mdlat) + "," + str(mdlat) \
+                + "," + str(mdlat) + "," + str(mdlon) \
                 + "," + slat + "," + slon\
                 + "," + sdlat + "," + sdlon + "\n"
         #

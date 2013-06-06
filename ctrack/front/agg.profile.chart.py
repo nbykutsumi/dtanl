@@ -9,14 +9,16 @@ from ctrack_fsub import *
 #----------------------------------------------------
 #singleday =True
 singleday = False
-iyear = 2007
-eyear = 2008
+iyear = 2006
+eyear = 2010
 lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lseason = [1]
-
+window = "no"
+#window = "out"
+#window = "in"
 ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700] #(km)
 #ldist_km = [300.0]  #(km)
-#dist_mask = 700.  # (km)
+#dist_mask = 500.  # (km)
 #dist_mask = 1400.  # (km)
 #dist_mask = 1800.  # (km)
 #dist_mask = 2500.  # (km)
@@ -25,7 +27,7 @@ lplev    = [925.,850.,700., 600., 500.,300.,250.,]
 plev_sfc = 925
 lftype = [1,2,4]
 #lftype = [2]
-
+sresol  = "anl_p25"
 iday  = 1
 ny    = 180
 nx    = 360
@@ -52,8 +54,8 @@ urlon = 210
 #-----
 miss  = -9999.0
 chartdir_root = "/media/disk2/out/chart/ASAS/front"
-tdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/TMP"
-qdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/SPFH"
+tdir_root     = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP"%(sresol)
+qdir_root     = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH"%(sresol)
 #------------------------
 #************************
 lat_first     = -89.5
@@ -122,8 +124,8 @@ for season in lseason:
           da2theta_tmp  = {}
           #-----------------
           for plev in lplev:
-            tname     = tdir          + "/anl_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev,year,mon,day,hour)
-            qname     = qdir          + "/anl_p25.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev,year,mon,day,hour)
+            tname     = tdir          + "/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
+            qname     = qdir          + "/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
             a2t                = fromfile(tname,     float32).reshape(ny,nx)
             a2q                = fromfile(qname,     float32).reshape(ny,nx)
             da2theta_tmp[plev] = dtanl_fsub.mk_a2theta_e(plev*100., a2t.T, a2q.T).T
@@ -140,13 +142,17 @@ for season in lseason:
 
           #***********************************
           for ftype in lftype:
+            a2chart_seg        = ma.masked_not_equal(a2chart, ftype).filled(miss)
             #-- maskout fronts close to other front type ----
             a2chart_others     = ma.masked_equal(a2chart, ftype).filled(miss)
             a2terr_others      = ctrack_fsub.mk_territory_saone(a2chart_others.T, dist_mask*1000., miss, lat_first, dlat, dlon).T
             #-- make chart_seg ------------------------------
-            a2chart_seg        = ma.masked_not_equal(a2chart, ftype).filled(miss)
-            a2chart_seg        = ma.masked_where(a2terr_others !=miss, a2chart_seg).filled(miss)
-
+            if window =="no":
+              pass
+            elif window == "out":
+              a2chart_seg        = ma.masked_where(a2terr_others !=miss, a2chart_seg).filled(miss)
+            elif window == "in":
+              a2chart_seg        = ma.masked_where(a2terr_others ==miss, a2chart_seg).filled(miss)
             #--------------------
             for dist_km in ldist_km:
               #** Precipitation ***********
@@ -204,8 +210,12 @@ for season in lseason:
         for dist_km in ldist_km:
           #** precipitation *************************
           #** names *******
-          oname_pr   = odir + "/pr.maskrad.%04dkm.%04dkm.%s.sa.one"%(dist_mask, dist_km, sftype)
-          oname_num  = odir + "/num.maskrad.%04dkm.%04dkm.%s.sa.one"%(dist_mask, dist_km, sftype)
+          if window == "no":
+            oname_pr   = odir + "/pr.maskrad.%04dkm.%s.sa.one"%(dist_km, sftype)
+            oname_num  = odir + "/num.maskrad.%04dkm.%s.sa.one"%(dist_km, sftype)
+          elif window in ["in","out"]:
+            oname_pr   = odir + "/pr.maskrad.%s.%04dkm.%04dkm.%s.sa.one"%(window,dist_mask, dist_km, sftype)
+            oname_num  = odir + "/num.maskrad.%s.%04dkm.%04dkm.%s.sa.one"%(window,dist_mask, dist_km, sftype)
           #** write *******
           da2pr[ftype, dist_km].tofile(oname_pr)
           da2num[ftype,dist_km].tofile(oname_num)
@@ -214,8 +224,12 @@ for season in lseason:
           #** theta *********************************
           for plev in lplev:
             #** names *******
-            oname_theta      = odir + "/theta.maskrad.%04dkm.%04dkm.%s.%04dhPa.sa.one"%(dist_mask, dist_km, sftype, plev)
-            oname_num_theta  = odir + "/num_theta.maskrad.%04dkm.%04dkm.%s.%04dhPa.sa.one"%(dist_mask, dist_km, sftype, plev)
+            if window == "no":
+              oname_theta      = odir + "/theta.maskrad.%04dkm.%s.%04dhPa.sa.one"%(dist_km, sftype, plev)
+              oname_num_theta  = odir + "/num_theta.maskrad.%04dkm.%s.%04dhPa.sa.one"%(dist_km, sftype, plev)
+            elif window in ["in","out"]: 
+              oname_theta      = odir + "/theta.maskrad.%s.%04dkm.%04dkm.%s.%04dhPa.sa.one"%(window,dist_mask, dist_km, sftype, plev)
+              oname_num_theta  = odir + "/num_theta.maskrad.%s.%04dkm.%04dkm.%s.%04dhPa.sa.one"%(window,dist_mask, dist_km, sftype, plev)
             #** write *******
             da2theta[ftype, dist_km, plev].tofile(oname_theta)
             da2num_theta[ftype, dist_km, plev].tofile(oname_num_theta)
@@ -223,8 +237,12 @@ for season in lseason:
 
           #** gradtheta *********************************
           #** names *******
-          oname_gradtheta      = odir + "/grad.theta.maskrad.%04dkm.%04dkm.%s.sa.one"%(dist_mask, dist_km, sftype)
-          oname_num_gradtheta  = odir + "/num_grad.theta.maskrad.%04dkm.%04dkm.%s.sa.one"%(dist_mask, dist_km, sftype)
+          if window == "no":
+            oname_gradtheta      = odir + "/grad.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, sftype)
+            oname_num_gradtheta  = odir + "/num_grad.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, sftype)
+          elif window in ["in","out"]:
+            oname_gradtheta      = odir + "/grad.theta.maskrad.%s.%04dkm.%04dkm.%s.sa.one"%(window,dist_mask, dist_km, sftype)
+            oname_num_gradtheta  = odir + "/num_grad.theta.maskrad.%s.%04dkm.%04dkm.%s.sa.one"%(window,dist_mask, dist_km, sftype)
           #** write *******
           da2gradtheta[ftype, dist_km].tofile(oname_gradtheta)
           da2num_gradtheta[ftype, dist_km].tofile(oname_num_gradtheta)
@@ -232,8 +250,12 @@ for season in lseason:
 
           #** grad2theta *********************************
           #** names *******
-          oname_grad2theta      = odir + "/grad2.theta.maskrad.%04dkm.%04dkm.%s.sa.one"%(dist_mask, dist_km, sftype)
-          oname_num_grad2theta  = odir + "/num_grad2.theta.maskrad.%04dkm.%04dkm.%s.sa.one"%(dist_mask, dist_km, sftype)
+          if window == "no":
+            oname_grad2theta      = odir + "/grad2.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, sftype)
+            oname_num_grad2theta  = odir + "/num_grad2.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, sftype)
+          elif window in ["in","out"]:
+            oname_grad2theta      = odir + "/grad2.theta.maskrad.%s.%04dkm.%04dkm.%s.sa.one"%(window,dist_mask, dist_km, sftype)
+            oname_num_grad2theta  = odir + "/num_grad2.theta.maskrad.%s.%04dkm.%04dkm.%s.sa.one"%(window,dist_mask, dist_km, sftype)
           #** write *******
           da2grad2theta[ftype, dist_km].tofile(oname_grad2theta)
           da2num_grad2theta[ftype, dist_km].tofile(oname_num_grad2theta)

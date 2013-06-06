@@ -2,10 +2,10 @@ from numpy import *
 import ctrack_func
 import calendar
 #--------------------------------
-iyear  = 2004
-eyear  = 2004
-#lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
-lmon   = [6,7]
+iyear  = 2003
+eyear  = 2005
+lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
+#lmon   = [6,7]
 iday   = 1
 lhour  = [0,6,12,18]
 #lvar   = ["UGRD", "VGRD"]

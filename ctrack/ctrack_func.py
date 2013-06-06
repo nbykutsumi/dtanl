@@ -2,6 +2,10 @@ import os, sys
 from numpy import *
 
 #####################################################
+def upscale(a2in, a1lat_org, a1lon_org, a1lat_out, a1lon_out):
+  a2fin     = cf.biIntp( a1lat_org, a1lon_org, a2org, a1lat_fin, a1lon_fin, miss = miss_out)[0] 
+
+
 #####################################################
 def xy2fortpos(ix, iy, nx):
   number = iy* nx + ix +1

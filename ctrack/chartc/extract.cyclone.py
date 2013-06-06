@@ -12,31 +12,28 @@ import os, sys
 from cf.plot import *
 import datetime
 #***************************************
-singleday = True
-#singleday = False
+#singleday = True
+singleday = False
 region   = "ASAS"
 #--------------------------
 if len(sys.argv) >1:
   iyear   = int(sys.argv[1])
   lyear   = [iyear]
 else:
-  #lyear    = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011]
-  #lyear    = [2006,2007,2008,2009,2010,2011]
-  #lyear    = [2000,2001,2002,2003]
   lyear    = [2004]
 #--------------------------
 #lmon     = [1,2,3,4,5,6,7,8,9,10,11,12]
-lmon     = [1]
+lmon     = [1,3,5,7,9]
 #lmon     = [10,11,12]
 #lmon     = [1]
-iday     = 11
+iday     = 1
 #lhour    = [6]
 #lhour    = [0, 6,12, 18]
-lhour    = [0]
+lhour    = [0,12]
 #---------------------------------------
 #pdfdir_root = "/home/utsumi/mnt/export/nas_d/data/WeatherChart"
-pdfdir_root = "/media/disk2/data/JMAChart/ASAS"
-odir_root   = "/media/disk2/out/chart/ASAS/front"
+pdfdir_root = "/media/disk2/data/JMAChart/cyclone"
+odir_root   = "/media/disk2/out/chart/ASAS/exc"
 xydatadir   = "/media/disk2/out/chart/ASAS/const"
 
 miss     = -9999.0
@@ -121,51 +118,26 @@ for year in lyear:
         subprocess.call(scmd, shell=True)
         a2jpg     = mpimg.imread(jpgname)
 
-        #** extract fronts ******************
+        #** extract cyclones ******************
         #---------------------------------------
         a2one    = ones([ny_fig,nx_fig],float32)
         a2r      = a2jpg[:,:,0]
         a2g      = a2jpg[:,:,1]
         a2b      = a2jpg[:,:,2]
         
-        a2front  = a2one*miss
-        #-- warm front ----
-        a2mask   = ma.masked_where(a2r < 145, a2one)
-        a2mask   = ma.masked_where(a2g > 23, a2mask)
-        a2mask   = ma.masked_where(a2b > 23, a2mask)
+        a2c      = a2one*miss
+        a2mask   = ma.masked_where(a2r > 60, a2one)
+        a2mask   = ma.masked_where(a2g < 150, a2mask)
+        a2mask   = ma.masked_where(a2b > 90, a2mask)
         a2mask   = a2mask.filled(miss)
-        a2front  = ma.masked_where(a2mask != miss, a2front).filled(1.0)
-        
-        ##-- cold front ----
-        a2mask   = ma.masked_where(a2r > 30, a2one)
-        a2mask   = ma.masked_where(a2g > 30, a2mask)
-        a2mask   = ma.masked_where(a2b < 110, a2mask)
-        a2mask   = a2mask.filled(miss)
-        a2front  = ma.masked_where(a2mask != miss, a2front).filled(2.0)
-        #
-        ##-- occ front
-        #a2mask   = ma.masked_where(a2r < 160, a2one)
-        #a2mask   = ma.masked_where(a2g > 80, a2mask)
-        #a2mask   = ma.masked_where(a2b < 160, a2mask)
-
-        a2mask   = ma.masked_where(a2r < 120, a2one)
-        a2mask   = ma.masked_where(a2g > 80, a2mask)
-        a2mask   = ma.masked_where(a2b < 160, a2mask)
-
-        a2mask   = a2mask.filled(miss)
-        a2front  = ma.masked_where(a2mask != miss, a2front).filled(3.0)
-        
+        a2c      = ma.masked_where(a2mask != miss, a2c).filled(1.0)
+       
         #--
-        a2front_saone = chart_fsub.chartfront2saone_new(\
-                          a2front.T, a2xfort_corres.T, a2yfort_corres.T,\
+        a2c_saone = chart_fsub.chartcyclone2saone(\
+                          a2c.T, a2xfort_corres.T, a2yfort_corres.T,\
                           miss).T
 
-        #a2front_saone = chart_fsub.chartfront2saone(\
-        #                  a2front.T, a2xfort_corres.T, a2yfort_corres.T,\
-        #                  miss).T
-
-
-        a2front_saone.tofile(bnname)
+        a2c_saone.tofile(bnname)
         print bnname
         #** remove jpg file ********************
         os.remove(jpgname)
@@ -178,10 +150,9 @@ for year in lyear:
         #col = matplotlib.colors.ListedColormap(["white", "red", (0,102./255.,1), (204/255.,102/255.,255/255.),"orange"])
         #col = matplotlib.colors.ListedColormap(["white", "red", "blue", (204/255.,0/255.,255/255.),"orange"])
         #col = matplotlib.colors.ListedColormap(["white", (255/255., 51/255., 0), (0,102/255.,1), "purple", "orange" ])
-        col = matplotlib.colors.ListedColormap(["white", (255/255., 51/255., 0), (0,153/255.,1), (153/255., 0, 153/255.), "orange" ])
-        col = matplotlib.colors.ListedColormap(["white", (255/255., 30/255., 0), (0,153/255.,1), (153/255., 0, 153/255.), "orange" ])
+        col = matplotlib.colors.ListedColormap(["white", "red"])
         #col = "spectral"
-        bnd = [-1.0e+10, 0.5, 1.5, 2.5, 3.5, 4.5]
+        bnd = [-1.0e+10, 0.5, 1.5]
 
         # Basemap #
         figmap = plt.figure(figsize=(8,8))
@@ -194,10 +165,10 @@ for year in lyear:
         #M   = Basemap( resolution="l", llcrnrlat=lllat_rect-0.5, llcrnrlon=lllon_rect-0.5, urcrnrlat=urlat_rect+0.5, urcrnrlon=urlon_rect+0.5, ax=axmap)
         M   = Basemap( resolution="l", llcrnrlat=lllat_rect, llcrnrlon=lllon_rect, urcrnrlat=urlat_rect, urcrnrlon=urlon_rect, ax=axmap)
         # transform #
-        a2front_saone_trans  = a2front_saone[ydom_saone_first:ydom_saone_last +1, xdom_saone_first:xdom_saone_last+1]
+        a2c_saone_trans  = a2c_saone[ydom_saone_first:ydom_saone_last +1, xdom_saone_first:xdom_saone_last+1]
 
         # draw data #
-        im  = M.imshow(a2front_saone_trans, norm=BoundaryNormSymm(bnd), cmap=col, interpolation="nearest")
+        im  = M.imshow(a2c_saone_trans, norm=BoundaryNormSymm(bnd), cmap=col, interpolation="nearest")
 
         # sahde #
         a2shade_trans        = a2domain_mask[ydom_saone_first:ydom_saone_last +1, xdom_saone_first:xdom_saone_last+1]
@@ -214,17 +185,17 @@ for year in lyear:
         #            llcrnrlat=lllat, urcrnrlat=urlat, llcrnrlon=lllon, urcrnrlon=urlon,\
         #            rsphere=6371200.,resolution="l",area_thresh=10000)
         ## transform #
-        #a2front_saone        = ma.masked_equal(a2front_saone, miss).filled(0.0)
-        #a2front_saone        = c_[ a2front_saone[:,180:360], a2front_saone[:,0:180] ]
+        #a2c_saone        = ma.masked_equal(a2c_saone, miss).filled(0.0)
+        #a2c_saone        = c_[ a2c_saone[:,180:360], a2c_saone[:,0:180] ]
         #a1lon = arange(-179.5, 179.5+0.5, 1.0)
         #a1lat = arange(-89.5, 89.5+0.5, 1.0)
-        #a2front_saone_trans  = M.transform_scalar( a2front_saone, a1lon, a1lat, 900, 800)
-        #a2zero_saone_trans   = a2front_saone_trans * 0.0
-        #a2front_saone_trans_temp = ma.masked_where( (0.9<a2front_saone_trans)&(a2front_saone_trans<1.1), a2zero_saone_trans).filled(1.0)
-        #a2front_saone_trans      = a2front_saone_trans_temp
+        #a2c_saone_trans  = M.transform_scalar( a2c_saone, a1lon, a1lat, 900, 800)
+        #a2zero_saone_trans   = a2c_saone_trans * 0.0
+        #a2c_saone_trans_temp = ma.masked_where( (0.9<a2c_saone_trans)&(a2c_saone_trans<1.1), a2zero_saone_trans).filled(1.0)
+        #a2c_saone_trans      = a2c_saone_trans_temp
         #
         ## draw data #
-        #im  = M.imshow(a2front_saone_trans, norm=BoundaryNormSymm(bnd), cmap=col, interpolation="nearest")
+        #im  = M.imshow(a2c_saone_trans, norm=BoundaryNormSymm(bnd), cmap=col, interpolation="nearest")
 
         # coastlines #
         M.drawcoastlines()
@@ -248,7 +219,7 @@ for year in lyear:
         # colorbar #
         if cbarflag == True:
           plt.clf()
-          im        = imshow(a2front_saone, norm=BoundaryNormSymm(bnd), cmap=col)
+          im        = imshow(a2c_saone, norm=BoundaryNormSymm(bnd), cmap=col)
           figcbar   = plt.figure(figsize=(5,0.6))                  
           axcbar    = figcbar.add_axes([0, 0.4, 1.0, 0.6])
           plt.colorbar(im, boundaries=bnd, cax=axcbar, orientation="horizontal")

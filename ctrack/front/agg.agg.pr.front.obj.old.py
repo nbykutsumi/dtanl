@@ -16,8 +16,9 @@ singleday= False
 iyear = 1997
 eyear = 2004
 #lseason=["ALL","DJF","JJA"]
-lseason=[1,2,3,4,5,6,7,8,9,10,11,12,"ALL","DJF","JJA"]
+#lseason=[1,2,3,4,5,6,7,8,9,10,11,12,"ALL","DJF","JJA"]
 #lseason=[1,2,3,4,5,6,7,8,9,10,11,12]
+lseason = [1]
 #lseason=["DJF"]
 #lseason=["JJA"]
 #lseason=["ALL"]
@@ -33,14 +34,15 @@ miss  = -9999.0
 miss_gpcp = -99999.
 #lthdist   = [250,500,1000,1500]
 lthdist   = [500]
-
+sreol     = "anl_p"
 #-- para for objective locator -------------
 plev     = 850*100.0 # (Pa)
 #llthfmask = [[0.3,2.0]]
 #llthfmask = [[0.5,2.0],[0.8,2.0],[1.0,2.0],[0.5,2.5],[0.5,3.0]]
 #llthfmask = [[0.5,2.0]]
 #llthfmask = [[0.2,2.0],[0.3,2.0]]
-llthfmask = [[0.4,2.0]]
+#llthfmask = [[0.4,2.0]]
+llthfmask  = [[0.7,4.0]]
 
 thorog  = ctrack_para.ret_thorog()
 thgradorog=ctrack_para.ret_thgradorog()
@@ -72,7 +74,7 @@ a2shade  = ma.masked_where(a2gradorogmask >thgradorog, a2shade).filled(miss)
 #    bnd = [100,300,500,700,900,1100,1300,1500,1700,1900,2100]
 #
 #  #----------------------------------------------
-#  odir_root  = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/front/agg/%04d-%04d/%s"%(iyear, eyear, season)
+#  odir_root  = "/media/disk2/out/JRA25/sa.one.%s/6hr/tenkizu/front/agg/%04d-%04d/%s"%(sresol,iyear, eyear, season)
 #  odir       = odir_root
 #  ctrack_func.mk_dir(odir)
 #  #-------
@@ -122,7 +124,7 @@ bnd        = [1.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 
 for season in lseason:
   lmon  = ctrack_para.ret_lmon(season)
-  odir_root  = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/front/agg/%04d-%04d/%s"%(iyear, eyear, season)
+  odir_root  = "/media/disk2/out/JRA25/sa.one.%s/6hr/tenkizu/front/agg/%04d-%04d/%s"%(sresol,iyear, eyear, season)
   odir       = odir_root
   ctrack_func.mk_dir(odir)
   #-------

@@ -19,7 +19,8 @@ else:
   iyear = 2004
   eyear = 2004
   #lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
-  lmon  = [1,6,7,9,12]
+  #lmon  = [1,6,7,9,12]
+  lmon  = [7,6]
   #lmon  = [9,12]
   #lmon  = [7]
   resol   = "anl_p"

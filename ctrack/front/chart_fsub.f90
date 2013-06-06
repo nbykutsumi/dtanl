@@ -2,6 +2,103 @@ MODULE chart_fsub
 
 CONTAINS
 !*********************************************************
+SUBROUTINE chartcyclone2saone(a2c_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2c_saone)
+implicit none
+!----------------------
+integer                              nx_org, ny_org
+!------------------------
+! front : 1->warm   2->cold  3->occ
+!------------------------
+real,dimension(nx_org, ny_org)    :: a2c_org
+!f2py intent(in)                     a2c_org
+!
+real,dimension(nx_org, ny_org)    :: a2x_corres, a2y_corres
+!f2py intent(in)                     a2x_corres, a2y_corres
+real                                 miss
+!f2py intent(in)                     miss
+!--- out ----------
+real,dimension(360,180)           :: a2c_saone, a2count_saone
+!f2py intent(out)                    a2c_saone, a2count_saone
+!--- calc ---------
+integer                              ix, iy
+integer                              ix_corres, iy_corres
+integer                              ix_saone,  iy_saone
+integer                              iix_saone,  iiy_saone
+integer                              idx, idy
+integer                              maxflag
+!--- parameter  ---------
+integer,parameter                    :: len_org = 10
+!--- initialize ---------
+a2c_saone          = 0.0
+a2count_saone      = 0.0
+!------------------------
+! convert resolution a2org -> a2saone
+!------------------------
+do iy = 1,ny_org
+  do ix = 1,nx_org
+    !--------------------------------
+    ix_corres  = int(a2x_corres(ix,iy))
+    iy_corres  = int(a2y_corres(ix,iy))
+    if ((ix_corres.eq.miss).or.(iy_corres.eq.miss))then
+      cycle
+    end if
+    !--------------------------------
+    if (a2c_org(ix,iy) .eq. 1.0) then
+      a2count_saone(ix_corres,iy_corres) = a2count_saone(ix_corres,iy_corres) + 1.0
+    end if
+  end do 
+end do
+!------------------------
+!------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    if (a2count_saone(ix_saone, iy_saone) .gt.0.0)then
+      !--------------------------
+      maxflag  = 1
+      !--------------------------
+      do idy = -1,1
+        do idx = -1,1
+          !---------------------
+          call ixy2iixy_saone(ix_saone + idx, iy_saone + idy, iix_saone, iiy_saone)
+          !---------------------
+          if (a2count_saone(iix_saone, iiy_saone) .gt. a2count_saone(ix_saone, iy_saone))then
+            maxflag = 0
+          end if
+        end do
+      end do
+      if ( maxflag .eq. 1)then
+        print *,ix_saone,iy_saone
+        a2c_saone(ix_saone,iy_saone) = 1.0
+      end if
+    end if
+  end do
+end do
+!------------------------
+do iy_saone = 1, 180
+  do ix_saone = 1, 360
+    if (a2c_saone(ix_saone, iy_saone) .eq. 1.0)then
+      !--------------------------
+      do idy = -1,1
+        do idx = -1,1
+          !---------------------
+          call ixy2iixy_saone(ix_saone + idx, iy_saone + idy, iix_saone, iiy_saone)
+          !---------------------
+          if (a2c_saone(iix_saone, iiy_saone) .gt. 0.0)then
+            print *,"BBBB",iix_saone,iiy_saone
+            if ((idx.ne.0).and.(idy.ne.0))then
+              a2c_saone(iix_saone, iiy_saone) = 0.0
+              print *,"AAAA",iix_saone, iiy_saone
+            end if
+          end if
+        end do
+      end do
+    end if
+  end do
+end do
+!-----------
+return
+END SUBROUTINE chartcyclone2saone
+!*********************************************************
 SUBROUTINE chartfront2saone_new(a2front_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2front_saone)
 implicit none
 !----------------------

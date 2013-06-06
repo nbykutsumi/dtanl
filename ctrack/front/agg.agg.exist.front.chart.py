@@ -16,6 +16,7 @@ miss   = -9999.0
 region = "ASAS"
 
 region_draw = "JPN"
+rad    = 200.0  # (km)
 #---------------------
 #lllat  = 0.0
 #lllon  = 60.0
@@ -23,6 +24,9 @@ region_draw = "JPN"
 #urlon  = 210.0
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region_draw)
 thorog = 1500.0 # (m)
+bnd_normal  = [1,3,5,7,9,11,13]
+bnd_stat    = [1,4,7,10,13,16,19,22]
+bnd_all     = [5,10,15,20,25,30,35,40,45]
 #------------------------------------------------------
 idir_root  = "/media/disk2/out/chart/ASAS/front/agg"
 odir_root  = idir_root 
@@ -32,7 +36,7 @@ domdir   = "/media/disk2/out/chart/ASAS/const"
 domname  = domdir + "/domainmask_saone.ASAS.2000-2006.bn"
 a2dom    = fromfile(domname, float32).reshape(180,360)
 #--- orog mask   ------
-orogname = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
+orogname = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
 a2orog   = fromfile(orogname, float32).reshape(ny,nx)
 #--- shade       ------
 a2shade  = ma.masked_equal(a2dom, 0.0).filled(miss)
@@ -46,17 +50,31 @@ for season in lseason:
   ctrack_func.mk_dir(odir)
   ctrack_func.mk_dir(figdir)
   #
-  soname_warm  = odir      + "/freq.warm.saone"
-  soname_cold  = odir      + "/freq.cold.saone"
-  soname_occ   = odir      + "/freq.occ.saone"
-  soname_stat  = odir      + "/freq.stat.saone"
-  soname_all   = odir      + "/freq.all.saone"
-  #
-  figname_warm = figdir    + "/freq.warm.%s.png"%(season)
-  figname_cold = figdir    + "/freq.cold.%s.png"%(season)
-  figname_occ  = figdir    + "/freq.occ.%s.png"%(season)
-  figname_stat = figdir    + "/freq.stat.%s.png"%(season)
-  figname_all  = figdir    + "/freq.all.%s.png"%(season)
+  if rad != "":
+    print "XXXXXXXXXXXXXXXXXXX"
+    soname_warm  = odir      + "/freq.rad%04dkm.warm.sa.one"%(rad)
+    soname_cold  = odir      + "/freq.rad%04dkm.cold.sa.one"%(rad)
+    soname_occ   = odir      + "/freq.rad%04dkm.occ.sa.one"%(rad)
+    soname_stat  = odir      + "/freq.rad%04dkm.stat.sa.one"%(rad)
+    soname_all   = odir      + "/freq.rad%04dkm.all.sa.one"%(rad)
+    #
+    figname_warm = figdir    + "/freq.rad%04dkm.warm.%s.png"%(rad,season)
+    figname_cold = figdir    + "/freq.rad%04dkm.cold.%s.png"%(rad,season)
+    figname_occ  = figdir    + "/freq.rad%04dkm.occ.%s.png"%(rad,season)
+    figname_stat = figdir    + "/freq.rad%04dkm.stat.%s.png"%(rad,season)
+    figname_all  = figdir    + "/freq.rad%04dkm.all.%s.png"%(rad,season)
+  else:
+    soname_warm  = odir      + "/freq.warm.sa.one"
+    soname_cold  = odir      + "/freq.cold.sa.one"
+    soname_occ   = odir      + "/freq.occ.sa.one"
+    soname_stat  = odir      + "/freq.stat.sa.one"
+    soname_all   = odir      + "/freq.all.sa.one"
+    #
+    figname_warm = figdir    + "/freq.warm.%s.png"%(season)
+    figname_cold = figdir    + "/freq.cold.%s.png"%(season)
+    figname_occ  = figdir    + "/freq.occ.%s.png"%(season)
+    figname_stat = figdir    + "/freq.stat.%s.png"%(season)
+    figname_all  = figdir    + "/freq.all.%s.png"%(season)
   #--- init -------------------
   a2warm     = zeros([ny,nx], float32)
   a2cold     = zeros([ny,nx], float32)
@@ -72,10 +90,17 @@ for season in lseason:
     for mon in lmon:
       #--------------------
       idir         = idir_root + "/%04d/%02d"%(year,mon)
-      siname_warm  = idir      + "/count.warm.saone"
-      siname_cold  = idir      + "/count.cold.saone"
-      siname_occ   = idir      + "/count.occ.saone"
-      siname_stat  = idir      + "/count.stat.saone"
+      if rad != "":
+        siname_warm  = idir      + "/count.rad%04dkm.warm.sa.one"%(rad)
+        siname_cold  = idir      + "/count.rad%04dkm.cold.sa.one"%(rad)
+        siname_occ   = idir      + "/count.rad%04dkm.occ.sa.one"%(rad)
+        siname_stat  = idir      + "/count.rad%04dkm.stat.sa.one"%(rad)
+        print "radradradrad"
+      else:
+        siname_warm  = idir      + "/count.warm.sa.one"
+        siname_cold  = idir      + "/count.cold.sa.one"
+        siname_occ   = idir      + "/count.occ.sa.one"
+        siname_stat  = idir      + "/count.stat.sa.one"
       #--------------------
       a2warm_temp       = fromfile(siname_warm, float32).reshape(ny,nx)
       a2cold_temp       = fromfile(siname_cold, float32).reshape(ny,nx)
@@ -102,16 +127,21 @@ for season in lseason:
   #***************************
   #  figure warm 
   #---------------------------
-  #bnd        = [2,3,4,5,6,7,8,9,10]
-  bnd        = [4,8,12,16,20,24,28,32,36]
-  cbarname = figdir + "/freq.cbar.png"
+  bnd        = [1,3,5,7,9,11,13,15]
+  #bnd        = [4,8,12,16,20,24,28,32,36]
+  #-------
+  if rad == "":
+    cbarname = figdir + "/freq.cbar.png"
+  else:
+    cbarname = figdir + "/freq.rad%04dkm.cbar.png"%(rad)
+  #-------
   stitle   = "freq. warm: season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
   datname  = soname_warm
   figname  = figname_warm
   a2figdat = fromfile(datname, float32).reshape(ny,nx)
   #-- sum 9grids ---
-  a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
+  #a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
@@ -120,16 +150,20 @@ for season in lseason:
   #***************************
   #  figure cold 
   #---------------------------
-  #bnd        = [2,3,4,5,6,7,8,9,10]
-  bnd        = [4,8,12,16,20,24,28,32,36]
-  cbarname = figdir + "/freq.cbar.png"
+  bnd  = bnd_normal
+  #-------
+  if rad == "":
+    cbarname = figdir + "/freq.cbar.png"
+  else:
+    cbarname = figdir + "/freq.rad%04dkm.cbar.png"%(rad)
+  #-------
   stitle   = "freq. cold: season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
   datname  = soname_cold
   figname  = figname_cold
   a2figdat = fromfile(datname, float32).reshape(ny,nx)
   #-- sum 9grids ---
-  a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
+  #a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
@@ -138,16 +172,20 @@ for season in lseason:
   #***************************
   #  figure occ 
   #---------------------------
-  #bnd        = [2,3,4,5,6,7,8,9,10]
-  bnd        = [4,8,12,16,20,24,28,32,36]
-  cbarname = figdir + "/freq.cbar.png"
+  bnd  = bnd_normal
+  #-------
+  if rad == "":
+    cbarname = figdir + "/freq.cbar.png"
+  else:
+    cbarname = figdir + "/freq.rad%04dkm.cbar.png"%(rad)
+  #-------
   stitle   = "freq. occ: season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
   datname  = soname_occ
   figname  = figname_occ
   a2figdat = fromfile(datname, float32).reshape(ny,nx)
   #-- sum 9grids ---
-  a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
+  #a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
@@ -156,18 +194,25 @@ for season in lseason:
   #***************************
   #  figure stat 
   #---------------------------
-  #bnd        = [2,3,4,5,6,7,8,9,10]
+  bnd        = bnd_stat
+  #bnd        = [1,4,7,10,13,16,19,22,25]
+  #bnd        = [1, 2,3,4,5,6,7,8,9,10]
   #bnd        = [4,8,12,16,20,24,28,32,36]
   #bnd        = [4,10,16,22,28,34,40,46,52,58,64,70,76,82,88,94]
-  bnd        = [4,10,16,22,28,34,40,46,52,58,64]
-  cbarname = figdir + "/freq.cbar.stat.png"
+  #bnd        = [4,10,16,22,28,34,40,46,52,58,64]
+  #-----------
+  if rad == "":
+    cbarname = figdir + "/freq.cbar.stat.png"
+  else:
+    cbarname = figdir + "/freq.rad%04dkm.cbar.stat.png"%(rad)
+  #-----------
   stitle   = "freq. stat: season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
   datname  = soname_stat
   figname  = figname_stat
   a2figdat = fromfile(datname, float32).reshape(ny,nx)
   #-- sum 9grids ---
-  a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
+  #a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
@@ -176,16 +221,22 @@ for season in lseason:
   #***************************
   #  figure all 
   #---------------------------
-  #bnd        = [2,3,4,5,6,7,8,9,10]
-  bnd        = [10,20,30,40,50,60,70,80]
-  cbarname = figdir + "/freq.cbar.all.png"
+  bnd        = bnd_all
+  #bnd        = [5,10,15,20,25,30,35,40,45]
+  #bnd        = [10,20,30,40,50,60,70,80]
+  #----------
+  if rad == "":
+    cbarname = figdir + "/freq.cbar.all.png"
+  else:
+    cbarname = figdir + "/freq.rad%04dkm.cbar.all.png"%(rad)
+  #----------
   stitle   = "freq. all: season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
   datname  = soname_all
   figname  = figname_all
   a2figdat = fromfile(datname, float32).reshape(ny,nx)
   #-- sum 9grids ---
-  a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
+  #a2figdat = dtanl_fsub.sum_9grids_saone(a2figdat.T, miss).T
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0

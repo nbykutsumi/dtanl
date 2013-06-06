@@ -14,13 +14,12 @@ lftype  = ["warm","cold","stat"]
 lplev     = [925., 850.,700., 600., 500., 300.]
 ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700]
 region  = "ASAS"
-#window  = "no"
+window  = "no"
 #window  = "out"
-window  = "in"
+#window  = "in"
 
-#dist_mask= 0. # (km)
+dist_mask= 0. # (km)
 #dist_mask= 300. # (km)
-dist_mask= 500. # (km)
 #dist_mask= 1000. # (km)
 
 iyear   = 2004
@@ -58,7 +57,7 @@ for season in lseason:
       dtheta[ftype, plev]      = []
     #-----
     for dist_km in ldist_km:
-      #** initialize precip *******
+      #** initialize recip *******
       a2num = zeros([ny,nx],float32)
       a2pr  = zeros([ny,nx],float32)
 
@@ -86,7 +85,7 @@ for season in lseason:
           #----------
           print season, ftype, dist_km, year,mon
           #***** precipitation ****************
-          idir       = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d/prof"%(year,mon)
+          idir       = "/media/disk2/out/chart/ASAS/front/agg/test/prof"
           if window == "no":
             iname_pr   =  idir + "/pr.maskrad.%04dkm.%s.sa.one"%(dist_km, ftype)
             iname_num  =  idir + "/num.maskrad.%04dkm.%s.sa.one"%(dist_km, ftype)
@@ -101,7 +100,6 @@ for season in lseason:
           a2num      =  a2num + a2num_tmp
 
           #***** theta *************************
-          idir            = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d/prof"%(year,mon)
           for plev in lplev:
             #--- mean theta ----------
             climdir         = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s"%(iyear,eyear,mon)
@@ -125,7 +123,6 @@ for season in lseason:
             da2num_theta[plev]  =  da2num_theta[plev] + a2num_theta_tmp
 
           #***** grad.theta *************************
-          idir            = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d/prof"%(year,mon)
           if window == "no":
             iname_gradtheta         =  idir + "/grad.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, ftype)
             iname_num_gradtheta     =  idir + "/num_grad.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, ftype)
@@ -140,7 +137,6 @@ for season in lseason:
           a2num_gradtheta         =  a2num_gradtheta + a2num_gradtheta_tmp
 
           #***** grad2.theta *************************
-          idir            = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d/prof"%(year,mon)
           if window == "no":
             iname_grad2theta         =  idir + "/grad2.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, ftype)
             iname_num_grad2theta     =  idir + "/num_grad2.theta.maskrad.%04dkm.%s.sa.one"%(dist_km, ftype)
@@ -185,7 +181,8 @@ for season in lseason:
     lx      = ldist_km
     axplot.plot(lx,ly, color="k", linewidth=2, linestyle=dstyle[ftype])
   #-- set axis limit ---
-  axplot.set_ylim( (0.0, 0.6) )
+  #axplot.set_ylim( (0.0, 0.6) )
+  axplot.set_ylim( (0.0, 1.0) )
   #-- legend -----------
   axplot.legend(lftype)
   #-- axis label -------
@@ -195,7 +192,7 @@ for season in lseason:
   #-- title ------------
   axplot.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(ftype, season, dist_mask, iyear, eyear))
   #-- save -------------
-  pictdir   = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s/pict"%(iyear,eyear,season)
+  pictdir   = "/media/disk2/out/chart/ASAS/front/agg/test/prof/pict"
   ctrack_func.mk_dir(pictdir)
   if window == "no":
     figname   = pictdir + "/plt.dist.pint.maskrad.%04d-%04d.%s.%s.png"%(iyear,eyear,season,region)
@@ -243,7 +240,7 @@ for season in lseason:
     ##-- title ------------
     #axcont.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(ftype, season, dist_mask, iyear, eyear))
     #-- save -------------
-    pictdir   = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s/pict"%(iyear,eyear,season)
+    pictdir   = "/media/disk2/out/chart/ASAS/front/agg/test/prof/pict"
     ctrack_func.mk_dir(pictdir)
     if window == "no":
       figname   = pictdir + "/cont.dist.theta.maskrad.%04d-%04d.%s.%s.%s.png"%(iyear,eyear,season,region,ftype)
@@ -277,7 +274,7 @@ for season in lseason:
   #-- title ------------
   axplot.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(ftype, season, dist_mask, iyear, eyear))
   #-- save -------------
-  pictdir   = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s/pict"%(iyear,eyear,season)
+  pictdir   = "/media/disk2/out/chart/ASAS/front/agg/test/prof/pict"
   ctrack_func.mk_dir(pictdir)
   if window == "no":
     figname   = pictdir + "/plt.dist.grad.theta.maskrad.%04d-%04d.%s.%s.png"%(iyear,eyear,season,region)
@@ -310,7 +307,7 @@ for season in lseason:
   #-- title ------------
   axplot.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(ftype, season, dist_mask, iyear, eyear))
   #-- save -------------
-  pictdir   = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s/pict"%(iyear,eyear,season)
+  pictdir   = "/media/disk2/out/chart/ASAS/front/agg/test/prof/pict"
   ctrack_func.mk_dir(pictdir)
   if window == "no":
     figname   = pictdir + "/plt.dist.grad2theta.maskrad.%04d-%04d.%s.%s.png"%(iyear,eyear,season,region)
