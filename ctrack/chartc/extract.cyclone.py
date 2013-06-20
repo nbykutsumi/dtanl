@@ -23,9 +23,9 @@ else:
   lyear    = [2004]
 #--------------------------
 #lmon     = [1,2,3,4,5,6,7,8,9,10,11,12]
-lmon     = [1,3,5,7,9]
+#lmon     = [1,3,5,7,9]
 #lmon     = [10,11,12]
-#lmon     = [1]
+lmon     = [11]
 iday     = 1
 #lhour    = [6]
 #lhour    = [0, 6,12, 18]
@@ -93,7 +93,7 @@ for year in lyear:
         pdfname3 = pdfdir + "/As_%04d%02d%02d%02d.PDF"%(year,mon,day,hour)
         pdfname4 = pdfdir + "/AS_%04d%02d%02d%02d.pdf"%(year,mon,day,hour)
         jpgname  = odir   + "/As_%04d%02d%02d%02d.jpg"%(year,mon,day,hour)
-        bnname   = odir   + "/front.ASAS.%04d.%02d.%02d.%02d.saone"%(year,mon,day,hour)
+        bnname   = odir   + "/front.ASAS.%04d.%02d.%02d.%02d.sa.one"%(year,mon,day,hour)
         ofigname= figdir + "/front.ASAS.%04d.%02d.%02d.%02d.png"%(year,mon,day,hour)
 
         #** convert pdf --> jpg and read jpg *************

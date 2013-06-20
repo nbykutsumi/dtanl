@@ -11,15 +11,15 @@ def xy2fortpos(ix, iy, nx):
   number = iy* nx + ix +1
   return number
 #####################################################
-def fortpos2xy(number, nx, miss_int):
+def fortpos2pyxy(number, nx, miss_int):
   if (number == miss_int):
-    iy0 = miss_int
-    ix0 = miss_int
+    iy_py = miss_int
+    ix_py = miss_int
   else:
-    iy0 = int(number/nx)         # iy0 = 0, 1, 2, ..
-    ix0 = number - nx*iy0 -1     # ix0 = 0, 1, 2, ..
+    iy_py = int((number-1.0)/nx)      # iy_py = 0,1,2,..
+    ix_py = number - nx*iy_py-1   # ix_py = 0,1,2,..
   #----
-  return ix0, iy0
+  return ix_py, iy_py
 #####################################################
 def check_file(sname):
   if not os.access(sname, os.F_OK):

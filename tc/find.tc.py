@@ -3,6 +3,7 @@ from ctrack_fsub import *
 import calendar
 import ctrack_para
 import ctrack_func
+import tc_para
 #-----------------------------------------
 singleday = True
 iyear  = 2004
@@ -14,14 +15,18 @@ miss   = -9999.0
 
 ny     = 180
 nx     = 360
-
+model  = "org"
 dpgradrange   = ctrack_para.ret_dpgradrange()
 thpgrad        = dpgradrange[1][0] 
-thdura   = 48
-thwind   = 15 #m/s 
-thrvort  = 3.5e-5
-thwcore  = 1.5  # (K)
-
+thdura   = 36
+#thwind   = 15 #m/s 
+#thrvort  = 3.5e-5
+#thwcore  = 1.5  # (K)
+thwind   = tc_para.ret_thwind()
+thrvort  = tc_para.ret_thrvort()
+thwcore  = tc_para.ret_thwcore()
+thsst    = tc_para.ret_thsst()
+#
 #thdura   = -9999.0
 #thwind   = -9999.0 #m/s 
 #thrvort  = -9999.0
@@ -32,18 +37,25 @@ plev_low = 850*100.0 # (Pa)
 plev_mid = 500*100.0 # (Pa)
 plev_up  = 250*100.0 # (Pa)
 
-psldir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL"
-pgraddir_root   = "/media/disk2/out/JRA25/sa.one/6hr/pgrad"
-lifedir_root    = "/media/disk2/out/JRA25/sa.one/6hr/life"
-nextposdir_root = "/media/disk2/out/JRA25/sa.one/6hr/nextpos"
+psldir_root     = "/media/disk2/data/JRA25/sa.one.%s/6hr/PRMSL"%(model)
+pgraddir_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/pgrad"%(model)
+lifedir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/life"%(model)
+nextposdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/nextpos"%(model)
 #
-tdir_root       = "/media/disk2/data/JRA25/sa.one/6hr/TMP"
-udir_root       = "/media/disk2/data/JRA25/sa.one/6hr/UGRD"
-vdir_root       = "/media/disk2/data/JRA25/sa.one/6hr/VGRD"
-
+tdir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP"%(model)
+udir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/UGRD"%(model)
+vdir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/VGRD"%(model)
+#
+sstdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p25/mon/WTMPsfc"
 #-----------------------------------------
 for year in range(iyear,eyear+1):
   for mon in lmon:
+    ##############
+    #  SST
+    #-------------
+    sstdir   = sstdir_root + "/%04d"%(year)
+    sstname  = sstdir + "/fcst_phy2m.WTMPsfc.%04d%02d.sa.one"%(year,mon)
+    a2sst    = fromfile( sstname, float32).reshape(ny,nx)
     #----------
     if singleday == True:
       eday = iday
@@ -63,13 +75,13 @@ for year in range(iyear,eyear+1):
         #
         pgradname       = pgraddir   + "/pgrad.%s.sa.one"%(stime)
         lifename        = lifedir    + "/life.%s.sa.one"%(stime)
-        tlowname        = tdir       + "/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
-        tmidname        = tdir       + "/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_mid*0.01, year, mon, day, hour)
-        tupname         = tdir       + "/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
-        ulowname        = udir       + "/anal_p25.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
-        uupname         = udir       + "/anal_p25.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
-        vlowname        = vdir       + "/anal_p25.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
-        vupname         = vdir       + "/anal_p25.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
+        tlowname        = tdir       + "/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
+        tmidname        = tdir       + "/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_mid*0.01, year, mon, day, hour)
+        tupname         = tdir       + "/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
+        ulowname        = udir       + "/anl_p.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
+        uupname         = udir       + "/anl_p.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
+        vlowname        = vdir       + "/anl_p.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
+        vupname         = vdir       + "/anl_p.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
         #
         a2pgrad         = fromfile(pgradname, float32).reshape(ny, nx)
         a2life          = fromfile(lifename,  int32).reshape(ny, nx)
@@ -87,4 +99,8 @@ for year in range(iyear,eyear+1):
                           a2pgrad.T, a2life.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T\
                         , thpgrad, thdura, thwind, thrvort, thwcore, miss).T
 
-      
+        a2tcloc_old     = ctrack_fsub.find_tc_saone_old(\
+                          a2pgrad.T, a2life.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T\
+                        , thpgrad, thdura, thwind, thrvort, thwcore, miss).T
+
+     

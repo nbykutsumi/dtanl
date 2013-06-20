@@ -76,7 +76,10 @@ def ret_lcrad():
   lcrad =  [1000.0*1000.0]
   return lcrad
 #-----------------------------------
-def ret_dpgradrange():
+def ret_dpgradrange_8gridgrad():
+  #------------------
+  # unit: Pa/1000km, not hPa/1000km or hPa/100km
+  #------------------
   ##dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,250.0],2:[250.0,500.0],3:[500.0,750.0],4:[750.0, 1000.0], 5:[1000.0, 1250.0], 6:[1250.0, 1500.0], 7:[2500.0, 3000.0], 8:[3000.0, 10.0e+10]}
   #dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,250.0],2:[250.0,500.0],3:[500.0,750.0],4:[750.0, 1000.0], 5:[1000.0, 1250.0], 6:[1250.0, 1500.0], 7:[1500, 1750], 8:[1750, 10.0e+10]}
   #dpgradrange = {0:[1.0, 10.0e+10],1:[1.0,500.0],2:[500.0, 1000.0],3:[1000.0, 1500.0],4:[1500.0, 10.0e+10]}
@@ -90,6 +93,48 @@ def ret_dpgradrange():
   #dpgradrange[16] = [1500.0, 10.0e+10]
   ##---------------------
   return dpgradrange
+
+#-----------------------------------
+def ret_dpgradrange(model="org"):
+  #------------------
+  # unit: Pa/1000km, not hPa/1000km or hPa/100km
+  #------------------
+  #pgradmin : hPa/100km
+  #------------------
+  if model=="org":
+    pgradmin = 0.342
+  if model=="HadGEM2-ES":
+    pgradmin = 0.343
+  if model=="IPSL-CM5A-MR":
+    pgradmin = 0.309
+  if model=="CNRM-CM5":
+    pgradmin = 0.351
+  if model=="MIROC5":
+    pgradmin = 0.351
+  if model=="inmcm4":
+    pgradmin = 0.323
+  if model=="MPI-ESM-MR":
+    pgradmin = 0.320
+  if model=="CSIRO-Mk3-6-0":
+    pgradmin = 0.320
+  if model=="NorESM1-M":
+    pgradmin = 0.285
+  if model=="IPSL-CM5B-LR":
+    pgradmin = 0.212
+  if model=="GFDL-CM3":
+    pgradmin = 0.261
+  if model=="test.1.5deg":
+    pgradmin = 0.333
+  if model=="test.10deg":
+    pgradmin = -0.019
+  if model=="test.5deg":
+    pgradmin = 0.017
+  if model=="test.3deg":
+    pgradmin = 0.154
+  dpgradrange = {0:[0.0, 10.0e+10],1:[0.0,pgradmin*1000.],2:[pgradmin*1000., 180.0],3:[180.0, 500.0],4:[500.0, 10.0e+10]}
+  #---------------------
+  return dpgradrange
+
 #-----------------------------------
 def ret_lseason():
   lseason = ["DJF"]

@@ -41,8 +41,8 @@ for year in range(iyear, eyear+1):
     tcname   = line[5].strip()
     lat      = float(line[16])
     lon      = float(line[17])
-    ix       = int((lon-0.0)/dlon)
-    iy       = int((lat-90.0)/dlat)
+    ix       = int((lon- 0.0)/dlon)
+    iy       = int((lat-(-90.0))/dlat)
     ldat_temp = [ix, iy, tcname] 
     ddat[mon].append(ldat_temp)
 

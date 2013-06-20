@@ -1,19 +1,57 @@
-import ctrack_fig
 from numpy import *
 
-idir1  = "/media/disk2/data/JRA25/sa.one/6hr/anl_p.SPFH/200101"
-idir2  = "/media/disk2/data/JRA25/sa.one/6hr/SPFH/200101"
+#--------------------------------------------
+def a_to_s(a1in, sep=" "):
+  s   = (sep).join(map(str, a1in))
+  return s
+#--------------------------------------------
+def ret_sline(smodel, dlat, dlon):
+  a1lat  = arange(-90.0+dlat*0.5, 90.0-dlat*0.5+0.001, dlat)
+  a1lon  = arange(0.0+dlon*0.5, 360.0-dlon*0.5+0.001, dlon)
+  nlat   = len(a1lat)
+  nlon   = len(a1lon)
+  
+  slat   = a_to_s(a1lat, " ")
+  slon   = a_to_s(a1lon, " ")
+  sline  = smodel + "," + svar + "," + "(%d %d)"%(nlat, nlon)\
+          + "," + str(dlat) + "," + str(dlon) \
+          + "," + slat + "," + slon\
+          + "," + "-" + "," + "-" + "\n"
+  return sline
+#--------------------------------------------
+odir = "/home/utsumi/mnt/iis.data1/utsumi/CMIP5"
+svar = "psl"
 
-iname1 = idir1 + "/anl_p.SPFH.0850hPa.2001010100.sa.one"
-iname2 = idir2 + "/anl_p25.SPFH.0850hPa.2001010100.sa.one"
+sout   = ""
+#--- 1.5deg --------
+smodel = "test.1.5deg"
+dlat   = 1.5
+dlon   = 1.5
+sline  = ret_sline(smodel, dlat, dlon)
+sout   = sout + sline
+#--- 3deg --------
+smodel = "test.3deg"
+dlat   = 3.0
+dlon   = 3.0
+sline  = ret_sline(smodel, dlat, dlon)
+sout   = sout + sline
+#--- 5deg --------
+smodel = "test.5deg"
+dlat   = 5.0
+dlon   = 5.0
+sline  = ret_sline(smodel, dlat, dlon)
+sout   = sout + sline
+#--- 10deg --------
+smodel = "test.10deg"
+dlat   = 10.0
+dlon   = 10.0
+sline  = ret_sline(smodel, dlat, dlon)
+sout   = sout + sline
 
 
-a1  = fromfile(iname1, float32).reshape(180,360)
-a2  = fromfile(iname2, float32).reshape(180,360)
-
-#ctrack_fig.mk_pict_saone_reg(a1, soname="./a1.png")
-#ctrack_fig.mk_pict_saone_reg(a2, soname="./a2.png")
-
-
-
-
+#
+#-- save -----
+slabel  = "model,var,(nlat nlon),mdlat,mdlon,lat,lon,dlat,dlon\n"
+sout    = slabel + sout
+soname  = odir   + "/list.test.csv"
+f = open(soname, "w");    f.write(sout);    f.close();  print soname

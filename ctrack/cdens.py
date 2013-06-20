@@ -102,16 +102,6 @@ def xy2fortpos(ix, iy, nx):
   number = iy* nx + ix +1
   return number
 #####################################################
-def fortpos2xy(number, nx, miss_int):
-  if (number == miss_int):
-    iy0 = miss_int
-    ix0 = miss_int
-  else:
-    iy0 = int(number/nx)         # iy0 = 0, 1, 2, ..
-    ix0 = number - nx*iy0 -1     # ix0 = 0, 1, 2, ..
-  #----
-  return ix0, iy0
-#####################################################
 def check_file(sname):
   if not os.access(sname, os.F_OK):
     print "no file:",sname

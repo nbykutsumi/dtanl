@@ -1,4 +1,5 @@
 from numpy import *
+from ctrack_func import fortpos2pyxy
 import calendar
 import datetime
 import os, sys
@@ -55,16 +56,6 @@ def solvelife(number):
   pmin = int(number / 10000)
   dura = number - pmin *10000
   return (pmin, dura)
-#####################################################
-def fortpos2xy(number, nx, miss_int):
-  if (number == miss_int):
-    iy0 = miss_int
-    ix0 = miss_int
-  else:
-    iy0 = int(number/nx)         # iy0 = 0, 1, 2, ..
-    ix0 = number - nx*iy0 -1     # ix0 = 0, 1, 2, ..
-  #----
-  return ix0, iy0
 #####################################################
 def check_file(sname):
   if not os.access(sname, os.F_OK):
@@ -241,7 +232,7 @@ for model in lmodel:
                 ipos1    = a2ipos1[iy, ix]
                 idate1   = a2idate1[iy, ix]
                 nextpos1 = a2nextpos1[iy, ix]
-                (ixnext, iynext) = fortpos2xy(nextpos1, nx, miss_int)
+                (ixnext, iynext) = fortpos2pyxy(nextpos1, nx, miss_int)
                 foundflag = foundflag +1
                 if ( (ipos1 == 610) and (idate1 == 1990010100) ):
                   print year, mon, day, hour,"yx", iy, ix, "yxnext",iynext, ixnext, "dura", dura1, "pmin", pmin1, "psl", psl1

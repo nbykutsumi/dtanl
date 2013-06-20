@@ -128,7 +128,7 @@ for year in range(iyear, eyear+1):
               if (pgrad_min <= pgrad < pgrad_max):
                 #------
                 nextpos   = a2nextpos[iy, ix]
-        	x_next, y_next = ctrack_func.fortpos2xy(nextpos, nx, miss_int)
+        	x_next, y_next = ctrack_func.fortpos2pyxy(nextpos, nx, miss_int)
                 if ( (x_next == miss_int) & (y_next == miss_int) ):
                   continue
                 #------
