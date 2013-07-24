@@ -1,7 +1,7 @@
 import subprocess
 
-iyear = 2000
-eyear = 2004
+iyear = 1997
+eyear = 2012
 imon  = 1
 emon  = 12
 for year in range(iyear , eyear+1):

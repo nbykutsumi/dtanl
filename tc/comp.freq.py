@@ -3,17 +3,16 @@ import ctrack_func
 import ctrack_para
 import matplotlib.pyplot as plt
 #-------------------------------------------
-iyear = 2000
+iyear = 2004
 eyear = 2004
 #lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
 season="ALL"
 lmon  =ctrack_para.ret_lmon(season) 
 thdura= 36
-thwcore = 0.5
-#thwcore = 1.0
-thwind  = 0.0
-thrvort = 7.0e-5
-thsst   = 273.15 + 25.0
+lthwcore = [thwcore]
+lthsst   = [thsst]
+lthwind  = [thwind]
+lthrvort = [thrvort]
 
 ny    = 180
 nx    = 360

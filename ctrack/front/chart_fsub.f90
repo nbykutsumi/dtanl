@@ -98,6 +98,68 @@ end do
 !-----------
 return
 END SUBROUTINE chartcyclone2saone
+
+!*********************************************************
+SUBROUTINE chartfront2dec(a2front_org, a2front_saone&
+          , a2x_corres_dec,   a2y_corres_dec&
+          , a2x_corres_saone, a2y_corres_saone&
+          , miss, nx_org, ny_org, a2front_dec)
+implicit none
+!----------------------
+integer                              nx_org, ny_org
+!------------------------
+! front : 1->warm   2->cold  3->occ
+!------------------------
+real,dimension(nx_org, ny_org)    :: a2front_org
+!f2py intent(in)                     a2front_org
+!
+real,dimension(360,180)           :: a2front_saone
+!f2py intent(in)                     a2front_saone
+!!
+real,dimension(nx_org, ny_org)    :: a2x_corres_dec, a2y_corres_dec
+!f2py intent(in)                     a2x_corres_dec, a2y_corres_dec
+!
+real,dimension(nx_org, ny_org)    :: a2x_corres_saone, a2y_corres_saone
+!f2py intent(in)                     a2x_corres_saone, a2y_corres_saone
+!
+real                                 miss
+!f2py intent(in)                     miss
+!--- out ----------
+real,dimension(1600,700)          :: a2front_dec
+!f2py intent(out)                    a2front_dec
+!--- calc ---------
+integer                              ix, iy
+integer                              ix_corres_dec, iy_corres_dec
+integer                              ix_corres_saone, iy_corres_saone
+!--- initialize ---------
+a2front_dec  = miss
+!------------------------
+! convert front resolution a2org -> a2dec
+!------------------------
+do iy = 1,ny_org
+  do ix = 1,nx_org
+    !--------------------------------
+    if (a2front_org(ix,iy).eq.miss)then
+      cycle
+    end if
+    !--------------------------------
+    ix_corres_dec    = int(a2x_corres_dec(ix,iy))
+    iy_corres_dec    = int(a2y_corres_dec(ix,iy))
+    if ((ix_corres_dec.eq.miss).or.(iy_corres_dec.eq.miss))then
+      cycle
+    end if
+    !--------------------------------
+    ix_corres_saone  = int(a2x_corres_saone(ix,iy))
+    iy_corres_saone  = int(a2y_corres_saone(ix,iy))
+    !--------------------------------
+    a2front_dec(ix_corres_dec,iy_corres_dec) = a2front_saone(ix_corres_saone,iy_corres_saone)
+    !--------------------------------
+  end do
+end do
+!---------------------------------------------------------
+return
+END SUBROUTINE chartfront2dec
+
 !*********************************************************
 SUBROUTINE chartfront2saone_new(a2front_org, a2x_corres, a2y_corres, miss, nx_org, ny_org, a2front_saone)
 implicit none

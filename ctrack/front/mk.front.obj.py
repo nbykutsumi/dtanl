@@ -5,12 +5,11 @@ import ctrack_func
 import sys, os
 import gsmap_func
 import datetime
+import front_para
 from dtanl_fsub import *
 from ctrack_fsub import *
 #-----------------------
-
-iyear  = 2000
-eyear  = 2004
+lyear  = range(1996,2012+1)
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon   = [1]
 iday   = 1
@@ -18,8 +17,6 @@ lhour  = [0,6,12,18]
 #local region ------
 plev     = 850 *100.0   #(Pa)
 cbarflag = "True"
-#thfmasktheta1 = 0.6
-#thfmasktheta2 = 2.0
 
 sresol   = "anl_p"
 thfmasktheta1, thfmasktheta2  = front_para.ret_thfmask(sresol)
@@ -74,7 +71,7 @@ def mk_front_loc(a2thermo, a2gradthermo, thfmask1, thfmask2):
   return a2loc
 
 #******************************************************
-for year in range(iyear, eyear+1):
+for year in lyear:
   for mon in lmon:
     #-----------
     sodir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/front"%(sresol)
@@ -88,11 +85,11 @@ for year in range(iyear, eyear+1):
         stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
         #******************************************************
         #-- q: mixing ratio --------------------------
-        qname = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/anal_p25.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
+        qname = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/anl_p.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
         a2q   = fromfile(qname, float32).reshape(ny,nx)
         
         #-- t: ---------------------------------------
-        tname = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
+        tname = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
         a2t   = fromfile(tname, float32).reshape(ny,nx)
         
         #-- tv: --------------------------------------

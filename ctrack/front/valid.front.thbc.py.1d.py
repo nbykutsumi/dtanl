@@ -3,13 +3,13 @@ import ctrack_para
 from numpy import *
 #---------------------------------------
 iyear   = 2001
-eyear   = 2003
+eyear   = 2004
 
 #----
 lseason = [6]
 sresol  = "anl_p"
 lthfmask1  = [0.7]
-lthfmask2  = [3.0, 4.0]
+lthfmask2  = [4.0]
 lthbc      = array([0.1,0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7,1.9,2.1])/1000./100.  # (K/m)
 nx,ny      = 360,180
 lat_first  = -89.5

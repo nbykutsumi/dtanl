@@ -2,8 +2,8 @@ from numpy import *
 import calendar
 import os, sys
 #********************************************
-iyear = 1997
-eyear = 2010
+iyear = 2011
+eyear = 2012
 imon  = 1
 emon  = 12
 #********************************************
@@ -65,8 +65,9 @@ def mk_ctl_daily(sfile_daily, soname):
 #********************************************
 for year in range(iyear, eyear +1):
   #-----
-  #sidir = "/media/disk2/data/GPCP1DD/data/org"
-  sidir = "/home/utsumi/mnt/export/nas02/data/GPCP1DD/v1.2/data"
+  sidir = "/media/disk2/data/GPCP1DD/v1.2/1dd/data"
+  #sidir = "/home/utsumi/mnt/export/nas02/data/GPCP1DD/v1.2/1dd"
+  #sodir = "/media/disk2/data/GPCP1DD/v1.2/1dd/%04d"%(year)
   sodir = "/media/disk2/data/GPCP1DD/v1.2/1dd/%04d"%(year)
   mk_dir(sodir)
   #**************
@@ -81,6 +82,8 @@ for year in range(iyear, eyear +1):
     #*****************
     siname  = sidir + "/gpcp_1dd_v1.2_p1d.%04d%02d"%(year, mon)
     if not os.access(siname, os.F_OK):
+      print "nofile:"
+      print siname
       continue
     #************
     # read & write header

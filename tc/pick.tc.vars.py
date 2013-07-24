@@ -21,10 +21,15 @@ for model in lmodel:
       break
 #--- print -----------
 for model in lmodel:
-  print \
-'  if model=="%s":\n\
-    thwcore = %.2f'%(model,dv[model])
-
+  if model == "org":
+    print \
+  '  if model in ["org","anl_p"]:\n\
+      thwcore = %.2f'%(dv[model])
+  else: 
+    print \
+  '  if model=="%s":\n\
+      thwcore = %.2f'%(model,dv[model])
+  
 
 print ""
 #***********************************
@@ -44,7 +49,12 @@ for model in lmodel:
       break
 #--- print -----------
 for model in lmodel:
-  print \
-'  if model=="%s":\n\
-    thrvort = %.1e'%(model,dv[model])
-
+  if model == "org":
+    print \
+  '  if model in ["org","anl_p"]:\n\
+      thrvort = %.1e'%(dv[model])
+  else:
+     print \
+  '  if model=="%s":\n\
+      thrvort = %.1e'%(model,dv[model])
+  

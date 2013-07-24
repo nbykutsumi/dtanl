@@ -96,11 +96,8 @@ for year in range(iyear,eyear+1):
 
 
         a2tcloc         = ctrack_fsub.find_tc_saone(\
-                          a2pgrad.T, a2life.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T\
-                        , thpgrad, thdura, thwind, thrvort, thwcore, miss).T
-
-        a2tcloc_old     = ctrack_fsub.find_tc_saone_old(\
-                          a2pgrad.T, a2life.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T\
-                        , thpgrad, thdura, thwind, thrvort, thwcore, miss).T
+        a2tcloc         = ctrack_fsub.find_tc_saone(\
+                          a2pgrad.T, a2life.T, a2lastpos.T, a2lastflag.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T, a2sst.T, a2landsea.T\
+                        , thpgrad, thdura, thsst, thwind, thrvort, initflag, miss)
 
      

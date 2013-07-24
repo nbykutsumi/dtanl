@@ -67,7 +67,7 @@ def ret_ibtracs_dpyxy_saone(year_org):
     eday = calendar.monthrange(year_org,mon)[1]
     for day in range(1,eday+1):
       for hour in lhour:
-        print year_org,mon,day,hour
+        #print year_org,mon,day,hour
         dout[year_org,mon,day,hour] = []
   #-----------------
   for line in lines[3:]:

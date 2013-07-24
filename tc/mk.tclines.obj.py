@@ -5,9 +5,12 @@ from ctrack_fsub import *
 import calendar
 import ctrack_para
 import ctrack_func
+import tc_para
 import sys, os
 #--------------------------------------
+print len(sys.argv), sys.argv
 if len(sys.argv) > 1:
+  print "from py.py"
   iyear     = int(sys.argv[1])
   eyear     = int(sys.argv[2])
   season    = sys.argv[3]
@@ -26,32 +29,30 @@ if len(sys.argv) > 1:
   plev_mid  = float(sys.argv[10])
   plev_up   = float(sys.argv[11])
   tplev_low = float(sys.argv[12])
-
+  model     = sys.argv[13]
 else:
-  iyear   = 2000
+  print "NOT from py.py"
+  model    = "org"
+  iyear   = 2004
   eyear   = 2004
   #season  = "DJF"
   #season  = 8
   season  = "ALL"
   #season  = 8
-  thdura  = 36
-  thwcore = 0.5  # [K]
-  #thwcore = 1.0  # [K]
+  #thdura  = 72
+  thdura  = 48
   dpgradrange   = ctrack_para.ret_dpgradrange()
   thpgrad        = dpgradrange[1][0]
-  #thwind   = 10 #m/s
-  thrvort  = 7.0e-5
-  thsst    = 273.15 + 25.0
-  thwind   = 0.0
-  #thrvort  = 0.0
-  
+  thsst    = tc_para.ret_thsst()
+  thwind   = tc_para.ret_thwind()
+  thrvort  = tc_para.ret_thrvort(model)
+  thwcore  = tc_para.ret_thwcore(model)
+
   plev_low = 850*100.0 # (Pa)
   plev_mid = 500*100.0 # (Pa)
   plev_up  = 250*100.0 # (Pa)
-  #plev_up  = 300*100.0 # (Pa)
   
   tplev_low = 850*100.0
-  #tplev_low = 700*100.0
 #---------------------------------
 ny      = 180
 nx      = 360
@@ -83,26 +84,26 @@ nclass  = len(lclass)
 thpgrad = dpgradrange[0][0]
 #----------------------------
 
-psldir_root     = "/media/disk2/data/JRA25/sa.one/6hr/PRMSL"
-pgraddir_root   = "/media/disk2/out/JRA25/sa.one/6hr/pgrad"
-lifedir_root    = "/media/disk2/out/JRA25/sa.one/6hr/life"
-nextposdir_root = "/media/disk2/out/JRA25/sa.one/6hr/nextpos"
-lastposdir_root = "/media/disk2/out/JRA25/sa.one/6hr/lastpos"
-iposdir_root    = "/media/disk2/out/JRA25/sa.one/6hr/ipos"
+psldir_root     = "/media/disk2/data/JRA25/sa.one.%s/6hr/PRMSL"%(model)
+pgraddir_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/pgrad"%(model)
+lifedir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/life"%(model)
+nextposdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/nextpos"%(model)
+lastposdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/lastpos"%(model)
+iposdir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/ipos"%(model)
 #
-tdir_root       = "/media/disk2/data/JRA25/sa.one/6hr/TMP"
-udir_root       = "/media/disk2/data/JRA25/sa.one/6hr/UGRD"
-vdir_root       = "/media/disk2/data/JRA25/sa.one/6hr/VGRD"
+tdir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP"%(model)
+udir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/UGRD"%(model)
+vdir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/VGRD"%(model)
 #
-sstdir_root     = "/media/disk2/data/JRA25/sa.one/mon/WTMPsfc"
+sstdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p25/mon/WTMPsfc"
 #
-sodir_root      = "/media/disk2/out/JRA25/sa.one/6hr/tc/%02dh/%04d-%04d/%s/pict"%(thdura, iyear, eyear, season)
-#sodir           = sodir_root + "/temp"
-sodir           = sodir_root
+#sodir_root      = "/media/disk2/out/JRA25/sa.one.%s/6hr/tc/%02dh/%04d-%04d/%s/pict"%(model, thdura, iyear, eyear, season)
+sodir_root      = "/media/disk2/out/obj.valid/tc.tracklines"
+sodir           = sodir_root + "/%04d-%04d"%(iyear,eyear)
 ctrack_func.mk_dir(sodir_root)
 ctrack_func.mk_dir(sodir)
 #** land sea mask -------------------
-landseadir      = "/media/disk2/data/JRA25/sa.one/const/landsea"
+landseadir      = "/media/disk2/data/JRA25/sa.one.anl_land/const/landsea"
 landseaname     = landseadir + "/landsea.sa.one"
 a2landsea       = fromfile(landseaname, float32).reshape(ny,nx)
 
@@ -141,17 +142,16 @@ for year in range(iyear, eyear+1):
         lastposdir      = lastposdir_root + "/%04d%02d"%(year, mon)
         iposdir         = iposdir_root    + "/%04d%02d"%(year, mon)
         
-        pslname         = psldir     + "/fcst_phy2m.PRMSL.%s.sa.one"%(stime)
+        pslname         = psldir     + "/anl_p.PRMSL.%s.sa.one"%(stime)
         pgradname       = pgraddir   + "/pgrad.%s.sa.one"%(stime)
         lifename        = lifedir    + "/life.%s.sa.one"%(stime)
-        #tlowname        = tdir       + "/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
-        tlowname        = tdir       + "/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(tplev_low*0.01, year, mon, day, hour)
-        tmidname        = tdir       + "/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_mid*0.01, year, mon, day, hour)
-        tupname         = tdir       + "/anal_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
-        ulowname        = udir       + "/anal_p25.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
-        uupname         = udir       + "/anal_p25.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
-        vlowname        = vdir       + "/anal_p25.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
-        vupname         = vdir       + "/anal_p25.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
+        tlowname        = tdir       + "/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(tplev_low*0.01, year, mon, day, hour)
+        tmidname        = tdir       + "/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_mid*0.01, year, mon, day, hour)
+        tupname         = tdir       + "/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
+        ulowname        = udir       + "/anl_p.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
+        uupname         = udir       + "/anl_p.UGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
+        vlowname        = vdir       + "/anl_p.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_low*0.01, year, mon, day, hour)
+        vupname         = vdir       + "/anl_p.VGRD.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev_up *0.01, year, mon, day, hour)
         nextposname     = nextposdir + "/nextpos.%s.sa.one"%(stime)
         lastposname     = lastposdir + "/lastpos.%s.sa.one"%(stime)
         iposname        = iposdir    + "/ipos.%s.sa.one"%(stime)
@@ -199,7 +199,7 @@ for year in range(iyear, eyear+1):
             if a2tcloc[iy, ix] > 0.0:
 
               nextpos   = a2nextpos[iy, ix]
-              x_next, y_next = ctrack_func.fortpos2xy(nextpos, nx, miss_int)
+              x_next, y_next = ctrack_func.fortpos2pyxy(nextpos, nx, miss_int)
               if ( (x_next == miss_int) & (y_next == miss_int) ):
                 continue
               #------
@@ -233,7 +233,7 @@ parallels = 10.0
 M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1], rotation=90)
 M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0])
 #-- title -------------------
-stitle = "TCobj %04d-%04d %s %02dh wc:%3.1f\n"%(iyear, eyear, season, thdura, thwcore)
+stitle = "TCobj res=%s %04d-%04d %s %02dh wc:%3.1f\n"%(model, iyear, eyear, season, thdura, thwcore)
 stitle = stitle + "sst:%.0f wind:%d vort:%.1e tplow:%d wpup:%d"%(thsst-273.15, thwind, thrvort, tplev_low*0.01, plev_up*0.01)
 axmap.set_title(stitle)
 
@@ -280,7 +280,7 @@ for iclass in [0]:
 #-- save --------------------
 print "save"
 #soname  = sodir + "/tclines.%04d-%04d.%s.%02dh.%3.2f.png"%(iyear, eyear,season, thdura, thwcore)
-soname  = sodir + "/tclines.%04d-%04d.%s.%02dh.wc%3.2f.sst%d.wind%d.vor%.1e.tplow%d.pup%d.png"%(iyear, eyear,season, thdura, thwcore, thsst -273.15, thwind, thrvort, tplev_low*0.01, plev_up*0.01)
+soname  = sodir + "/tclines.%s.%04d-%04d.%s.%02dh.wc%3.2f.sst%d.wind%d.vor%.1e.tplow%d.pup%d.png"%(model, iyear, eyear,season, thdura, thwcore, thsst -273.15, thwind, thrvort, tplev_low*0.01, plev_up*0.01)
 plt.savefig(soname)
 plt.clf()
 print soname

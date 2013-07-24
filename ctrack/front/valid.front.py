@@ -9,7 +9,7 @@ from dtanl_fsub import *
 from ctrack_fsub import *
 #---------------------------------
 iyear   = 2001
-eyear   = 2001
+eyear   = 2004
 lmon    = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon    = [1]
 iday    = 1
@@ -20,7 +20,6 @@ plev    = 850*100.0  #(Pa)
 sresol  = "anl_p"
 lthfmask1  = [0.1,0.3,0.5,0.7,0.9,1.1]
 lthfmask2  = [1.0,2.0,3.0,4.0,5.0,6.0]
-lthbc      = array([0.5,0.7,0.9,1.1,1.3])/1000.0/100.0  # (K/m)
 #************************
 thorog  = ctrack_para.ret_thorog()
 highsidedist  = ctrack_para.ret_highsidedist()

@@ -68,6 +68,13 @@ def ret_domain_corner_rect(region):
     urlon = 208.5
     urlat = 70.5
 
+    #lllon = 122.0
+    #lllat = 20.0
+    #urlon = 158.0
+    #urlat = 45.0
+
+
+
   return (lllon, lllat, urlon, urlat)
 #------------------------
 def ret_domain_corner_rect_forfig(region):
@@ -130,6 +137,15 @@ def ret_xydom_saone_rect_first_last(region):
     xdom_saone_last  = int((urlon - 0.5 + 0.5)/1.0)
     ydom_saone_first = int((lllat -(-89.5) + 0.5)/1.0)
     ydom_saone_last  = int((urlat -(-89.5) + 0.5)/1.0) 
+    return (xdom_saone_first, xdom_saone_last, ydom_saone_first, ydom_saone_last)
+#------------------------
+def ret_xydom_dec_rect_first_last(region):
+  if region == "ASAS":
+    lllon, lllat, urlon, urlat = ret_domain_corner_rect(region)
+    xdom_saone_first = int((lllon - 60.05 + 0.05)/0.1)
+    xdom_saone_last  = int((urlon - 60.05 + 0.05)/0.1)
+    ydom_saone_first = int((lllat -(0.05) + 0.05)/0.1)
+    ydom_saone_last  = int((urlat -(0.05) + 0.05)/0.1) 
     return (xdom_saone_first, xdom_saone_last, ydom_saone_first, ydom_saone_last)
 
 

@@ -8,15 +8,14 @@ import jra_func
 import ctrack_func
 import sys
 
-
-iyear    = 2000
-eyear    = 2004
+lyear    = [1979] + range(2011,2012+1)
+#lyear    = range(1980,1999+1) + range(2005,2010+1)
 imon     = 1
 emon     = 12
 tstp     = "mon"
 #idir_root   =  "/home/utsumi/mnt/export/nas12/JRA25"
 idir_root   =  "/media/disk2/data/JRA25/gr/mon"
-odir_root   =  "/media/disk2/data/JRA25/sa.one/%s"%(tstp)
+odir_root   =  "/media/disk2/data/JRA25/sa.one.anl_p25/%s"%(tstp)
 singleday   = False  # True or False
 #singleday   = True  # True or False
 miss_out    = -9999.0
@@ -114,7 +113,7 @@ for var in lvar:
       sys.exit()
   #-----------------------------------
   #-----------------------------------
-  for year in range(iyear, eyear + 1):
+  for year in lyear:
     for mon in range(imon, emon + 1):
       idir      = idir_root
       odir_temp = odir_root  +  "/%s"%(var)

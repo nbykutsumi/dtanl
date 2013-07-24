@@ -35,6 +35,9 @@ def ret_tcregionlatlon(region):
   #------------
   return lllat, lllon, urlat, urlon
 #------------------------------------
+def ret_thdp():
+  return -9999.0  # (Pa) for connectc
+#------------------------------------
 def ret_highsidedist():
   highsidedist = 100*1000.0 #(m)
   return highsidedist
@@ -101,37 +104,38 @@ def ret_dpgradrange(model="org"):
   #------------------
   #pgradmin : hPa/100km
   #------------------
-  if model=="org":
-    pgradmin = 0.342
+  if model in ["org","anl_p"]:
+      pgradmin = 0.342
   if model=="HadGEM2-ES":
-    pgradmin = 0.343
+      pgradmin = 0.343
   if model=="IPSL-CM5A-MR":
-    pgradmin = 0.309
+      pgradmin = 0.309
   if model=="CNRM-CM5":
-    pgradmin = 0.351
+      pgradmin = 0.351
   if model=="MIROC5":
-    pgradmin = 0.351
+      pgradmin = 0.351
   if model=="inmcm4":
-    pgradmin = 0.323
+      pgradmin = 0.323
   if model=="MPI-ESM-MR":
-    pgradmin = 0.320
+      pgradmin = 0.320
   if model=="CSIRO-Mk3-6-0":
-    pgradmin = 0.320
+      pgradmin = 0.320
   if model=="NorESM1-M":
-    pgradmin = 0.285
+      pgradmin = 0.285
   if model=="IPSL-CM5B-LR":
-    pgradmin = 0.212
+      pgradmin = 0.212
   if model=="GFDL-CM3":
-    pgradmin = 0.261
+      pgradmin = 0.261
   if model=="test.1.5deg":
-    pgradmin = 0.333
+      pgradmin = 0.333
   if model=="test.10deg":
-    pgradmin = -0.019
+      pgradmin = -0.019
   if model=="test.5deg":
-    pgradmin = 0.017
+      pgradmin = 0.017
   if model=="test.3deg":
-    pgradmin = 0.154
-  dpgradrange = {0:[0.0, 10.0e+10],1:[0.0,pgradmin*1000.],2:[pgradmin*1000., 180.0],3:[180.0, 500.0],4:[500.0, 10.0e+10]}
+      pgradmin = 0.154
+ 
+  dpgradrange = {0:[0.0, 10.0e+10],1:[0.0,pgradmin*1000.],2:[pgradmin*1000., 500.0],3:[500.0, 1000.0],4:[1000.0, 10.0e+10]}
   #---------------------
   return dpgradrange
 
@@ -175,6 +179,8 @@ def ret_lmon(season):
     lmon  = [11,12,1,2,3,4]
   elif season == "JJASON":
     lmon  = [6,7,8,9,10,11]
+  elif season == "JJAS":
+    lmon  = [6,7,8,9]
   return lmon
 #-----------------------------------
 def ret_mons(season):

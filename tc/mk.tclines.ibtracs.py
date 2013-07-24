@@ -5,7 +5,7 @@ import ctrack_para
 import matplotlib.pyplot as plt
 
 #-------------------------------
-iyear = 2000
+iyear = 2004
 eyear = 2004
 lhour = [0,6,12,18]
 season= "ALL"
@@ -14,7 +14,7 @@ nx    = 360
 dlat  = 1.0
 dlon  = 1.0
 idir ="/media/disk2/data/ibtracs/v03r04"
-odir_root ="/media/disk2/out/ibtracs/saone"
+odir_root ="/media/disk2/out/ibtracs/sa.one"
 
 #lllat   = -80.0
 #urlat   = 80.0

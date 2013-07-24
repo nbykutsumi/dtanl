@@ -147,7 +147,8 @@ for year in range(iyear, eyear+1):
         apgrad = findcyclone_out[1].T
         apmean.tofile(pmeanname)
         apgrad.tofile(pgradname)
-
+        print "pmean"
+        print apmean
 
 
 

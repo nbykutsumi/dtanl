@@ -93,8 +93,8 @@ for year in lyear:
         pdfname3 = pdfdir + "/As_%04d%02d%02d%02d.PDF"%(year,mon,day,hour)
         pdfname4 = pdfdir + "/AS_%04d%02d%02d%02d.pdf"%(year,mon,day,hour)
         jpgname  = odir   + "/As_%04d%02d%02d%02d.jpg"%(year,mon,day,hour)
-        bnname   = odir   + "/front.ASAS.%04d.%02d.%02d.%02d.sa.one"%(year,mon,day,hour)
-        ofigname= figdir + "/front.ASAS.%04d.%02d.%02d.%02d.png"%(year,mon,day,hour)
+        bnname   = odir   + "/exc.ASAS.%04d.%02d.%02d.%02d.sa.one"%(year,mon,day,hour)
+        ofigname= figdir + "/exc.ASAS.%04d.%02d.%02d.%02d.png"%(year,mon,day,hour)
 
         #** convert pdf --> jpg and read jpg *************
         if os.access(pdfname1, os.F_OK):

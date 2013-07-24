@@ -2,8 +2,8 @@ import ctrack_func
 import ctrack_para
 from numpy import *
 #---------------------------------------
-iyear   = 2000
-eyear   = 2000
+iyear   = 2001
+eyear   = 2004
 
 #----
 lseason = ["ALL","DJF","JJA"]
@@ -40,6 +40,7 @@ for season in lseason:
   #--
   for year in range(iyear,eyear+1):
     for mon in lmon:
+      print season,year,mon
       sidir             = sidir_root  + "/%04d%02d"%(year,mon)
       #*************************
       namenumchart      = sidir + "/num.chart.sa.one"
@@ -71,6 +72,7 @@ for season in lseason:
   #*******************************
   #-----  save ----------
   sodir  = sidir_root + "/%04d-%04d"%(iyear,eyear)
+  ctrack_func.mk_dir(sodir)
   soname = sodir      + "/rmse.2d.%04d-%04d.%s.csv"%(iyear,eyear,season)
   #
   srmse  = ""

@@ -8,20 +8,18 @@ import ctrack_para
 import ctrack_func
 import ctrack_fig
 import chart_para
+import front_para
 import subprocess
 #---------------------------------
 #singleday= True
 singleday= False
 
-iyear = 1997
-eyear = 2004
+iyear = 2000
+eyear = 2000
 #lseason=["ALL","DJF","JJA"]
 #lseason=[1,2,3,4,5,6,7,8,9,10,11,12,"ALL","DJF","JJA"]
 #lseason=[1,2,3,4,5,6,7,8,9,10,11,12]
 lseason = [1]
-#lseason=["DJF"]
-#lseason=["JJA"]
-#lseason=["ALL"]
 iday  = 1
 #lhour = [12]
 region= "ASAS"
@@ -37,12 +35,7 @@ lthdist   = [500]
 sreol     = "anl_p"
 #-- para for objective locator -------------
 plev     = 850*100.0 # (Pa)
-#llthfmask = [[0.3,2.0]]
-#llthfmask = [[0.5,2.0],[0.8,2.0],[1.0,2.0],[0.5,2.5],[0.5,3.0]]
-#llthfmask = [[0.5,2.0]]
-#llthfmask = [[0.2,2.0],[0.3,2.0]]
-#llthfmask = [[0.4,2.0]]
-llthfmask  = [[0.7,4.0]]
+thfmask1, thfmask2 = front_para.ret_thfmask
 
 thorog  = ctrack_para.ret_thorog()
 thgradorog=ctrack_para.ret_thgradorog()
@@ -57,6 +50,7 @@ a2gradorogmask = fromfile(gradorogadjname, float32).reshape(ny,nx)
 a2shade  = ma.masked_where(a2orog >thorog, a2orog).filled(miss)
 a2shade  = ma.masked_where(a2gradorogmask >thgradorog, a2shade).filled(miss)
 #***************************************
+#  Total precipitation associated with fronts
 ##***************************************
 #for season in lseason:
 #  lmon  = ctrack_para.ret_lmon(season)
@@ -127,57 +121,52 @@ for season in lseason:
   odir_root  = "/media/disk2/out/JRA25/sa.one.%s/6hr/tenkizu/front/agg/%04d-%04d/%s"%(sresol,iyear, eyear, season)
   odir       = odir_root
   ctrack_func.mk_dir(odir)
-  #-------
-  for lthfmask in llthfmask:
-    thfmask1, thfmask2 = lthfmask 
-    #------
-    for thdist in lthdist:
-      #----
-      tkey  = (thfmask1, thfmask2, thdist)
-      #-- oname  ----
-      soname = odir + "/frac.rad%04d.M1_%s_M2_%s.saone"%(thdist,thfmask1, thfmask2)
-      #-- init -------
-      a2spr_front= zeros([ny,nx], float32)
-      a2spr_plain= zeros([ny,nx], float32)
-      
-      #---------------
-      for mon in lmon:
-        #-- load data ---
-        # frontal precip --
-        datdir_root  = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/front/agg/%04d-%04d/%s"%(iyear, eyear, mon)
-        datdir       = datdir_root
-        datname = datdir + "/rad%04d.M1_%s_M2_%s.saone"%(thdist,thfmask1, thfmask2)
-        a2in    = fromfile(datname, float32).reshape(ny,nx)
-        a2spr_front = a2spr_front + ma.masked_equal(a2in, miss).filled(0.0)
+  #----
+  tkey  = (thfmask1, thfmask2, thdist)
+  #-- oname  ----
+  soname = odir + "/frac.rad%04d.M1_%s_M2_%s.saone"%(thdist,thfmask1, thfmask2)
+  #-- init -------
+  a2spr_front= zeros([ny,nx], float32)
+  a2spr_plain= zeros([ny,nx], float32)
   
-        # plain precip --
-        if prtype == "GPCP1DD":
-          plaindir  = "/media/disk2/data/GPCP1DD/v1.2/1dd/mean"
-          plainname = plaindir + "/gpcp_1dd_v1.2_p1d.%04d-%04d.%s.bn"%(iyear,eyear,mon)
-          a2in    = fromfile(plainname, float32).reshape(ny,nx)
-          a2in    = flipud(a2in)
-          a2in    = a2in * calendar.monthrange(1999, mon)[1]  #mm/day ->mm/mon
-        #-----
-        a2spr_plain = a2spr_plain + a2in
-      #-- save --------
-      a2frac    = ma.masked_where(a2spr_plain <1.0, a2spr_front)/a2spr_plain
-      a2frac    = ma.masked_where(a2spr_front <1.0, a2frac)
-      a2frac    = a2frac.filled(miss)
-      a2frac.tofile(soname)
-  
-      #-- fig: name ---
-      figdir         = odir
-      ctrack_func.mk_dir(figdir)
-      figname_all    = figdir + "/frac.pr.s%s.rad%04d.M1_%s_M2_%s.png"%(season,thdist, thfmask1, thfmask2)
-      #-- fig: prep -
-      cbarname = figdir + "/frac.pr.cbar.png" 
-      stitle   = "precip fraction,  season:%s M1:%s  M2:%s"%(season,thfmask1, thfmask2)
-      mycm     = "Spectral"
-      a2figdat = fromfile( soname, float32).reshape(ny,nx)
-      a2figdat = ma.masked_equal(a2figdat, miss) * 100.0
-      a2figdat = a2figdat.filled(miss)
-      #-- fig: draw -
-      ctrack_fig.mk_pict_saone_reg(a2figdat, bnd=bnd, soname=figname_all, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, mycm=mycm)
-      print figname_all  
+  #---------------
+  for mon in lmon:
+    #-- load data ---
+    # frontal precip --
+    datdir_root  = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/front/agg/%04d-%04d/%s"%(iyear, eyear, mon)
+    datdir       = datdir_root
+    datname = datdir + "/rad%04d.M1_%s_M2_%s.saone"%(thdist,thfmask1, thfmask2)
+    a2in    = fromfile(datname, float32).reshape(ny,nx)
+    a2spr_front = a2spr_front + ma.masked_equal(a2in, miss).filled(0.0)
+
+    # plain precip --
+    if prtype == "GPCP1DD":
+      plaindir  = "/media/disk2/data/GPCP1DD/v1.2/1dd/mean"
+      plainname = plaindir + "/gpcp_1dd_v1.2_p1d.%04d-%04d.%s.bn"%(iyear,eyear,mon)
+      a2in    = fromfile(plainname, float32).reshape(ny,nx)
+      a2in    = flipud(a2in)
+      a2in    = a2in * calendar.monthrange(1999, mon)[1]  #mm/day ->mm/mon
+    #-----
+    a2spr_plain = a2spr_plain + a2in
+  #-- save --------
+  a2frac    = ma.masked_where(a2spr_plain <1.0, a2spr_front)/a2spr_plain
+  a2frac    = ma.masked_where(a2spr_front <1.0, a2frac)
+  a2frac    = a2frac.filled(miss)
+  a2frac.tofile(soname)
+
+  #-- fig: name ---
+  figdir         = odir
+  ctrack_func.mk_dir(figdir)
+  figname_all    = figdir + "/frac.pr.s%s.rad%04d.M1_%s_M2_%s.png"%(season,thdist, thfmask1, thfmask2)
+  #-- fig: prep -
+  cbarname = figdir + "/frac.pr.cbar.png" 
+  stitle   = "precip fraction,  season:%s M1:%s  M2:%s"%(season,thfmask1, thfmask2)
+  mycm     = "Spectral"
+  a2figdat = fromfile( soname, float32).reshape(ny,nx)
+  a2figdat = ma.masked_equal(a2figdat, miss) * 100.0
+  a2figdat = a2figdat.filled(miss)
+  #-- fig: draw -
+  ctrack_fig.mk_pict_saone_reg(a2figdat, bnd=bnd, soname=figname_all, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, mycm=mycm)
+  print figname_all  
   
 

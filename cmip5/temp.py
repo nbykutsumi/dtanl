@@ -1,18 +1,25 @@
-from ctrack import *
-from numpy import *
+import cmip_func
+from netCDF4 import *
 
-ix1 = 30
-iy1 = 40
-xgrids = 3
-ygrids = 2
-nx = 7
-ny = 7
-imiss = -9999
+idir  = "/home/utsumi/mnt/iis.data2/CMIP5/cmip5.working/MIROC5.historical"
+iname = idir + "/" +"va_6hrPlev_MIROC5_historical_r1i1p1_1973010100-1973123118.nc"
+nc    = Dataset(iname, "r", format="NETCDF")
+time1 = nc.variables["time"][0]
+time2 = nc.variables["time"][1]
+time3 = nc.variables["time"][-1]
 
-tout = ctrack.mk_a1xa1y(ix1, iy1, xgrids, ygrids, nx, ny, imiss)
+time1t = cmip_func.date2cmiptime(1973,1,1,0,0)
+time2t = cmip_func.date2cmiptime(1973,1,1,6,0)
+time3t = cmip_func.date2cmiptime(1973,12,31,18,0)
+
+time1r = cmip_func.cmiptime2date(time1)
+time2r = cmip_func.cmiptime2date(time2)
+time3r = cmip_func.cmiptime2date(time3)
 
 
-a1x = tout[0]
-a1y = tout[1]
-for i in range(len(a1x)):
-  print "x,y=",a1x[i], a1y[i]
+print time1, time1t, time1r
+print time2, time2t, time2r
+print time3, time3t, time3r
+
+l = cmip_func.ret_filedate("ua","6hrPlev","MIROC5","historical","r1i1p1",1972,5,1,0,0,1973,5,5,0,0,noleapflag=True)
+print l

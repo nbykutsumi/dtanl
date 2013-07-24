@@ -8,14 +8,20 @@ import os
 #---------------------------
 #singletime = True
 singletime = False
-calcflag   = True
+#calcflag   = True
+calcflag   = False
 lbstflag_tc   = ["bst"]
+#lbstflag_tc   = ["bst"]
 #lbstflag_f    = ["bst.high","bst.type"]
 lbstflag_f = [""]
+
+sresol  = "anl_p"
 iyear   = 2001
-eyear   = 2004
+eyear   = 2009
+#iyear    = 2001
+#eyear    = 2001
 #lseason = ["NDJFMA","JJASON"]
-lseason = ["ALL","NDJFMA","JJASON","DJF","JJA"]
+lseason = ["ALL","NDJFMA","JJASON"]
 #lseason = ["NDJFMA","JJASON","DJF","JJA"]
 #lseason = ["DJF"]
 #lseason = ["ALL"]
@@ -24,20 +30,35 @@ lseason = ["ALL","NDJFMA","JJASON","DJF","JJA"]
 iday    = 1
 ptile   = 99.9 # (%)
 #lnhour  = [1,3,6,12]
+#lnhour  = [1,3,6,12,24]
 lnhour  = [1,3,6,12,24]
 #lnhour  = [24]
-ltag    = ["tc","c","fbc","nbc","ot","o.tc","o.c","o.fbc","o.nbc","TCF","TCFC","TCB","TCBC"]
+#ltag    = ["nbcot","nbcot","tc","c","fbc","nbc","ot","o.tc","o.c","o.fbc","o.nbc","TCF","TCFC","TCB","TCBC"]
 #ltag    = ["tc","c","fbc","nbc","ot"]
-#ltag    = ["o.c"]
+ltag    = ["nbcot"]
+thdura_c  = 48
+thdura_tc = thdura_c
+
 iyear_dat= 2001
-eyear_dat= 2004
+eyear_dat= 2009
 #--------------------------------
 lprtype  = ["GSMaP"]
 #--------------------------------
-
-dist_tc = 500 #[km]
+# 100% area
+dist_tc = 1000 #[km]
 dist_c  = 1000 #[km]
 dist_f  = 500 #[km]
+
+## 80% area
+#dist_tc    = 894 # [km]
+#dist_c     = 894 # [km]
+#dist_f     = 400 # [km]
+
+## 120% area
+#dist_tc    = 1095 # [km]
+#dist_c     = 1095 # [km]
+#dist_f     = 600  # [km]
+
 nx,ny   =[360,180]
 
 thorog    = 1500   # [m]
@@ -50,173 +71,175 @@ region    = "GLOB"
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 
 #---------------------
-for nhour in lnhour:
-  for prtype in lprtype:
-    #-- load ptile -------
-    if prtype == "JRA":
-      ptiledir_root = "/media/disk2/data/JRA25/sa.one/6hr/PR/ptile" 
-      ptiledir      = ptiledir_root + "/%04d-%04d"%(2001,2004)
-      ptilename     = ptiledir + "/fcst_phy2m.PR.p%05.2f.%s.sa.one"%(ptile,"ALL")
-      #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
-      a2ptile       = fromfile(ptilename, float32).reshape(ny,nx)
-    if prtype == "GPCP1DD":
-      ptiledir_root = "/media/disk2/data/GPCP1DD/v1.2/1dd/ptile" 
-      ptiledir      = ptiledir_root + "/%04d-%04d"%(2000,2010)
-      ptilename     = ptiledir + "/pr.gpcp.p%05.2f.%s.bn"%(ptile,"ALL")
-      #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
-      a2ptile       = fromfile(ptilename, float32).reshape(ny,nx)
+for season in lseason:
+  for nhour in lnhour:
+    for prtype in lprtype:
+      #-- load ptile -------
+      if prtype == "JRA":
+        ptiledir_root = "/media/disk2/data/JRA25/sa.one/6hr/PR/ptile" 
+        ptiledir      = ptiledir_root + "/%04d-%04d"%(2001,2004)
+        ptilename     = ptiledir + "/fcst_phy2m.PR.p%05.2f.%s.sa.one"%(ptile,"ALL")
+        #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
+        a2ptile       = fromfile(ptilename, float32).reshape(ny,nx)
+      if prtype == "GPCP1DD":
+        ptiledir_root = "/media/disk2/data/GPCP1DD/v1.2/1dd/ptile" 
+        ptiledir      = ptiledir_root + "/%04d-%04d"%(2000,2010)
+        ptilename     = ptiledir + "/pr.gpcp.p%05.2f.%s.bn"%(ptile,"ALL")
+        #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
+        a2ptile       = fromfile(ptilename, float32).reshape(ny,nx)
+    
+      if prtype == "GSMaP":
+        thmissrat = 0.8
+        #ptiledir_root = "/media/disk2/data/GSMaP/sa.one/1hr/ptot/ptile" 
+        #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear, eyear)
+        #ptilename     = ptiledir + "/gsmap_mvk.v5.222.1.mov%02dhr.p%05.2f.%s.sa.one"%(nhour, ptile,"ALL")
+        ptiledir_root = "/media/disk2/data/GSMaP/sa.one/1hr/ptot/ptile" 
+        #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear, eyear)
+        ptiledir      = ptiledir_root + "/%04d-%04d"%(2001, 2009)
+        #ptilename     = ptiledir  + "/gsmap_mvk.v5.222.1.movw06hr.p99.90.ALL.sa.one"
+        ptilename     = ptiledir  + "/gsmap_mvk.v5.222.1.movw%02dhr.%3.1f.p%05.2f.ALL.sa.one"%(nhour, thmissrat, ptile)
+        a2ptile       = fromfile(ptilename, float32).reshape(120,360)
+        a2ptile       = gsmap_func.gsmap2global_one(a2ptile, miss_out)
   
-    if prtype == "GSMaP":
-      #ptiledir_root = "/media/disk2/data/GSMaP/sa.one/1hr/ptot/ptile" 
-      #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear, eyear)
-      #ptilename     = ptiledir + "/gsmap_mvk.v5.222.1.mov%02dhr.p%05.2f.%s.sa.one"%(nhour, ptile,"ALL")
-      ptiledir_root = "/media/disk2/data/GSMaP/sa.one/1hr/ptot/ptile" 
-      ptiledir      = ptiledir_root + "/%04d-%04d"%(2001, 2004)
-      #ptilename     = ptiledir  + "/gsmap_mvk.v5.222.1.movw06hr.p99.90.ALL.sa.one"
-      ptilename     = ptiledir  + "/gsmap_mvk.v5.222.1.movw%02dhr.p%05.2f.ALL.sa.one"%(nhour, ptile)
-      a2ptile       = fromfile(ptilename, float32).reshape(120,360)
-      a2ptile       = gsmap_func.gsmap2global_one(a2ptile, miss_out)
-
-      a2ptile       = (ma.masked_equal(a2ptile,miss)).filled(miss)
-
-      print ptilename
+        a2ptile       = (ma.masked_equal(a2ptile,miss)).filled(miss)
   
-    #-----------------------
-    for bstflag_tc in lbstflag_tc:
-      for bstflag_f in lbstflag_f:
-        #-- TC type ----------
-        if bstflag_tc =="bst":
-          tctype = "bst"
-        else:
-          tctype = ""
-        #-- front type  ------
-        if bstflag_f   == "bst.high":
-          ftype  = "bst.high"
-        elif bstflag_f == "bst.type":
-          ftype  = "bst.type"
-        elif bstflag_f == "":
-          ftype  = ""
-        #---------------------
-        if prtype in ["GPCP1DD"]:
-          coef       = 1.0/(60*60*24.0)
-        else:
-          coef       = 1.0
-        #--- tag dir_root -------------------
-        tagdir_root = "/media/disk2/out/JRA25/sa.one/6hr/tag"
-        #--- lhour -----------------------
-        lhour = range(24) 
-        #--- corresponding tag time ------
-        def ret_lhtag_inc(nhour, hour):
-          if nhour == 24:
-            if hour in [0,6,12,18]:
-              lhtag_inc = [-24,-18,-12,-6,0]
-              lwght     = array([3,6,6,6,3])/24.0
-            elif hour in [1,7,13,19]:
-              lhtag_inc = [-25,-19,-13,-7,-1]
-              lwght     = array([2,6,6,6,4])/24.0
-            elif hour in [2,8,14,20]:
-              lhtag_inc = [-26,-20,-14,-8,-2]
-              lwght     = array([1,6,6,6,5])/24.0
-            elif hour in [3,9,15,21]:
-              lhtag_inc = [-21,-15,-9,-3]
-              lwght     = array([6,6,6,6])/24.0
-            elif hour in [4,10,16,22]:
-              lhtag_inc = [-22,-16,-10,-4,+2]
-              lwght     = array([5,6,6,6,1])/24.0
-            elif hour in [5,11,17,23]:
-              lhtag_inc = [-23,-17,-11,-5,+1]
-              lwght     = array([4,6,6,6,2])/24.0
+        print ptilename
     
-          elif nhour == 12:
-            if hour in [0,6,12,18]:
-              lhtag_inc = [-12,-6,0]
-              lwght     = array([3,6,3])/12.0
-            elif hour in [1,7,13,19]:
-              lhtag_inc = [-13,-7,-1]
-              lwght     = array([2,6,4])/12.0
-            elif hour in [2,8,14,20]:
-              lhtag_inc = [-14,-8,-2]
-              lwght     = array([1,6,5])/12.0
-            elif hour in [3,9,15,21]:
-              lhtag_inc = [-9,-3]
-              lwght     = array([6,6])/12.0
-            elif hour in [4,10,16,22]:
-              lhtag_inc = [-10,-4,+2]
-              lwght     = array([5,6,1])/12.0
-            elif hour in [5,11,17,23]:
-              lhtag_inc = [-11,-5,+1]
-              lwght     = array([4,6,2])/12.0
-    
-          elif nhour == 6:
-            if hour in [0,6,12,18]:
-              lhtag_inc = [-6,0]
-              lwght     = array([3,3])/6.0
-            elif hour in [1,7,13,19]:
-              lhtag_inc = [-7,-1]
-              lwght     = array([2,4])/6.0
-            elif hour in [2,8,14,20]:
-              lhtag_inc = [-8,-2]
-              lwght     = array([1,5])/6.0
-            elif hour in [3,9,15,21]:
-              lhtag_inc = [-3]
-              lwght     = array([1.0])
-            elif hour in [4,10,16,22]:
-              lhtag_inc = [-4,+2]
-              lwght     = array([5,1])/6.0
-            elif hour in [5,11,17,23]:
-              lhtag_inc = [-5,+1]
-              lwght     = array([4,2])/6.0
-    
-          elif nhour == 3:
-            if hour in  [0,6,12,18]:
-              lhtag_inc = [0]
-              lwght     = array([1.0])
-            elif hour in [1,7,13,19]:
-              lhtag_inc = [-1]
-              lwght     = array([1.0])
-            elif hour in [2,8,14,20]:
-              lhtag_inc = [-2]
-              lwght     = array([1.0])
-            elif hour in [3,9,15,21]:
-              lhtag_inc = [-3]
-              lwght     = array([1.0])
-            elif hour in [4,10,16,22]:
-              lhtag_inc = [-4,+2]
-              lwght     = array([2,1])/3.0
-            elif hour in [5,11,17,23]:
-              lhtag_inc = [-5,+1]
-              lwght     = array([1,2])/3.0
-    
-          elif nhour == 1:
-            if hour in [0,6,12,18]:
-              lhtag_inc = [0]
-              lwght     = array([1.0])
-            elif hour in [1,7,13,19]:
-              lhtag_inc = [-1]
-              lwght     = array([1.0])
-            elif hour in [2,8,14,20]:
-              lhtag_inc = [-2]
-              lwght     = array([1.0])
-            elif hour in [3,9,15,21]:
-              lhtag_inc = [-3]
-              lwght     = array([1.0])
-            elif hour in [4,10,16,22]:
-              lhtag_inc = [+2]
-              lwght     = array([1.0])
-            elif hour in [5,11,17,23]:
-              lhtag_inc = [+1]
-              lwght     = array([1.0])
-          #
-          return lhtag_inc, lwght
-    
-        #-- orog ------------------------
-        orogname = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
-        a2orog   = fromfile(orogname, float32).reshape(ny,nx)
-        
-        a2shade  = ma.masked_where(a2orog >thorog, a2orog).filled(miss)
-        #***************************************
-        
-        for season in lseason:
+      #-----------------------
+      for bstflag_tc in lbstflag_tc:
+        for bstflag_f in lbstflag_f:
+          #-- TC type ----------
+          if bstflag_tc =="bst":
+            tctype = "bst"
+          else:
+            tctype = ""
+          #-- front type  ------
+          if bstflag_f   == "bst.high":
+            ftype  = "bst.high"
+          elif bstflag_f == "bst.type":
+            ftype  = "bst.type"
+          elif bstflag_f == "":
+            ftype  = ""
+          #---------------------
+          if prtype in ["GPCP1DD"]:
+            coef       = 1.0/(60*60*24.0)
+          else:
+            coef       = 1.0
+          #--- tag dir_root -------------------
+          tagdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tag/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
+          #--- lhour -----------------------
+          lhour = range(24) 
+          #--- corresponding tag time ------
+          def ret_lhtag_inc(nhour, hour):
+            if nhour == 24:
+              if hour in [0,6,12,18]:
+                lhtag_inc = [-24,-18,-12,-6,0]
+                lwght     = array([3,6,6,6,3])/24.0
+              elif hour in [1,7,13,19]:
+                lhtag_inc = [-25,-19,-13,-7,-1]
+                lwght     = array([2,6,6,6,4])/24.0
+              elif hour in [2,8,14,20]:
+                lhtag_inc = [-26,-20,-14,-8,-2]
+                lwght     = array([1,6,6,6,5])/24.0
+              elif hour in [3,9,15,21]:
+                lhtag_inc = [-21,-15,-9,-3]
+                lwght     = array([6,6,6,6])/24.0
+              elif hour in [4,10,16,22]:
+                lhtag_inc = [-22,-16,-10,-4,+2]
+                lwght     = array([5,6,6,6,1])/24.0
+              elif hour in [5,11,17,23]:
+                lhtag_inc = [-23,-17,-11,-5,+1]
+                lwght     = array([4,6,6,6,2])/24.0
+      
+            elif nhour == 12:
+              if hour in [0,6,12,18]:
+                lhtag_inc = [-12,-6,0]
+                lwght     = array([3,6,3])/12.0
+              elif hour in [1,7,13,19]:
+                lhtag_inc = [-13,-7,-1]
+                lwght     = array([2,6,4])/12.0
+              elif hour in [2,8,14,20]:
+                lhtag_inc = [-14,-8,-2]
+                lwght     = array([1,6,5])/12.0
+              elif hour in [3,9,15,21]:
+                lhtag_inc = [-9,-3]
+                lwght     = array([6,6])/12.0
+              elif hour in [4,10,16,22]:
+                lhtag_inc = [-10,-4,+2]
+                lwght     = array([5,6,1])/12.0
+              elif hour in [5,11,17,23]:
+                lhtag_inc = [-11,-5,+1]
+                lwght     = array([4,6,2])/12.0
+      
+            elif nhour == 6:
+              if hour in [0,6,12,18]:
+                lhtag_inc = [-6,0]
+                lwght     = array([3,3])/6.0
+              elif hour in [1,7,13,19]:
+                lhtag_inc = [-7,-1]
+                lwght     = array([2,4])/6.0
+              elif hour in [2,8,14,20]:
+                lhtag_inc = [-8,-2]
+                lwght     = array([1,5])/6.0
+              elif hour in [3,9,15,21]:
+                lhtag_inc = [-3]
+                lwght     = array([1.0])
+              elif hour in [4,10,16,22]:
+                lhtag_inc = [-4,+2]
+                lwght     = array([5,1])/6.0
+              elif hour in [5,11,17,23]:
+                lhtag_inc = [-5,+1]
+                lwght     = array([4,2])/6.0
+      
+            elif nhour == 3:
+              if hour in  [0,6,12,18]:
+                lhtag_inc = [0]
+                lwght     = array([1.0])
+              elif hour in [1,7,13,19]:
+                lhtag_inc = [-1]
+                lwght     = array([1.0])
+              elif hour in [2,8,14,20]:
+                lhtag_inc = [-2]
+                lwght     = array([1.0])
+              elif hour in [3,9,15,21]:
+                lhtag_inc = [-3]
+                lwght     = array([1.0])
+              elif hour in [4,10,16,22]:
+                lhtag_inc = [-4,+2]
+                lwght     = array([2,1])/3.0
+              elif hour in [5,11,17,23]:
+                lhtag_inc = [-5,+1]
+                lwght     = array([1,2])/3.0
+      
+            elif nhour == 1:
+              if hour in [0,6,12,18]:
+                lhtag_inc = [0]
+                lwght     = array([1.0])
+              elif hour in [1,7,13,19]:
+                lhtag_inc = [-1]
+                lwght     = array([1.0])
+              elif hour in [2,8,14,20]:
+                lhtag_inc = [-2]
+                lwght     = array([1.0])
+              elif hour in [3,9,15,21]:
+                lhtag_inc = [-3]
+                lwght     = array([1.0])
+              elif hour in [4,10,16,22]:
+                lhtag_inc = [+2]
+                lwght     = array([1.0])
+              elif hour in [5,11,17,23]:
+                lhtag_inc = [+1]
+                lwght     = array([1.0])
+            #
+            return lhtag_inc, lwght
+      
+          #-- orog ------------------------
+          orogname = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
+          a2orog   = fromfile(orogname, float32).reshape(ny,nx)
+          
+          a2shade  = ma.masked_where(a2orog >thorog, a2orog).filled(miss)
+          #***************************************
+          
           #-----------------
           if calcflag == True:
             #-----------------
@@ -241,8 +264,8 @@ for nhour in lnhour:
             a2num_TCFC  = a2zero.copy()
             a2num_TCB   = a2zero.copy()
             a2num_TCBC  = a2zero.copy()
-     
-  
+       
+    
             a2rfreq_sum = zeros([ny,nx],float32)
             #--------------------------------
             for year in range(iyear, eyear+1):
@@ -276,7 +299,7 @@ for nhour in lnhour:
                     if prtype   in ["GSMaP"]:
                       a2pr  = gsmap_func.timeave_gsmap_backward_saone(year,mon,day,hour, nhour)
                       a2pr  = gsmap_func.gsmap2global_one(a2pr, miss_out)
-    
+      
                     #*****************************
                     # load corresponding tags 
                     #-----------------------------
@@ -292,7 +315,7 @@ for nhour in lnhour:
                     for iinc in arange(len(lhtag_inc)):
                       htag_inc  = lhtag_inc[iinc]
                       wght      = lwght[iinc]
-    
+      
                       dhour       = datetime.timedelta(hours = htag_inc)
                       target      = now + dhour
                       year_target = target.year
@@ -301,7 +324,7 @@ for nhour in lnhour:
                       hour_target = target.hour
                       #-- tag name ---
                       tagdir   = tagdir_root + "/%04d%02d"%(year_target, mon_target)
-                      tagname  = tagdir + "/tag.%stc%02d.c%02d.%sf%02d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc/100, dist_c/100, ftype, dist_f/100, year_target,mon_target,day_target,hour_target)
+                      tagname  = tagdir + "/tag.%stc%04d.c%04d.%sf%04d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc, dist_c, ftype, dist_f, year_target,mon_target,day_target,hour_target)
                       if not os.access(tagname, os.F_OK):
                         print "AAAA"
                         print "nofile", tagname
@@ -309,29 +332,29 @@ for nhour in lnhour:
                           continue
                         elif (year==eyear)&(mon==12)&(day==eday):
                           continue
-    
+      
                       #-- load -------
                       a2tag     = fromfile(tagname, int32).reshape(180,360)
                       lout      = tag_fsub.solve_tag_4type(a2tag.T)
-  
+    
                       a2tag_tmp_tc  = array(lout[0].T, float32)
                       a2tag_tmp_c   = array(lout[1].T, float32)
                       a2tag_tmp_fbc = array(lout[2].T, float32)
                       a2tag_tmp_nbc = array(lout[3].T, float32)
                       a2tag_tmp_ot  = ma.masked_where(a2tag !=0, a2one).filled(0.0)
-  
+    
                       a2tag_sum     = a2tag_tmp_tc + a2tag_tmp_c + a2tag_tmp_fbc + a2tag_tmp_nbc
                       a2olwgt_tc      = (ma.masked_where(a2tag_sum==0.0, a2tag_tmp_tc ) / a2tag_sum).filled(0.0)
                       a2olwgt_c       = (ma.masked_where(a2tag_sum==0.0, a2tag_tmp_c  ) / a2tag_sum).filled(0.0)
                       a2olwgt_fbc     = (ma.masked_where(a2tag_sum==0.0, a2tag_tmp_fbc) / a2tag_sum).filled(0.0)
                       a2olwgt_nbc     = (ma.masked_where(a2tag_sum==0.0, a2tag_tmp_nbc) / a2tag_sum).filled(0.0) 
-  
+    
                       a2tag_tc  = a2tag_tc  + a2tag_tmp_tc  * wght *a2olwgt_tc 
                       a2tag_c   = a2tag_c   + a2tag_tmp_c   * wght *a2olwgt_c
                       a2tag_fbc = a2tag_fbc + a2tag_tmp_fbc * wght *a2olwgt_fbc 
                       a2tag_nbc = a2tag_nbc + a2tag_tmp_nbc * wght *a2olwgt_nbc 
                       a2tag_ot  = a2tag_ot  + a2tag_tmp_ot  * wght
-  
+    
                     ##
                     a2tag_all = a2tag_tc + a2tag_c + a2tag_fbc + a2tag_nbc + a2tag_ot
                     #************************************
@@ -342,7 +365,7 @@ for nhour in lnhour:
                     a2tag_o_fbc    = ma.masked_where(a2tag_all !=a2tag_fbc, a2tag_fbc).filled(0.0)
                     a2tag_o_nbc    = ma.masked_where(a2tag_all !=a2tag_nbc, a2tag_nbc).filled(0.0)
                     a2tag_o_ot     = a2tag_ot
-    
+      
                     #****************
                     # tag for overlap
                     #----------------
@@ -361,7 +384,7 @@ for nhour in lnhour:
                     a2tag_TCBC     = ma.masked_where(a2tag_tc  ==0.0, (a2tag_tc + a2tag_fbc + a2tag_c)/3.0).filled(0.0)
                     a2tag_TCBC     = ma.masked_where((a2tag_fbc==0.0)&(a2tag_c==0.0), a2tag_TCBC).filled(0.0)
                     a2tag_TCBC     = ma.masked_where(a2tag_nbc !=0.0, a2tag_TCBC).filled(0.0)
-    
+      
                     #*****************************
                     # check Pex
                     #-----------------------------
@@ -370,9 +393,9 @@ for nhour in lnhour:
                     a2tag_fbc   = ma.masked_where(a2pr < a2ptile, a2tag_fbc).filled(0.0)
                     a2tag_nbc   = ma.masked_where(a2pr < a2ptile, a2tag_nbc).filled(0.0)
                     a2tag_ot    = ma.masked_where(a2pr < a2ptile, a2tag_ot ).filled(0.0)
-  
-                    ##
     
+                    ##
+      
                     a2tag_o_tc  = ma.masked_where(a2pr < a2ptile, a2tag_o_tc ).filled(0.0)
                     a2tag_o_c   = ma.masked_where(a2pr < a2ptile, a2tag_o_c  ).filled(0.0)
                     a2tag_o_fbc = ma.masked_where(a2pr < a2ptile, a2tag_o_fbc).filled(0.0)
@@ -383,7 +406,7 @@ for nhour in lnhour:
                     a2tag_TCFC  = ma.masked_where(a2pr < a2ptile, a2tag_TCFC).filled(0.0)
                     a2tag_TCB   = ma.masked_where(a2pr < a2ptile, a2tag_TCB).filled(0.0)
                     a2tag_TCBC  = ma.masked_where(a2pr < a2ptile, a2tag_TCBC).filled(0.0)
-    
+      
                     #** weighting ***
                     #****************
                     a2num_pln   = a2num_pln + ma.masked_where(a2pr < a2ptile, a2one).filled(0.0)
@@ -429,24 +452,25 @@ for nhour in lnhour:
             #****************************************
             # write to file
             #----------------------------------------
-            sodir_root = "/media/disk2/out/JRA25/sa.one/6hr/tagpr"
+            sodir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagpr/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
             sodir      = sodir_root + "/%04d-%04d/%s"%(iyear, eyear, season)
             ctrack_func.mk_dir(sodir)
             dsname    = {}
             for stag in ltag:
-              dsname[stag]    =  sodir  + "/rfreq.%stc%02d.c%02d.%sf%02d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, ftype, dist_f/100, iyear, eyear, season, nhour, ptile, prtype, stag)
+              #dsname[stag]    =  sodir  + "/rfreq.%stc%02d.c%02d.%sf%02d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, ftype, dist_f/100, iyear, eyear, season, nhour, ptile, prtype, stag)
+              dsname[stag]    =  sodir  + "/rfreq.%stc%04d.c%04d.%sf%04d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.sa.one" %(tctype, dist_tc, dist_c, ftype, dist_f, iyear, eyear, season, nhour, ptile, prtype, stag)
               da2rfreq[stag].tofile(dsname[stag])
               print dsname[stag] 
-  
+    
             ##*** test *******
             #for stag in ["tc","c","fbc","nbc","ot"]:
             #  print stag, ma.masked_equal(da2rfreq[stag],miss).sum()
             #  a2rfreq_sum = a2rfreq_sum + ma.masked_equal(da2rfreq[stag],-9999.0).filled(0.0)
-  
+    
           #****************************************
           # draw figure
           #----------------------------------------
-          sodir_root = "/media/disk2/out/JRA25/sa.one/6hr/tagpr"
+          sodir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagpr/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
           sodir      = sodir_root + "/%04d-%04d/%s"%(iyear, eyear, season)
           figdir     = sodir + "/pict"
           ctrack_func.mk_dir(figdir)
@@ -455,25 +479,38 @@ for nhour in lnhour:
           da2frac    = {}
           for stag in ltag:
             #-- name --
-            dsname[stag]    =  sodir  + "/rfreq.%stc%02d.c%02d.%sf%02d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, ftype, dist_f/100, iyear, eyear, season, nhour, ptile, prtype, stag)
-            dfigname[stag]  =  figdir + "/rfreq.%stc%02d.c%02d.%sf%02d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.png" %(tctype, dist_tc/100, dist_c/100, ftype, dist_f/100, iyear, eyear, season, nhour, ptile, prtype, stag)
-    
-    
-        
+            if stag == "nbcot":
+              dsname["ot"]    =  sodir  + "/rfreq.%stc%04d.c%04d.%sf%04d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.sa.one" %(tctype, dist_tc, dist_c, ftype, dist_f, iyear, eyear, season, nhour, ptile, prtype, "ot")
+              dsname["nbc"]    =  sodir  + "/rfreq.%stc%04d.c%04d.%sf%04d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.sa.one" %(tctype, dist_tc, dist_c, ftype, dist_f, iyear, eyear, season, nhour, ptile, prtype, "nbc")
+            else:
+              dsname[stag]    =  sodir  + "/rfreq.%stc%04d.c%04d.%sf%04d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.sa.one" %(tctype, dist_tc, dist_c, ftype, dist_f, iyear, eyear, season, nhour, ptile, prtype, stag)
+            #--
+            dfigname[stag]  =  figdir + "/rfreq.%stc%04d.c%04d.%sf%04d.%04d-%04d.%s.mov%02dhr.%05.2f.%s.%s.png" %(tctype, dist_tc, dist_c, ftype, dist_f, iyear, eyear, season, nhour, ptile, prtype, stag)
+      
+      
+          
             #-- settings --
             bnd    = [5,10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
             cbarname = figdir + "/rfreq.cbar.png"
             #
-            stitle   = "rfreq %04.1f %s: season:%s %s %04d-%04d %stc%02d c%02d %sf%02d"%(ptile, stag, season, prtype, iyear, eyear, tctype, dist_tc/100, dist_c/100, ftype, dist_f/100)
+            stitle   = "rfreq %04.1f %s: season:%s %s %04d-%04d %stc%04d c%04d %sf%04d"%(ptile, stag, season, prtype, iyear, eyear, tctype, dist_tc, dist_c, ftype, dist_f)
             mycm     = "Spectral_r"
-            datname  = dsname[stag]
             figname  = dfigname[stag]
-        
+          
             #-- load -----
-            a2figdat = fromfile(datname, float32).reshape(ny,nx)
+            if stag == "nbcot":
+              a2figdat_ot  = fromfile(dsname["ot"],  float32).reshape(ny,nx)
+              a2figdat_nbc = fromfile(dsname["nbc"], float32).reshape(ny,nx)
+              a2figdat     = ma.masked_equal(a2figdat_ot,miss) + ma.masked_equal(a2figdat_ot, miss)
+            else:
+              datname  = dsname[stag]
+              a2figdat = fromfile(datname, float32).reshape(ny,nx)
+            #--
             a2figdat = ma.masked_equal(a2figdat, miss) * 100.0
-            #a2figdat = fromfile(datname, float32).reshape(ny,nx)
             a2figdat = ma.masked_equal(a2figdat, miss).filled(miss)
+
+
+
             #-- shade -----
             a2shade  = ma.masked_where(a2figdat==miss, a2shade).filled(miss)  
             #-- draw ------

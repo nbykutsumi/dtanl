@@ -1,33 +1,43 @@
 from netCDF4 import *
 from numpy import *
 import os
-import calendar
+import calendar, datetime
 import cf
+import cmip_func
 #####################################################
-odir_root ="/media/disk2/data/CMIP5/sa.one"
 #####################################################
-#var = "wap" #wap, zg, hur, hus
-#lvar  = ["ua", "va"]
-lvar  = ["va"]
-#lvar = ["wap", "zg"]
-#lvar = ["ta","hus"]
-#lvar = ["ta"]
-tstp = "day"
-#tstp  = "6hrLev"
-tinc  = {"6hr":6,  "6hrLev":6}
-hlast = {"6hr":18, "6hrLev":18}
-lev   =  500
+if len(sys.argv) > 1:
+  var     = sys.argv[1]
+  model   = sys.argv[2]
+  expr    = sys.argv[3]
+  ens     = sys.argv[4]
+  year    = int(sys.argv[5])
+  mon     = int(sys.argv[6])
+  dattype = sys.argv[7]
+  tinc    = int(sys.argv[8])
+  lev     = int(sys.argv[9])
+else:
+  print "*******************"
+  print "BBBBBBBBBBBB"
+  print "*******************"
+  var   = "ua"
+  model = "MIROC5"
+  expr  = "historical"
+  ens   = "r1i1p1"
+  year  = 1995
+  mon   = 1
+  dattype = "6hrPlev"
+  tinc  = 6
+  lev   =  850
 
-hdattype = "Plev"
-#lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
-lmodel = ["MIROC5"]
-#expr = "historical" #historical, rcp85
-#expr = "rcp85"
-#lexpr = ["historical", "rcp85"]
-lexpr = ["historical"]
-#lexpr = ["rcp85"]
-ens  = "r1i1p1"
+#--------------
+noleapflag = True
+iday  = 1
+eday  = calendar.monthrange(year,mon)[1]
+lyear = [year]
+lmon  = [mon]
 
+miss    = -9999.0
 ny_one  = 180
 nx_one  = 360
 #####################################################
@@ -76,8 +86,8 @@ def dumpdata(iname, nc):
   lenlon= len( a1lon_one)
 
   #--
-  if tstp not in ["6hrLev"]:
-    plev   = nc.variables["plev"][diz[model,lev]]
+  if dattype not in ["6hrLev"]:
+    plev   = nc.variables["plev"][diz[lev]]
     #slev   = a2s( nc.variables["plev"][:])
     #lenlev = len(nc.variables["plev"][:])
     slev   = str(plev)
@@ -90,7 +100,7 @@ def dumpdata(iname, nc):
   ###
   totext(namelat, slat)
   totext(namelon, slon)
-  if tstp not in["6hrLev"]:
+  if dattype not in["6hrLev"]:
     totext(namelev, slev)
   totext(namedims, sdims)
   print namedump
@@ -98,235 +108,170 @@ def dumpdata(iname, nc):
 # diz
 #------------------------------
 diz = {}
-diz["NorESM1-M",500]  = 3
-diz["MIROC5",500]     = 3
+diz[850]  = 0
+diz[500]  = 1
+diz[250]  = 2
 
 #####################################################
-for model in lmodel:
-  for expr in lexpr:
-    for var in lvar:
-      #####################################################
-      # set dlyrange
-      #####################################################
-      dlyrange     = {}
-      #
-      if ( (var in ["ua","va"]) and (tstp in ["6hr"])):
-        #dlyrange["NorESM1-M", "historical"]  = [[1980,1984],[1985,1989],[1990,1994],[1995,1999]]
-        dlyrange["NorESM1-M", "historical"]  = [[2000,2004]]
-        dlyrange["NorESM1-M", "rcp85"]       = [[2076,2080],[2081,2085],[2086,2090],[2091,2095]]
-        #
+odir_root ="/media/disk2/data/CMIP5/sa.one.%s.%s/%s"%(model, expr, var)
+odir_dump = odir_root
+#---------
 
-      elif ( tstp in ["6hrLev"] ):
-        #dlyrange["NorESM1-M", "historical"]  = [[1991,1991],[1992,1992], [1993,1993]]
-        #dlyrange["NorESM1-M", "historical"]  = [[1998,1998]]
-        dlyrange["NorESM1-M", "rcp85"]  = [[2086,2086],[2087,2087],[2088,2088],[2089,2089],[2090,2090],[2091,2091],[2092,2092],[2093,2093],[2094,2094],[2095,2095]]
+#####################################################
+# set dlyrange
+#####################################################
+llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59,noleapflag)
 
-      else:
-        #dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999],[2000,2005]]
-        dlyrange["NorESM1-M", "historical"]  = [[1980,1989],[1990,1999]]
-        #dlyrange["NorESM1-M", "historical"]  = [[2000,2005]]
-        dlyrange["NorESM1-M", "rcp85"]       = [[2076,2085],[2086,2095],[2096,2100]]
-        #
-        dlyrange["MIROC5", "historical"]     = [[1980,1989],[1990,1999],[2000,2009]]
-        #dlyrange["MIROC5", "historical"]     = [[2000,2009]]
-        dlyrange["MIROC5", "rcp85"]          = [[2080,2089], [2090,2099]]
-        #
-        dlyrange["CanESM2", "historical"]  = [[1979,2005]]
-        dlyrange["CanESM2", "rcp85"]       = [[2081,2090], [2091,2100]]
-      #------
-      if tstp in ["6hrLev"]:
-        lmonrange = [[1,6], [7,12]]
-        #lmonrange = [[7,12]]
-        #lmonrange = [[1,6]]
-      else:
-        lmonrange = [[1,12]]
-      #------------------------------
-      # make heads and tails
-      #------------------------------
-      if (tstp == "day"):
-        ihead = var + "_" + tstp + "_" +model + "_" + expr +"_"\
-               +ens
-        ohead = ihead
-        odir_tail = var + "/" + tstp + "/" +model + "/" + expr +"/"\
-               +ens
-        odir_dump = odir_root + "/" +odir_tail
-
-      elif (tstp == "6hrLev"):
-        ihead = var + "_" + tstp + "_" +model + "_" + expr +"_"\
-               +ens
-        ohead = ihead
-        odir_tail = var + "/" + tstp + "/" +model + "/" + expr +"/"\
-               +ens
-        odir_dump = odir_root + "/" +odir_tail
-
-      else:
-        ihead = var + "_" + tstp + hdattype + "_" +model + "_" + expr +"_"\
-               +ens
-        ohead = var + "_" + tstp + "_" +model + "_" + expr +"_"\
-               +ens
-        odir_tail = var + "/" + tstp + "/" +model + "/" + expr +"/"\
-               +ens
-        odir_dump = odir_root + "/" +odir_tail
-
-        
-      #------------------------------
-      # set dir for nc input
-      #------------------------------
-      #incdir = "/media/disk2/data/CMIP5/nc/day/NorESM1-M"
-      #incdir = "/media/disk2/data/CMIP5/nc/%s/%s"%(tstp, model)
-      incdir = "/home/utsumi/mnt/export/nas_d/data/CMIP5/%s/%s"%(tstp, model)
-      #------------------------------
-      # make dump
-      #------------------------------
-      try:
-        os.makedirs(odir_dump)
-      except OSError:
-        pass
-      namedump = odir_dump +"/ncdump.txt"
-      namelon  = odir_dump +"/lon.txt"
-      namelat  = odir_dump +"/lat.txt"
-      namelev = odir_dump +"/lev.txt"
-      namedims  = odir_dump +"/dims.txt"
+print llfileinfo
+for lfileinfo in llfileinfo:
+  fyear0,fmon0,fday0,fhour0,fmin0,fcmiptime0,fyear1,fmon1,fday1,fhour1,fmin1,fcmiptime1,ncname\
+   = lfileinfo 
+  print lfileinfo
+  #------
+  time0 = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
+  #------------------------------
+  # make heads 
+  #------------------------------
+  ihead = var + "_" + dattype + "_" +model + "_" + expr +"_" +ens
+    
+  #------------------------------
+  # set dir for nc input
+  #------------------------------
+  incdir = "/home/utsumi/mnt/iis.data2/CMIP5/cmip5.working/%s.%s"%(model,expr)
+  #------------------------------
+  # make dump
+  #------------------------------
+  try:
+    os.makedirs(odir_dump)
+  except OSError:
+    pass
+  namedump = odir_dump +"/ncdump.txt"
+  namelon  = odir_dump +"/lon.txt"
+  namelat  = odir_dump +"/lat.txt"
+  namelev  = odir_dump +"/lev.txt"
+  namedims = odir_dump +"/dims.txt"
   
-      #------------------------------
-      lyrange = dlyrange[model, expr]
-      for yrange in lyrange:
-        y0 = yrange[0]
-        y1 = yrange[1]
-        for monrange in lmonrange:
-          istep = -1
-          imon = monrange[0]
-          emon = monrange[1]
-          #--------------------
-          if (tstp == "day"):
-            itimerange="%04d0101-%04d1231"%(y0,y1)
-          elif (tstp == "3hr"):
-            itimerange="%04d01010130-%04d12312230"%(y0,y1, hlast[tstp])
-          elif ( tstp == "6hrLev")&(emon ==6):
-            itimerange="%04d%02d0100-%04d%02d3018"%(y0,imon,y1,emon)
-          elif ( tstp == "6hrLev")&(emon ==12):
-            itimerange="%04d%02d0100-%04d%02d3118"%(y0,imon,y1,emon)
-          else:
-            itimerange="%04d010100-%04d1231%02d"%(y0,y1, hlast[tstp])
-          ######
-          iname = "%s/%s_%s.nc"%(incdir, ihead, itimerange)
-          #####
-          print os.access(iname, os.F_OK)
-          print "iname=", iname
-          nc = Dataset(iname, "r", format="NETCDF")
-          #####
-          dumpdata(iname, nc)
-          ny    = len(nc.variables["lat"][:])
-          nx    = len(nc.variables["lon"][:])
-          #--
-          if tstp in ["6hrLev"]:
-            nz  = len(nc.variables["lev"][:])
-          else:
-            nz  = len(nc.variables["plev"][:])
-          #--
-          #####
-          for y in range(y0, y1+1):
-            print y
-            #############
-            odir = odir_root + "/%s/%04d"%(odir_tail, y)
-            print odir
-            try:
-              os.makedirs(odir)
-            except OSError:
-              pass
-            #************
-            #############
-            print odir
-            for m in range(imon,emon+1):
-              ##############
-              # no leap
-              ##############
-              if (m==2)&(calendar.isleap(y)):
-                ed = calendar.monthrange(y,m)[1] -1
-              else:
-                ed = calendar.monthrange(y,m)[1]
-              ##############
-              for d in range(1, ed + 1):
-                if (tstp == "day"):
-                  istep = istep +1
-                  stime = "%04d%02d%02d%02d"%(y,m,d,0)
-                  ########
-                  #data     = nc.variables["%s"%(var)][istep]
-                  data      = nc.variables["%s"%(var)][istep][diz[model,lev]]
+  #------------------------------
+  #itimerange="%04d%02d%02d%02d-%04d%02d%02d%02d"%(fyear0,fmon0,fday0,fhour0,fyear1,fmon1,fday1,fhour1)
+  ######
+  #iname = "%s/%s_%s.nc"%(incdir, ihead, itimerange)
+  iname = incdir + "/" + ncname
+  #####
+  print os.access(iname, os.F_OK)
+  print "iname=", iname
+  nc = Dataset(iname, "r", format="NETCDF")
+  #*********
+  # ntime
+  #---------
+  ntime  = shape(nc.variables["time"])[0]
 
-                  #- Interpolation --
-                  a1lat_org = nc.variables["lat"][:]
-                  a1lon_org = nc.variables["lon"][:]
-                  data_one  = cf.biIntp(a1lat_org, a1lon_org, data, a1lat_one, a1lon_one)[0]
-                  data_one  = array(data_one, float32)
-           
-                  ########
-                  oname = odir + "/%s_%s.%04dPa.sa.one"%(ohead, stime, lev)
-                  ########
-                  f = open(oname, "wb")
-                  f.write(data_one)
-                  f.close()
-                  print oname
-                #-------------
-                elif (tstp == "3hr"):
-                  for h in range(1, 22+1, tinc[tstp]):
-                    istep = istep + 1
-                    stime = "%04d%02d%02d%02d30"%(y,m,d,h)
-                    ########
-                    data = nc.variables["%s"%(var)][istep]
-                    ########
-                    oname = odir + "/%s_%s.bn"%(ohead, stime)
-                    ########
-                    f = open(oname, "wb")
-                    f.write(data)
-                    f.close()
-                    print oname
-                #-------------- 
-                else:
-                  for h in range(0, 23+1, tinc[tstp]):
-                    istep = istep + 1
-                    print istep, y, m, d, h
-                    stime = "%04d%02d%02d%02d"%(y,m,d,h)
-                    ########
-                    data = nc.variables["%s"%(var)][istep]
-                    ########
-                    oname = odir + "/%s_%s.bn"%(ohead, stime)
-                    ########
-                    f = open(oname, "wb")
-                    f.write(data)
-                    f.close()
-                    print oname 
-                    #----------------
-                    # make pa for 6hrLev
-                    #----------------
-                    if tstp in ["6hrLev"]:
-                      a1a    = nc.variables["a"][:]
-                      a1b    = nc.variables["b"][:]
-                      p0     = nc.variables["p0"][:]
-                      a2ps   = nc.variables["ps"][istep]
-                      ##
-                      a3a    = a1z_to_a3zyx(a1a, ny, nx)
-                      a3b    = a1z_to_a3zyx(a1b, ny, nx)
-                      a3p0   = ones([nz, ny, nx], float32) * p0
-                      a3ps   = mul_a2( a2ps, nz)
-                      ##
-                      a3pa   = a3a * a3p0 + a3b * a3ps
-                      a3pa   = array(a3pa, float32)
-                      #-- name -----------------
-                      odir_tail_pa = "pa" + "/" + tstp + "/"\
-                                     +model + "/" + expr +"/" +ens
-                      odir_pa      = odir_root + "/%s/%04d"%(odir_tail_pa, y)
+  #####
+  dumpdata(iname, nc)
+  ny    = len(nc.variables["lat"][:])
+  nx    = len(nc.variables["lon"][:])
+  #--
+  if dattype in ["6hrLev"]:
+    nz  = len(nc.variables["lev"][:])
+  else:
+    nz  = len(nc.variables["plev"][:])
+  #--
+  #####
+  istep = -1
+  istep_withleap = -1
+  #--------------------
+  while istep <= ntime:
+    istep_withleap = istep_withleap + 1
+    time = time0 + datetime.timedelta(hours=istep_withleap *tinc)
+    year_tmp = time.year
+    mon_tmp  = time.month
+    day_tmp  = time.day
+    hour_tmp = time.hour
+    min_tmp = time.minute
   
-                      ihead_pa     = "pa" + "_" + tstp + "_" +model\
-                                     + "_" + expr +"_"+ens
-                      ohead_pa     = ihead_pa
-                      oname_pa  = odir_pa  + "/%s_%s.bn"%(ohead_pa, stime)
-                      try:
-                        os.makedirs(odir_pa)
-                      except OSError:
-                        pass 
-                      #-------------------------
-                      f = open(oname_pa, "wb")
-                      f.write(a3pa)
-                      f.close()
-                      print oname_pa 
+    ##############
+    # no leap
+    ##############
+    if ( calendar.isleap(year_tmp)& (mon_tmp == 2)&(day_tmp==29)):
+      continue
+    ##############
+    istep = istep + 1
+    #############
+    if ((year_tmp not in lyear) or (mon_tmp not in lmon)):
+      continue
+    ##############
+    # check cmiptime & file name time
+    #-------------
+    cmiptime_tmp  = nc.variables["time"][istep]
+
+    year_cmip, mon_cmip, day_cmip, hour_cmip, min_cmip\
+       = cmip_func.cmiptime2date(cmiptime_tmp, noleapflag=True)
+
+    if not (year_cmip, mon_cmip, day_cmip, hour_cmip, min_cmip\
+       == year_tmp, mon_tmp, day_tmp, hour_tmp, min_tmp):
+      print "not much in time"
+      print "time_cmip",year_cmip, mon_cmip, day_cmip, hour_cmip, min_cmip
+      print "time_tmp ",year_tmp, mon_tmp, day_tmp, hour_tmp, min_tmp
+      sys.exit()
+ 
+    #############
+    odir = odir_root + "/%04d%02d"%(year_tmp,mon_tmp)
+    print odir
+    try:
+      os.makedirs(odir)
+    except OSError:
+      pass
+    #############
+    stime = "%04d%02d%02d%02d%02d"%(year_tmp,mon_tmp,day_tmp,hour_tmp,min_tmp)
+    ########
+    data      = nc.variables["%s"%(var)][istep][diz[lev]]
+    if type(data) == numpy.ma.core.MaskedArray:
+      data = data.filled(miss)
+  
+    #- Interpolation --
+    a1lat_org = nc.variables["lat"][:]
+    a1lon_org = nc.variables["lon"][:]
+    data_one  = cf.biIntp(a1lat_org, a1lon_org, data, a1lat_one, a1lon_one, miss=miss)[0]
+    data_one  = array(data_one, float32)
+   
+    ########
+    oname = odir + "/%s.%s.%s.%s.%s.%04dPa.sa.one"%(var, model, expr, ens, stime, lev)
+    ########
+    f = open(oname, "wb")
+    f.write(data_one)
+    f.close()
+    print oname
+    #-------------
+    ##----------------
+    ## make pa for 6hrLev
+    ##----------------
+    #if dattype in ["6hrLev"]:
+    #  a1a    = nc.variables["a"][:]
+    #  a1b    = nc.variables["b"][:]
+    #  p0     = nc.variables["p0"][:]
+    #  a2ps   = nc.variables["ps"][istep]
+    #  ##
+    #  a3a    = a1z_to_a3zyx(a1a, ny, nx)
+    #  a3b    = a1z_to_a3zyx(a1b, ny, nx)
+    #  a3p0   = ones([nz, ny, nx], float32) * p0
+    #  a3ps   = mul_a2( a2ps, nz)
+    #  ##
+    #  a3pa   = a3a * a3p0 + a3b * a3ps
+    #  a3pa   = array(a3pa, float32)
+    #  #-- name -----------------
+    #  odir_tail_pa = "pa" + "/" + dattype + "/"\
+    #                 +model + "/" + expr +"/" +ens
+    #  odir_pa      = odir_root + "/%s/%04d"%(odir_tail_pa, y)
+  
+    #  ihead_pa     = "pa" + "_" + dattype + "_" +model\
+    #                 + "_" + expr +"_"+ens
+    #  ohead_pa     = ihead_pa
+    #  oname_pa  = odir_pa  + "/%s_%s.bn"%(ohead_pa, stime)
+    #  try:
+    #    os.makedirs(odir_pa)
+    #  except OSError:
+    #    pass 
+    #  #-------------------------
+    #  f = open(oname_pa, "wb")
+    #  f.write(a3pa)
+    #  f.close()
+    #  print oname_pa 

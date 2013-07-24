@@ -8,27 +8,45 @@ import os
 #---------------------------
 #singletime = True
 singletime = False
+calcflag   = True
 #calcflag   = True
-calcflag   = False
-lbstflag    = [True,False]
+lbstflag    = [True]
 #lbstflag   = [False]
-iyear   = 2001
-eyear   = 2004
+
+sresol  = "anl_p"
+iyear   = 1997
+eyear   = 2012
 #lseason = ["DJF", "JJA","ALL"]
 #lseason = ["NDJFMA","JJASON"]
-lseason = ["NDJFMA","JJASON","DJF","JJA","ALL"]
+#lseason = ["NDJFMA","JJASON","DJF","JJA","ALL"]
+lseason = range(1,12+1)
 #lseason = [1]
 iday    = 1
 #--------------------------------
 #lprtype  = ["JRA","GPCP1DD"]
-lprtype  = ["GSMaP"]
-#lprtype   = ["JRA"]
+#lprtype  = ["GSMaP"]
+lprtype   = ["GPCP1DD"]
 #--------------------------------
 
-dist_tc = 500 #[km]
+dist_tc = 1000 #[km]
 dist_c  = 1000 #[km]
 dist_f  = 500 #[km]
+
+## 80% area
+#dist_tc    = 894 # [km]
+#dist_c     = 894 # [km]
+#dist_f     = 400 # [km]
+
+## 120% area
+#dist_tc    = 894 # [km]
+#dist_c     = 894 # [km]
+#dist_f     = 400 # [km]
+
+
 nx,ny   =[360,180]
+
+thdura_c    = 72
+thdura_tc   = 72
 
 thorog    = 1500   # [m]
 miss      = -9999.0
@@ -39,6 +57,7 @@ miss_gpcp = -99999.
 region    = "GLOB"
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 #---------------------
+
 for prtype in lprtype:
   for bstflag in lbstflag:
     #-- TC type ----------
@@ -46,23 +65,21 @@ for prtype in lprtype:
       tctype = "bst"
     else:
       tctype = ""
-    #---------------------
-    if prtype in ["GPCP1DD"]:
-      coef       = 1.0/(60*60*24.0)
-    else:
-      coef       = 1.0
     #--- tag dir_root -------------------
-    tagdir_root = "/media/disk2/out/JRA25/sa.one/6hr/tag"
+    tagdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tag/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
     #--- precipitation directory & timestep-----
     if prtype == "GSMaP":
+      # unit (mm/s)
       prdir_root  = "/media/disk2/data/GSMaP/sa.one/3hr/ptot"
       timestep    = "3hr"
     
     elif prtype == "JRA":
-      prdir_root  = "/media/disk2/data/JRA25/sa.one/6hr/PR"
+      # unit (mm/s)
+      prdir_root  = "/media/disk2/data/JRA25/sa.one.anl_p/6hr/PR"
       timestep    = "6hr"
     
     elif prtype == "GPCP1DD":
+      # unit (mm/day)
       prdir_root  = "/media/disk2/data/GPCP1DD/v1.2/1dd"
       timestep    = "day"
     
@@ -92,7 +109,7 @@ for prtype in lprtype:
       return lhtag_inc
     
     #-- orog ------------------------
-    orogname = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
+    orogname = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
     a2orog   = fromfile(orogname, float32).reshape(ny,nx)
     
     a2shade  = ma.masked_where(a2orog >thorog, a2orog).filled(miss)
@@ -113,17 +130,19 @@ for prtype in lprtype:
         #--------------------------------
         a2one    = ones([ny,nx],float32)
         a2zero   = zeros([ny,nx],float32)
-        ##
-        a2pr_all = a2zero
-        a2pr_tc  = a2zero
-        a2pr_c   = a2zero
-        a2pr_fbc = a2zero
-        a2pr_nbc = a2zero
-        a2pr_ot  = a2zero
         #--------------------------------
         for year in range(iyear, eyear+1):
           #-----------------
           for mon in lmon:
+            print year,mon
+            ##
+            a2pr_all = a2zero
+            a2pr_tc  = a2zero
+            a2pr_c   = a2zero
+            a2pr_fbc = a2zero
+            a2pr_nbc = a2zero
+            a2pr_ot  = a2zero
+
             #-- prdir ---
             if prtype in ["GSMaP", "JRA"]:
               prdir    = prdir_root + "/%04d%02d"%(year, mon)
@@ -135,9 +154,9 @@ for prtype in lprtype:
             if singletime ==True:
               eday = iday
               lhour = [0]
-            #-- leap year -------
-            if (mon==2)&(eday==29):
-              eday = 28
+            ##-- leap year -------
+            #if (mon==2)&(eday==29):
+            #  eday = 28
             #--------------------
             for day in range(iday, eday+1):
               print prtype, season, year, mon, day
@@ -198,6 +217,7 @@ for prtype in lprtype:
                   a2tag_fbc = a2tag_fbc + array(lout[2].T, float32)
                   a2tag_nbc = a2tag_nbc + array(lout[3].T, float32)
                   a2tag_ot  = a2tag_ot  + ma.masked_where(a2tag !=0, a2one).filled(0.0)
+
                 ##
                 a2tag_tc  = a2tag_tc  / len(lhtag_inc)
                 a2tag_c   = a2tag_c   / len(lhtag_inc)
@@ -229,80 +249,50 @@ for prtype in lprtype:
                 a2pr_fbc     = a2pr_fbc + a2prtmp_fbc
                 a2pr_nbc     = a2pr_nbc + a2prtmp_nbc
                 a2pr_ot      = a2pr_ot  + a2prtmp_ot
-        #-------------------------------------
-        a2frac_tc  = (ma.masked_where(a2pr_all==0.0, a2pr_tc ) / a2pr_all).filled(0.0)
-        a2frac_c   = (ma.masked_where(a2pr_all==0.0, a2pr_c  ) / a2pr_all).filled(0.0)
-        a2frac_fbc = (ma.masked_where(a2pr_all==0.0, a2pr_fbc) / a2pr_all).filled(0.0)
-        a2frac_nbc = (ma.masked_where(a2pr_all==0.0, a2pr_nbc) / a2pr_all).filled(0.0)
-        a2frac_ot  = (ma.masked_where(a2pr_all==0.0, a2pr_ot ) / a2pr_all).filled(0.0)
 
-        #*** mask for GSMaP *********************
-        if prtype == "GSMaP":
-          a2frac_tc  = ma.masked_where(a2shade_gsmap==miss, a2frac_tc ).filled(miss)
-          a2frac_c   = ma.masked_where(a2shade_gsmap==miss, a2frac_c  ).filled(miss)
-          a2frac_fbc = ma.masked_where(a2shade_gsmap==miss, a2frac_fbc).filled(miss)
-          a2frac_nbc = ma.masked_where(a2shade_gsmap==miss, a2frac_nbc).filled(miss)
-          a2frac_ot  = ma.masked_where(a2shade_gsmap==miss, a2frac_ot ).filled(miss)
-      
-        #****************************************
-        # write to file
-        #----------------------------------------
-        sodir_root = "/media/disk2/out/JRA25/sa.one/6hr/tagpr"
-        sodir      = sodir_root + "/%04d-%04d/%s"%(iyear, eyear, season)
-        ctrack_func.mk_dir(sodir)
-        sname_tc   =  sodir  + "/frac.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%s.tc.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, prtype)
-        sname_c    =  sodir  + "/frac.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%s.c.sa.one"  %(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, prtype)
-        sname_fbc  =  sodir  + "/frac.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%s.fbc.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, prtype)
-        sname_nbc  =  sodir  + "/frac.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%s.nbc.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, prtype)
-        sname_ot   =  sodir  + "/frac.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%s.ot.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, prtype)
-        ##
-        a2frac_tc.tofile(sname_tc)
-        a2frac_c.tofile(sname_c)
-        a2frac_fbc.tofile(sname_fbc)
-        a2frac_nbc.tofile(sname_nbc)
-        a2frac_ot.tofile(sname_ot)
-    
-    
-      #****************************************
-      # draw figure
-      #----------------------------------------
-      ltag       = ["tc","c","fbc","nbc","ot"]
-      sodir_root = "/media/disk2/out/JRA25/sa.one/6hr/tagpr"
-      sodir      = sodir_root + "/%04d-%04d/%s"%(iyear, eyear, season)
-      figdir     = sodir + "/pict"
-      ctrack_func.mk_dir(figdir)
-      dsname     = {}
-      dfigname   = {}
-      da2frac    = {}
-      for tag in ltag:
-        #-- name --
-        dsname[tag]   =  sodir  + "/frac.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%s.%s.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, prtype, tag)
-        dfigname[tag] =  figdir + "/frac.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%s.%s.png"%(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, prtype, tag)
-    
-        #-- settings --
-        if tag in ["tc"]:
-          bnd    = [5,10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
-          cbarname = figdir + "/frac.cbar.tc.png"
-        else:
-          bnd    = [5,10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
-          cbarname = figdir + "/frac.cbar.png"
-        #
-        if tag =="tc":
-          stitle   = "frac %s%s: season:%s %s %04d-%04d %stc%02d c%02d f%02d"%(tctype, tag, season, prtype, iyear, eyear, tctype, dist_tc/100, dist_c/100, dist_f/100)
-        else:
-          stitle   = "frac %s: season:%s %s %04d-%04d %stc%02d c%02d f%02d"%(tag, season, prtype, iyear, eyear, tctype, dist_tc/100, dist_c/100, dist_f/100)
-        mycm     = "Spectral_r"
-        datname  = dsname[tag]
-        figname  = dfigname[tag]
-    
-        #-- loaad -----
-        a2figdat = fromfile(datname, float32).reshape(ny,nx)
-        a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-    
-        #-- draw ------
-        ctrack_fig.mk_pict_saone_reg(a2figdat, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
-        print figname
-   
+            #*****************************
+            # convert unit to mm/s
+            #---------------------
+            if prtype in ["GPCP1DD"]:
+              coef       = 1.0/(60*60*24.0)
+            else:
+              coef       = 1.0
+            #--                         
+            totaltimes   = ctrack_para.ret_totaldays(year,year,mon)*len(lhour)
+            #
+            a2pr_all     = a2pr_all *coef/ totaltimes 
+            a2pr_tc      = a2pr_tc  *coef/ totaltimes 
+            a2pr_c       = a2pr_c   *coef/ totaltimes 
+            a2pr_fbc     = a2pr_fbc *coef/ totaltimes 
+            a2pr_nbc     = a2pr_nbc *coef/ totaltimes 
+            a2pr_ot      = a2pr_ot  *coef/ totaltimes 
 
+            #print "all",mon, a2pr_all.sum()
+            #print "tc", mon, a2pr_tc.sum()
+            #print "c",  mon, a2pr_c.sum()
+            #print "fbc",mon, a2pr_fbc.sum()              
+            #print "nbc",mon, a2pr_nbc.sum()
+            #print "ot", mon, a2pr_ot.sum()
+            #*****************************
+            #-- save monthly data ---
+            #-----------------------------
+            sodir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagpr/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
+            sodir      = sodir_root + "/%04d%02d"%(year, mon)
+            ctrack_func.mk_dir(sodir)
+
+            sname_all  =  sodir  + "/pr.plain.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
+            sname_tc   =  sodir  + "/pr.tc.%stc%02d.c%02d.f%02d.%04d.%04d.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
+            sname_c    =  sodir  + "/pr.c.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one"  %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
+            sname_fbc  =  sodir  + "/pr.fbc.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
+            sname_nbc  =  sodir  + "/pr.nbc.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
+            sname_ot   =  sodir  + "/pr.ot.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
+            #-----------------------------
+            a2pr_all.tofile(sname_all)
+            a2pr_tc.tofile(sname_tc)
+            a2pr_c.tofile(sname_c)
+            a2pr_fbc.tofile(sname_fbc)
+            a2pr_nbc.tofile(sname_nbc)
+            a2pr_ot.tofile(sname_ot)
+            print sname_c
 
 
