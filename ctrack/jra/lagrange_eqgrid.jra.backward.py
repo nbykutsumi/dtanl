@@ -8,6 +8,7 @@ import gsmap_func
 #*************************************************************
 #singleday = True
 singleday = False
+calcflag  = False
 bsttc     = True
 #bsttc     = False
 iyear     = 1997
@@ -191,213 +192,216 @@ for season in lseason:
       #---------------------
       # for only figure, comment out from here
       #---------------------
-      
-      i = 0
-      for year in range(iyear, eyear+1):
-        #***********************
-        #-- TC best track
-        #-----------------------
-        if bsttc == True:
-          ddatbst = tc_func.ret_ibtracs_dpyxy_saone(year)
-        #***********************
-        for mon in lmon:
-          eday  = calendar.monthrange(year, mon)[1]
-          if singleday == True:
-            eday = iday
-          #-----------------
-          for day in range(1, eday+1):
-          #for day in range(28, eday+1):
-            if ((vtype == "GPCP1DD")&((year,mon,day) == (1997,1,1))):
-              continue
-            print vtype, year, mon, day, "eday=",eday
-            print "lmon=" , lmon
-            for hour in lhour:
-              if ((year==iyear)&(mon==1)&(day==1)&(hour==lhour[0])):
+      if calcflag == True: 
+        i = 0
+        for year in range(iyear, eyear+1):
+          #***********************
+          #-- TC best track
+          #-----------------------
+          if bsttc == True:
+            ddatbst = tc_func.ret_ibtracs_dpyxy_saone(year)
+          #***********************
+          for mon in lmon:
+            eday  = calendar.monthrange(year, mon)[1]
+            if singleday == True:
+              eday = iday
+            #-----------------
+            for day in range(1, eday+1):
+            #for day in range(28, eday+1):
+              if ((vtype == "GPCP1DD")&((year,mon,day) == (1997,1,1))):
                 continue
-              if ((year==eyear)&(mon==12)&(day==31)&(hour==lhour[-1])):
-                continue
-              #---------------------
-              didir      = {}
-              diname     = {}
-              da2in      = {}
-    
-              ltarget    = []
-              #----------
-              da2in[var]   = zeros([ny_org, nx_org], float32)
-    
-              #----------
-              for var_temp in ["life", "pgrad"]:
-                didir[var_temp] = didir_root[var_temp] + "/%04d%02d"%(year, mon)
-              #
-              didir["tc"] = didir_root["tc"] + "/%04d/%02d"%(year, mon)
-              #-------------------
-              if vtype in ["GSMaP"]:
-                 lhour_inc  = [0,3]
-              elif vtype in ["JRA"]:
-                 lhour_inc  = [0,6]
-              elif vtype in ["GPCP1DD"]:
-                 lhour_inc  = [0,-24]
-              #-------------------
-              now   = datetime.datetime(year, mon, day, hour)
-              for hour_inc in lhour_inc:
-                dhour       = datetime.timedelta(hours = hour_inc)
-                target      = now + dhour
-                year_target = target.year
-                mon_target  = target.month
-                day_target  = target.day
-                hour_target = target.hour
-    
-                if vtype in ["GSMaP", "JRA"]:
-                  didir[var] = didir_root[var] + "/%04d%02d"%(year_target, mon_target)
-                elif vtype:
-                  didir[var] = didir_root[var] + "/%04d"%(year_target)
-     
-                #-- prec name --
-                if var == "pr":
-                  if vtype == "GSMaP":
-                    diname["pr"]    = didir["pr"]    + "/gsmap_mvk.3rh.%04d%02d%02d.%02d00.v5.222.1.sa.one"%(year_target, mon_target, day_target, hour_target)
-                    print year, mon, day, hour, target
-    
-                  elif vtype == "JRA":
-                    diname["pr"]    = didir["pr"]    + "/fcst_phy2m.PR.%04d%02d%02d%02d.sa.one"%(year_target, mon_target, day_target, hour_target)
-                    print year, mon, day, hour, target
-    
-                  elif vtype == "GPCP1DD":
-                    diname["pr"]    = didir["pr"]    + "/gpcp_1dd_v1.2_p1d.%04d%02d%02d.bn"%(year_target, mon_target, day_target)
-                    print year, mon, day, hour, target
-    
-                if var == "pr":
-                  #-- load -----
-                  if vtype == "GSMaP": 
-                    a2invar_temp      = fromfile(diname[var],  float32).reshape(120, 360)
-                    a2invar_temp      = gsmap_func.gsmap2global_one(a2invar_temp, miss_out)
-                  elif vtype == "JRA":
-                    a2invar_temp      = fromfile(diname[var],  float32).reshape(ny_org, nx_org)
-                  elif vtype == "GPCP1DD":
-                    a2invar_temp      = flipud(fromfile(diname[var],  float32).reshape(ny_org, nx_org))
-                    a2invar_temp      = ma.masked_equal(a2invar_temp, miss_gpcp).filled(0.0)
-                  #------
-                da2in[var] = da2in[var] + ma.masked_equal(a2invar_temp, miss_out)
-              #---------------
-              da2in[var] = da2in[var] / len(lhour_inc)
-              if type(da2in[var]) == ma.core.MaskedArray:
-                da2in[var] = da2in[var].filled(miss_out)
-              #---------------
-              diname["life"]  = didir["life"]  + "/life.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
-              diname["pgrad"] = didir["pgrad"] + "/pgrad.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
-              #*****************************
-              # TC besttrack
-              #----------------
-              if bsttc == True:
-                psldir  = "/media/disk2/data/JRA25/sa.one.%s/6hr/PRMSL/%04d%02d"%(sresol,year,mon)
-                pslname = psldir + "/anl_p.PRMSL.%04d%02d%02d%02d.sa.one"%(year,mon,day,hour)
-                a2psl   = fromfile(pslname, float32).reshape(ny_org,nx_org)
-                lxy = ddatbst[year,mon,day,hour]
-                a2tc    = ones([ny_org,nx_org],float32) * miss_out
-                for xy in lxy:
-                  ixpy, iypy = xy
-                  ixfort, iyfort  = ixpy+1, iypy+1
-                  a2tc[iypy,ixpy] = ctrack_fsub.point_pgrad_rad_saone(ixfort,iyfort,a2psl.T, 300.0, miss_out)
-
-              #*****************************
-              # TC objective
-              #----------------
-              diname["tc"]    = didir["tc"]    + "/tc.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
-              diname["tc"]    = didir["tc"]    + "/tc.wc%4.2f.sst%02d.wind%02d.vor%.1e.%04d%02d%02d%02d.sa.one"%(thwcore, thsst-273.15, thwind, thrvort, year, mon, day, hour)
-              a2tc            = fromfile(diname["tc"],float32).reshape(ny_org, nx_org)
-
-              #---------------
-              da2in["pgrad"]  = fromfile(diname["pgrad"],float32).reshape(ny_org, nx_org)
-              da2in["life"]   = fromfile(diname["life"], int32).reshape(ny_org, nx_org)
+              print vtype, year, mon, day, "eday=",eday
+              print "lmon=" , lmon
+              for hour in lhour:
+                if ((year==iyear)&(mon==1)&(day==1)&(hour==lhour[0])):
+                  continue
+                if ((year==eyear)&(mon==12)&(day==31)&(hour==lhour[-1])):
+                  continue
+                #---------------------
+                didir      = {}
+                diname     = {}
+                da2in      = {}
       
-              #--- original --> fine grid ---
-              a2in_fin        = cf.biIntp(a1lat_org, a1lon_org, da2in[var], a1lat_fin, a1lon_fin, miss=miss_out)[0] 
+                ltarget    = []
+                #----------
+                da2in[var]   = zeros([ny_org, nx_org], float32)
       
-              #--- cyclone center data -------------
-              da2in["center"] = ma.masked_less(da2in["pgrad"], 0.0).filled(miss_out)
-              #--- check duration -----
-              ltmp = ctrack_fsub.solvelife(da2in["life"].T, miss_int)
-              a2dura = ltmp[0].T
-              da2in["center"] = ma.masked_where( a2dura < thdura, da2in["center"]).filled(miss_out)
+                #----------
+                for var_temp in ["life", "pgrad"]:
+                  didir[var_temp] = didir_root[var_temp] + "/%04d%02d"%(year, mon)
+                #
+                didir["tc"] = didir_root["tc"] + "/%04d/%02d"%(year, mon)
+                #-------------------
+                if vtype in ["GSMaP"]:
+                   lhour_inc  = [0,3]
+                elif vtype in ["JRA"]:
+                   lhour_inc  = [0,6]
+                elif vtype in ["GPCP1DD"]:
+                   lhour_inc  = [0,-24]
+                #-------------------
+                now   = datetime.datetime(year, mon, day, hour)
+                for hour_inc in lhour_inc:
+                  dhour       = datetime.timedelta(hours = hour_inc)
+                  target      = now + dhour
+                  year_target = target.year
+                  mon_target  = target.month
+                  day_target  = target.day
+                  hour_target = target.hour
+      
+                  if vtype in ["GSMaP", "JRA"]:
+                    didir[var] = didir_root[var] + "/%04d%02d"%(year_target, mon_target)
+                  elif vtype:
+                    didir[var] = didir_root[var] + "/%04d"%(year_target)
        
-              #--- mask out TC --------
-              da2in["center"] = ma.masked_where( a2tc !=miss_out, da2in["center"]).filled(miss_out)
+                  #-- prec name --
+                  if var == "pr":
+                    if vtype == "GSMaP":
+                      diname["pr"]    = didir["pr"]    + "/gsmap_mvk.3rh.%04d%02d%02d.%02d00.v5.222.1.sa.one"%(year_target, mon_target, day_target, hour_target)
+                      print year, mon, day, hour, target
+      
+                    elif vtype == "JRA":
+                      diname["pr"]    = didir["pr"]    + "/fcst_phy2m.PR.%04d%02d%02d%02d.sa.one"%(year_target, mon_target, day_target, hour_target)
+                      print year, mon, day, hour, target
+      
+                    elif vtype == "GPCP1DD":
+                      diname["pr"]    = didir["pr"]    + "/gpcp_1dd_v1.2_p1d.%04d%02d%02d.bn"%(year_target, mon_target, day_target)
+                      print year, mon, day, hour, target
+      
+                  if var == "pr":
+                    #-- load -----
+                    if vtype == "GSMaP": 
+                      a2invar_temp      = fromfile(diname[var],  float32).reshape(120, 360)
+                      a2invar_temp      = gsmap_func.gsmap2global_one(a2invar_temp, miss_out)
+                    elif vtype == "JRA":
+                      a2invar_temp      = fromfile(diname[var],  float32).reshape(ny_org, nx_org)
+                    elif vtype == "GPCP1DD":
+                      a2invar_temp      = flipud(fromfile(diname[var],  float32).reshape(ny_org, nx_org))
+                      a2invar_temp      = ma.masked_equal(a2invar_temp, miss_gpcp).filled(0.0)
+                    #------
+                  da2in[var] = da2in[var] + ma.masked_equal(a2invar_temp, miss_out)
+                #---------------
+                da2in[var] = da2in[var] / len(lhour_inc)
+                if type(da2in[var]) == ma.core.MaskedArray:
+                  da2in[var] = da2in[var].filled(miss_out)
+                #---------------
+                diname["life"]  = didir["life"]  + "/life.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
+                diname["pgrad"] = didir["pgrad"] + "/pgrad.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
+                #*****************************
+                # TC besttrack
+                #----------------
+                if bsttc == True:
+                  psldir  = "/media/disk2/data/JRA25/sa.one.%s/6hr/PRMSL/%04d%02d"%(sresol,year,mon)
+                  pslname = psldir + "/anl_p.PRMSL.%04d%02d%02d%02d.sa.one"%(year,mon,day,hour)
+                  a2psl   = fromfile(pslname, float32).reshape(ny_org,nx_org)
+                  lxy = ddatbst[year,mon,day,hour]
+                  a2tc    = ones([ny_org,nx_org],float32) * miss_out
+                  for xy in lxy:
+                    ixpy, iypy = xy
+                    ixfort, iyfort  = ixpy+1, iypy+1
+                    a2tc[iypy,ixpy] = ctrack_fsub.point_pgrad_rad_saone(ixfort,iyfort,a2psl.T, 300.0, miss_out)
   
-              #-------------------------------------
-              for iy_org in ly_org:
-                for ix_org in lx_org:
-                  #-------------
-                  if thgrad_min <= da2in["pgrad"][iy_org, ix_org] < thgrad_max:
-                    i = i+1
-                    print iy_org, ix_org
-                    #---- project center position original --> fine grid
-                    lat_org          = a1lat_org[iy_org]
-                    lon_org          = a1lon_org[ix_org]
-                    iy_fin, ix_fin   = latlon2yx(lat_org, lon_org, lat_fin_first, lon_fin_first, dlat_fin, dlon_fin)
+                #*****************************
+                # TC objective
+                #----------------
+                diname["tc"]    = didir["tc"]    + "/tc.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
+                diname["tc"]    = didir["tc"]    + "/tc.wc%4.2f.sst%02d.wind%02d.vor%.1e.%04d%02d%02d%02d.sa.one"%(thwcore, thsst-273.15, thwind, thrvort, year, mon, day, hour)
+                a2tc            = fromfile(diname["tc"],float32).reshape(ny_org, nx_org)
+  
+                #---------------
+                da2in["pgrad"]  = fromfile(diname["pgrad"],float32).reshape(ny_org, nx_org)
+                da2in["life"]   = fromfile(diname["life"], int32).reshape(ny_org, nx_org)
         
-                    iy_fin_fort  = iy_fin + 1
-                    ix_fin_fort  = ix_fin + 1
+                #--- original --> fine grid ---
+                a2in_fin        = cf.biIntp(a1lat_org, a1lon_org, da2in[var], a1lat_fin, a1lon_fin, miss=miss_out)[0] 
         
-                    #---- search and project to equal size grids -----
-                    a2sum_eqgrid_temp, a2num_eqgrid_temp =\
-                            ctrack_fsub.eqgrid_aggr(\
-                                          a2in_fin.T\
-                                        , a1lat_fin\
-                                        , a1lon_fin\
-                                        , dkm\
-                                        , nradeqgrid\
-                                        , iy_fin_fort\
-                                        , ix_fin_fort\
-                                        , miss_out) 
+                #--- cyclone center data -------------
+                da2in["center"] = ma.masked_less(da2in["pgrad"], 0.0).filled(miss_out)
+                #--- check duration -----
+                ltmp = ctrack_fsub.solvelife(da2in["life"].T, miss_int)
+                a2dura = ltmp[0].T
+                da2in["center"] = ma.masked_where( a2dura < thdura, da2in["center"]).filled(miss_out)
          
-                    a2sum_eqgrid_temp = a2sum_eqgrid_temp.T
-                    a2num_eqgrid_temp = a2num_eqgrid_temp.T
-                    
-                    a2sum_eqgrid  = a2sum_eqgrid + a2sum_eqgrid_temp
-                    a2num_eqgrid  = a2num_eqgrid + a2num_eqgrid_temp
-  
-                    #--- for correlation coefficient ------
-                    a2cor_num_temp= ma.masked_where( a2num_eqgrid_temp <=0.0, a2one).filled(0.0)
-                    a2cor_A_temp = (ma.masked_where(a2num_eqgrid_temp==0.0, a2sum_eqgrid_temp) / a2num_eqgrid_temp).filled(0.0)
-                    a2cor_B_temp = a2cor_num_temp * da2in["pgrad"][iy_org, ix_org]
-                    
-                    a2cor_num     = a2cor_num + a2cor_num_temp
-                    a2cor_SA      = a2cor_SA  + a2cor_A_temp
-                    a2cor_SB      = a2cor_SB  + a2cor_B_temp
-                    a2cor_SAB     = a2cor_SAB + a2cor_A_temp * a2cor_B_temp
-                    a2cor_SA2     = a2cor_SA2 + a2cor_A_temp **2.0
-                    a2cor_SB2     = a2cor_SB2 + a2cor_B_temp **2.0
-        
+                #--- mask out TC --------
+                da2in["center"] = ma.masked_where( a2tc !=miss_out, da2in["center"]).filled(miss_out)
+    
+                #-------------------------------------
+                for iy_org in ly_org:
+                  for ix_org in lx_org:
+                    #-------------
+                    if thgrad_min <= da2in["pgrad"][iy_org, ix_org] < thgrad_max:
+                      i = i+1
+                      print iy_org, ix_org
+                      #---- project center position original --> fine grid
+                      lat_org          = a1lat_org[iy_org]
+                      lon_org          = a1lon_org[ix_org]
+                      iy_fin, ix_fin   = latlon2yx(lat_org, lon_org, lat_fin_first, lon_fin_first, dlat_fin, dlon_fin)
+          
+                      iy_fin_fort  = iy_fin + 1
+                      ix_fin_fort  = ix_fin + 1
+          
+                      #---- search and project to equal size grids -----
+                      a2sum_eqgrid_temp, a2num_eqgrid_temp =\
+                              ctrack_fsub.eqgrid_aggr(\
+                                            a2in_fin.T\
+                                          , a1lat_fin\
+                                          , a1lon_fin\
+                                          , dkm\
+                                          , nradeqgrid\
+                                          , iy_fin_fort\
+                                          , ix_fin_fort\
+                                          , miss_out) 
+           
+                      a2sum_eqgrid_temp = a2sum_eqgrid_temp.T
+                      a2num_eqgrid_temp = a2num_eqgrid_temp.T
                       
-                    #lnum.append(a2cor_num_temp[58,21])
-                    #lA.append(a2cor_A_temp[58,21])
-                    #lB.append(a2cor_B_temp[58,21])
-                    #lAB.append(a2cor_A_temp[58,21]*a2cor_B_temp[58,21])
-                    #lA2.append(a2cor_A_temp[58,21]**2.0)
-                    #lB2.append(a2cor_B_temp[58,21]**2.0)
-      
-      
-      #----------------------------------------------
-      a2mean_eqgrid  = ma.masked_where(a2num_eqgrid ==0.0, a2sum_eqgrid) / a2num_eqgrid
-      a2mean_eqgrid  = a2mean_eqgrid.filled(0.0)
-      
-      #-- corr. coeff -------
-      a2cor_MA       = (ma.masked_where(a2cor_num ==0.0, a2cor_SA) / a2cor_num).filled(0.0)
-      a2cor_MB       = (ma.masked_where(a2cor_num ==0.0, a2cor_SB) / a2cor_num).filled(0.0)
-      #
-      a2cor_bunshi   = a2cor_SAB - a2cor_MB * a2cor_SA - a2cor_MA * a2cor_SB + a2cor_num * a2cor_MA * a2cor_MB
-      
-      a2cor_bunbo1   = a2cor_SA2 - 2.0 * a2cor_MA * a2cor_SA + a2cor_num * a2cor_MA**2.0
-      
-      a2cor_bunbo2   = a2cor_SB2 - 2.0 * a2cor_MB * a2cor_SB + a2cor_num * a2cor_MB**2.0
-      
-      a2cor_bunbo    = (a2cor_bunbo1 * a2cor_bunbo2)**0.5
-      a2cor_eqgrid   = ( ma.masked_where(a2cor_bunbo == 0.0, a2cor_bunshi) / a2cor_bunbo ).filled(0.0)
-      
-      #-- save --------------
-      a2mean_eqgrid  = a2mean_eqgrid * coef
-      a2mean_eqgrid.tofile(oname_mean)
-      a2cor_eqgrid.tofile(oname_cor)
+                      a2sum_eqgrid  = a2sum_eqgrid + a2sum_eqgrid_temp
+                      a2num_eqgrid  = a2num_eqgrid + a2num_eqgrid_temp
+    
+                      #--- for correlation coefficient ------
+                      a2cor_num_temp= ma.masked_where( a2num_eqgrid_temp <=0.0, a2one).filled(0.0)
+                      a2cor_A_temp = (ma.masked_where(a2num_eqgrid_temp==0.0, a2sum_eqgrid_temp) / a2num_eqgrid_temp).filled(0.0)
+                      a2cor_B_temp = a2cor_num_temp * da2in["pgrad"][iy_org, ix_org]
+                      
+                      a2cor_num     = a2cor_num + a2cor_num_temp
+                      a2cor_SA      = a2cor_SA  + a2cor_A_temp
+                      a2cor_SB      = a2cor_SB  + a2cor_B_temp
+                      a2cor_SAB     = a2cor_SAB + a2cor_A_temp * a2cor_B_temp
+                      a2cor_SA2     = a2cor_SA2 + a2cor_A_temp **2.0
+                      a2cor_SB2     = a2cor_SB2 + a2cor_B_temp **2.0
+          
+                        
+                      #lnum.append(a2cor_num_temp[58,21])
+                      #lA.append(a2cor_A_temp[58,21])
+                      #lB.append(a2cor_B_temp[58,21])
+                      #lAB.append(a2cor_A_temp[58,21]*a2cor_B_temp[58,21])
+                      #lA2.append(a2cor_A_temp[58,21]**2.0)
+                      #lB2.append(a2cor_B_temp[58,21]**2.0)
+        
+        
+        #----------------------------------------------
+        a2mean_eqgrid  = ma.masked_where(a2num_eqgrid ==0.0, a2sum_eqgrid) / a2num_eqgrid
+        a2mean_eqgrid  = a2mean_eqgrid.filled(0.0)
+        
+        #-- corr. coeff -------
+        a2cor_MA       = (ma.masked_where(a2cor_num ==0.0, a2cor_SA) / a2cor_num).filled(0.0)
+        a2cor_MB       = (ma.masked_where(a2cor_num ==0.0, a2cor_SB) / a2cor_num).filled(0.0)
+        #
+        a2cor_bunshi   = a2cor_SAB - a2cor_MB * a2cor_SA - a2cor_MA * a2cor_SB + a2cor_num * a2cor_MA * a2cor_MB
+        
+        a2cor_bunbo1   = a2cor_SA2 - 2.0 * a2cor_MA * a2cor_SA + a2cor_num * a2cor_MA**2.0
+        
+        a2cor_bunbo2   = a2cor_SB2 - 2.0 * a2cor_MB * a2cor_SB + a2cor_num * a2cor_MB**2.0
+        
+        a2cor_bunbo    = (a2cor_bunbo1 * a2cor_bunbo2)**0.5
+        a2cor_eqgrid   = ( ma.masked_where(a2cor_bunbo == 0.0, a2cor_bunshi) / a2cor_bunbo ).filled(0.0)
+        
+        #-- save --------------
+        a2mean_eqgrid  = a2mean_eqgrid * coef
+        a2mean_eqgrid.tofile(oname_mean)
+        a2cor_eqgrid.tofile(oname_cor)
+      #---
+      elif calcflag == False:
+        pass
       #-- figure ---------------------
       
       if var == "pr":
@@ -412,7 +416,6 @@ for season in lseason:
       a2mean_eqgrid = fromfile(oname_mean, float32).reshape(ny_eqgrid, nx_eqgrid)
       figname_mean = oname_mean[:-3] + ".png"
       plt.clf()
-      plt.imshow(a2mean_eqgrid * figcoef, origin="lower", interpolation="nearest", vmin= 0.0, vmax=15.0)
       plt.imshow(a2mean_eqgrid * figcoef, origin="lower", interpolation="nearest", vmin= 0.0, vmax=15.0)
       plt.colorbar()
       plt.savefig(figname_mean)

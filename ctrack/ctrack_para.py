@@ -47,7 +47,8 @@ def ret_thorog():
   return thorog
 #-----------------------------------
 def ret_thgradorog():
-  thgradorog = 5.0 # m/km
+  #thgradorog = 5.0 # m/km
+  thgradorog = 3.0*1.e-3 # m/m
   return thgradorog
 #-----------------------------------
 def ret_totaldays(iyear, eyear, season):

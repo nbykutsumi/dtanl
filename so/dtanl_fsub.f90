@@ -2,6 +2,56 @@ MODULE dtanl_fsub
 
 CONTAINS
 !*********************************************************
+SUBROUTINE fill_front_gap(a2in, miss, nx, ny, a2out)
+implicit none
+integer                  nx, ny
+real,dimension(nx,ny) :: a2in
+!f2py intent(in)         a2in
+real                     miss
+!f2py intent(in)         miss
+!---- out -------
+real,dimension(nx,ny) :: a2out
+!f2py intent(out)        a2out
+!---- calc ------
+integer                  ix,iy
+integer                  iix,iiy, imx,imy
+integer                  dx,dy
+!---- init ------
+a2out     = a2in
+!----------------
+do iy = 1,ny
+  do ix = 1,nx
+    !print '(E10.2)',a2in(ix,iy)
+    if (a2in(ix,iy).ne.miss)then
+      do dy = -2,2,4
+        call ixy2iixy_saone(ix,iy+dy, iix, iiy)
+        if (a2in(iix,iiy).ne.miss)then
+          imx = int((ix + iix)*0.5)
+          imy = int((iy + iiy)*0.5)
+          if (a2in(imx,imy).eq.miss)then
+            a2out(imx,imy) = (a2in(ix,iy) + a2in(iix,iiy))*0.5
+          end if
+        end if
+      end do
+      do dx = -2,2,4
+        call ixy2iixy_saone(ix+dx,iy, iix, iiy)
+        if (a2in(iix,iiy).ne.miss)then
+          !print *,iix,iiy,a2in(iix,iiy)
+          imx = int((ix + iix)*0.5)
+          imy = int((iy + iiy)*0.5)
+          if (a2in(imx,imy).eq.miss)then
+            a2out(imx,imy) = (a2in(ix,iy) + a2in(iix,iiy))*0.5
+            !print *, imx,imy,a2in(ix,iy), a2out(imx,imy), a2in(iix,iiy)
+          end if
+        end if
+      end do
+    end if
+  end do
+end do
+!------------
+return
+END SUBROUTINE fill_front_gap
+!*********************************************************
 SUBROUTINE check_exist_3deg_saone(a2in, miss, nx, ny, a2out)
 implicit none
 !------------------------------------------
@@ -256,6 +306,173 @@ a1y(8) = iys
 !------
 return
 END SUBROUTINE mk_8gridsxy
+!*********************************************************
+SUBROUTINE del_front_lesseq_ngrids(a2in, miss, thnum, nx, ny, a2out)
+implicit none
+!--- in ---------
+integer                     nx, ny
+integer                     thnum
+!f2py intent(in)            thnum
+real,dimension(nx,ny)    :: a2in
+!f2py intent(in)            a2in
+real                        miss
+!f2py intent(in)            miss
+!--- out --------
+real,dimension(nx,ny)    :: a2out
+!f2py intent(out)           a2out
+!--- calc -------
+integer                     ix,iy,ik
+integer                     icount_surr
+integer                     iix,iiy
+integer                     id, id_min, ik_tmp
+integer                     stopflag
+integer                     idMAX, idMIN, MAXmin, MINmin
+integer,dimension(8)     :: a1x, a1y
+integer,dimension(nx,ny) :: a2id
+integer,dimension(nx*ny) :: a1connect, a1num
+real,dimension(nx,ny)    :: a2in_tmp
+!--- parameter --
+integer,parameter        :: miss_int = -9999
+!------
+!5!1!2!
+!6! !3!
+!7!8!4l
+!------
+!-- initialize ---
+a2in_tmp  = a2in
+a1connect = miss_int
+a1num     = 0
+a2id      = miss_int
+id        = 0
+a2out     = a2in
+!----------------
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      !-- 1st search ----
+      call mk_8gridsxy(ix,iy, a1x, a1y)
+      !*****************************
+      ! if (ix,iy) has not been given an ID
+      !------------
+      if (a2id(ix,iy).eq.miss_int)then
+        id = id + 1
+        a2id(ix,iy) = id 
+      end if
+      !***************************
+      !----------------------------
+      icount_surr = 0
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in_tmp(iix,iiy).ne.miss)then
+          icount_surr   = icount_surr + 1
+          !--- when adjacent id is -9999
+          if (a2id(iix,iiy).eq.miss_int)then
+            a2id(iix,iiy) = a2id(ix,iy)
+          !--- when adjacent id is not miss
+          else if (a2id(iix,iiy).ne.miss_int)then
+            if (a2id(ix,iy).eq.a2id(iix,iiy))then
+              continue
+            else
+              idMIN = min(a2id(ix,iy), a2id(iix,iiy))
+              idMAX = max(a2id(ix,iy), a2id(iix,iiy))
+              MINmin = a1connect(idMIN)
+              MAXmin = a1connect(idMAX)
+              if ((MINmin.eq.miss_int).and.(MAXmin.eq.miss_int))then
+                a1connect(idMAX) = idMIN
+              else if ((MINmin.eq.miss_int).and.(MAXmin.ne.miss_int))then
+                if (MAXmin.lt.idMIN)then
+                  a1connect(idMIN) = MAXmin
+                else if (idMIN .le. MAXmin) then
+                  a1connect(idMAX) = idMIN
+                end if
+              else if ((MINmin.ne.miss_int).and.(MAXmin.eq.miss_int))then
+                a1connect(idMAX)=MINmin
+              else if (MAXmin.eq.MINmin)then
+                continue
+              else if (MAXmin.gt.MINmin)then
+                a1connect(idMAX) = MINmin
+              else if (MINmin.gt.MAXmin)then
+                a1connect(idMIN) = MAXmin
+              end if
+            end if
+          end if
+        end if        
+      end do
+      if (icount_surr.eq. 0)then
+        a2in_tmp(ix,iy) = miss
+        a2id(ix,iy)     = miss_int
+        id = id -1
+      end if
+    end if
+  end do
+end do
+!-----
+do ik = 1,nx*ny
+  if (a1connect(ik).ne.miss_int)then
+    stopflag   = 0
+    ik_tmp     = ik
+    id_min     = a1connect(ik_tmp)
+    do while (stopflag .ne.1)
+      if (a1connect(ik_tmp).eq.miss_int)then
+        stopflag = 1
+      else
+        if (a1connect(ik_tmp).lt.id_min)then
+          id_min = a1connect(ik_tmp)
+        else
+          continue
+        end if
+        ik_tmp = a1connect(ik_tmp)
+      end if
+    end do 
+    a1connect(ik) = id_min
+  end if
+end do
+!-----
+do iy = 1, ny
+  do ix = 1,nx
+    if (a2id(ix,iy).ne.miss)then
+      ik = a2id(ix,iy)
+      if (a1connect(ik).ne.miss)then
+        a2id(ix,iy) = a1connect(ik)
+      else
+        continue
+      end if
+    end if
+  end do
+end do
+!********************************
+! count id
+!-----------------------
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2id(ix,iy).ne.miss)then
+      id = a2id(ix,iy)
+      a1num(id) = a1num(id) + 1
+    end if
+  end do
+end do
+!********************************
+! remove small segments
+!-----------------------
+do iy = 1,ny
+  do ix = 1,nx
+    id = a2id(ix,iy)
+    if (a1num(id).le.thnum)then
+      a2out(ix,iy) = miss
+    end if
+  end do
+end do
+
+!--------------------------------
+!a2out = real(a2id)
+return
+END SUBROUTINE del_front_lesseq_ngrids
+!
+!*********************************************************
+
+
+
 !*********************************************************
 SUBROUTINE del_front_3grids(a2in, miss, nx, ny, a2out)
 implicit none
@@ -1509,6 +1726,65 @@ do iy = 1, ny
 end do
 return
 END SUBROUTINE mk_a2wetbulbtheta
+
+!*********************************************************
+SUBROUTINE mk_a2slope_abs_saone(a2in, a2slopeabs)
+!---------------------------------
+! data order should be South -> North, West -> East
+! returns slope, not gradient
+!---------------------------------
+implicit none
+!--- in ----------
+integer                 :: ny = 180
+integer                 :: nx = 360
+real,dimension(360,180) :: a2in
+!f2py intent(in)           a2in
+!--- out ---------
+real,dimension(360,180) :: a2slopeabs
+!f2py intent(out)          a2slopeabs
+!--- para --------
+real                    :: lat_first = -89.5
+!--- calc --------
+real                       dn, ds, dew
+real                       vn, vs, vw, ve
+real                       lat
+real                       slopen, slopes, slopee, slopew
+integer                    ix,  iy
+integer                    ixn, ixs, ixw, ixe
+integer                    iyn, iys, iyw, iye
+!-----------------
+do iy = 1, ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  do ix = 1, nx
+    !---
+    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+    !---
+    vn = a2in(ixn, iyn)
+    vs = a2in(ixs, iys)
+    vw = a2in(ixw, iyw)
+    ve = a2in(ixe, iye)
+    !---
+    slopen= abs((vn - a2in(ix,iy))/dn)
+    slopes= abs((vs - a2in(ix,iy))/ds)
+    slopee= abs((ve - a2in(ix,iy))/dew)
+    slopew= abs((vw - a2in(ix,iy))/dew)
+    a2slopeabs(ix, iy) = (slopen + slopes + slopew + slopee)/4.0
+    !---
+  end do
+end do
+!-----------------
+return
+END SUBROUTINE mk_a2slope_abs_saone
+
+
+
+
 !*********************************************************
 SUBROUTINE mk_a2grad_abs_saone(a2in, a2gradabs)
 !---------------------------------

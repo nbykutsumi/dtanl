@@ -1,11 +1,56 @@
 module ctrack_fsub
 
 !-----------------------------------
-
 CONTAINS
 !*****************************************************************
 !* SUBROUTINE & FUNCTION
 !*****************************************************************
+SUBROUTINE mk_a2max_rad_saone(a2in, radkm, nx, ny, a2out)
+implicit none
+!----------------------------------------------
+integer                        nx, ny
+!--- in ------------
+real,dimension(nx,ny)       :: a2in
+!f2py intent(in)               a2in
+real                           radkm
+!f2py intent(in)               radkm
+!--- out -----------
+real,dimension(nx,ny)       :: a2out
+!f2py intent(out)              a2out
+!--- calc ----------
+integer,dimension(nx*ny)    :: a1x, a1y
+integer                        ix, iy, ixt, iyt, dx, dy, icount
+real                           lat
+real                           vmax
+!--- para ----------
+integer,parameter           :: miss_int = -9999
+real,parameter              :: dlat = 1.0
+real,parameter              :: dlon = 1.0
+real,parameter              :: lat_first = -89.5
+real,parameter              :: lon_first = 0.5
+!-------------------
+do iy = 1,ny
+  do ix = 1,nx
+    lat  = lat_first + dlat*(iy -1)
+    vmax = a2in(ix,iy)
+    CALL circle_xy_real(lat, lat_first, dlon, dlat, radkm*1000.0, miss_int, nx, ny, a1x, a1y)
+    !
+    icount = 1
+    do while (a1x(icount) .ne. miss_int)
+      dx = a1x(icount)
+      dy = a1y(icount)
+      CALL ixy2iixy(ix+dx, iy+dy, nx, ny, ixt, iyt)
+      vmax = max(vmax, a2in(ixt,iyt))
+      icount  = icount + 1
+    end do
+    a2out(ix,iy) = vmax
+    !-
+  end do
+end do
+!!----------------------------------------------
+return
+END SUBROUTINE mk_a2max_rad_saone
+
 !*****************************************************************
 SUBROUTINE point_pgrad_rad_saone(ixfort, iyfort, a2psl, radkm, miss, nx, ny, pgrad)
 implicit none
@@ -1242,7 +1287,46 @@ end do
 return
 END SUBROUTINE find_highsidevalue_saone
 !*****************************************************************
+SUBROUTINE mk_territory_deg_saone(a2in, ngrids&
+                , miss &
+                , nx, ny, a2territory )
+  implicit none
+  !-- input -------------------------------------
+  integer                                         nx, ny
+  real,dimension(nx,ny)                       ::  a2in
+!f2py intent(in)                                  a2in
+  integer                                         ngrids  ! [grids]
+!f2py intent(in)                                  ngrids
+  real                                            miss
+!f2py intent(in)                                  miss
 
+  !-- output ------------------------------------
+  real,dimension(nx,ny)                       ::  a2territory
+!f2py intent(out)                                 a2territory
+  !-- calc --------------------------------------
+  integer                                         ix, iy, iix, iiy, dx, dy
+  !----------------------------------------------
+a2territory = miss
+
+do iy = 1, ny
+  do ix = 1, nx
+    !------------------------
+    ! check
+    !------------------------
+    if (a2in(ix,iy) .eq.miss) cycle
+
+    !- territory ------------
+    do dy = -ngrids, ngrids
+      do dx = -ngrids, ngrids
+        call ixy2iixy( ix+dx, iy+dy, nx, ny, iix, iiy)
+        a2territory(iix,iiy) = 1.0
+      end do
+    end do
+    !------------------------
+  end do
+end do
+RETURN
+END SUBROUTINE mk_territory_deg_saone
 
 !*****************************************************************
 SUBROUTINE mk_territory_saone(a2in, thdist&

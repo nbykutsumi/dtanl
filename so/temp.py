@@ -2,32 +2,25 @@ from dtanl_fsub import *
 from numpy import *
 import ctrack_fig
 #---------------------------
-nx      = 360
-ny      = 180
+lllat = 0.0
+lllon = 60.0
+urlat = 60.0
+urlon = 230.0
+miss  = -9999.0
+ny,nx = 180,360
+thnum = 9
+idir = "/media/disk2/out/JRA25/sa.one.anl_p/6hr/front/200401"
+iname = idir + "/front.M1_0.7.M2_4.0.2004.01.02.00.sa.one"
+a2in = fromfile(iname, float32).reshape(180,360)
 
-lllat   = 20.
-urlat   = 60.
-lllon   = 110.
-urlon   = 160.
+a2out = dtanl_fsub.del_front_lesseq_ngrids(a2in.T, miss,thnum).T
 
-miss    = -9999.0
-a2in    = ones([ny,nx],float32)*miss
+fig1  = "/home/utsumi/bin/dtanl/so/fig_in.png"
+fig2  = "/home/utsumi/bin/dtanl/so/fig_out.png"
+ctrack_fig.mk_pict_saone_reg(a2in, soname=fig1, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
+ctrack_fig.mk_pict_saone_reg(a2out, soname=fig2, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
 
-a2in[36+90,140] = 1
-a2in[36+90+1, 140] = 1
-a2in[36+90+2, 140] = 1
-a2in[36+90+3, 140] = 1
-#a2in[36+90+4, 140] = 1
-
-
-soname1 = "/home/utsumi/temp/temp1.png"
-soname2 = "/home/utsumi/temp/temp2.png"
-
-
-a2out   = dtanl_fsub.del_front_3grids(a2in, miss)
-ctrack_fig.mk_pict_saone_reg(a2in,  soname=soname1, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
-ctrack_fig.mk_pict_saone_reg(a2out, soname=soname2, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
-
+print fig1
 
 
 

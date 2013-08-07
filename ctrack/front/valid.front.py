@@ -11,17 +11,30 @@ from ctrack_fsub import *
 iyear   = 2001
 eyear   = 2004
 lmon    = [1,2,3,4,5,6,7,8,9,10,11,12]
-#lmon    = [1]
+#lmon    = [6]
 iday    = 1
 lhour   = [0,6,12,18]
 #lhour   = [0]
 #----
 plev    = 850*100.0  #(Pa)
 sresol  = "anl_p"
-lthfmask1  = [0.1,0.3,0.5,0.7,0.9,1.1]
-lthfmask2  = [1.0,2.0,3.0,4.0,5.0,6.0]
+ftype   = "t"
+if ftype == "t":
+  #lthfmask1  = [0.18,0.22,0.25,0.26,0.27,0.28,0.29,0.30,0.31]
+  #lthfmask2  = [0.2,0.4,0.6,0.8,1.0,1.2]
+  lthfmask1  = [0.18,0.22]
+  lthfmask2  = [0.2,0.6]
+  #lthfmask2  = [1.0,1.4,1.8]
+elif ftype == "q":
+  thfmask1_t = 0.3
+  thfmask2_t = 1.0
+  lthfmask1  = array([2.0,2.2,2.4,2.6,2.8,3.0,3.2])*1.0e-4
+  lthfmask2  = array([2.2,2.4,2.6,2.8,3.0,3.2])*1.0e-3
+
+thgrids = 7
 #************************
-thorog  = ctrack_para.ret_thorog()
+thorog        = ctrack_para.ret_thorog()
+thgradorog    = ctrack_para.ret_thgradorog()
 highsidedist  = ctrack_para.ret_highsidedist()
 miss_out = -9999.0
 ny       = 180
@@ -30,15 +43,7 @@ nx       = 360
 lat_first= -89.5
 lon_first= 0.5
 dlat, dlon  = 1.0, 1.0
-#** region mask **********
-lllat    = 25.
-lllon    = 125.
-urlat    = 50.
-urlon    = 155.
-#--
-a2regionmask  = ctrack_func.mk_region_mask(lllat,urlat,lllon,urlon,nx,ny,lat_first,lon_first,dlat,dlon)
-#*************************
-
+miss     = -9999.0
 #************************
 # FUNCTIONS
 #************************
@@ -63,10 +68,16 @@ def mk_front_loc_contour(a2thermo, a2gradthermo, thfmask1, thfmask2):
 #******************************************************
 #-- orog & grad orog ----
 orogname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
-#gradorogadjname= "/media/disk2/data/JRA25/sa.one.125/const/topo/grad.topo.adj.twogrids.sa.one"
+gradname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxgrad.0200km.sa.one"
 a2orog     = fromfile(orogname, float32).reshape(ny,nx)
-#a2gradorogmask = fromfile(gradorogadjname, float32).reshape(ny,nx)
+a2grad     = fromfile(gradname, float32).reshape(ny,nx)
 
+##---- baiu region -----
+#lllat = 0.0
+#urlat = 75.0
+#lllon = 65.0
+#urlon = 135.0
+#a2region_baiu = ctrack_func.mk_region_mask(lllat,urlat,lllon,urlon,nx,ny,lat_first,lon_first,dlat,dlon)
 #******************************************************
 #--  init ---------
 a2one   = ones([ny,nx],float32)
@@ -74,18 +85,14 @@ a2one   = ones([ny,nx],float32)
 #******************************************************
 for year in range(iyear, eyear+1):
   for mon in lmon:
+    if ((ftype in ["q"])&(mon not in [5,6,7])):
+      continue
     #-- init monthly data --
-    da2hit      = {}
-    da2miss     = {}
-    da2os       = {}
     da2num_obj  = {}
 
     for thfmask1 in lthfmask1:
       for thfmask2 in lthfmask2:
         key = (thfmask1,thfmask2)
-        da2hit[key]       = zeros([ny,nx],float32)
-        da2miss[key]      = zeros([ny,nx],float32)
-        da2os[key]        = zeros([ny,nx],float32)
         da2num_obj[key]   = zeros([ny,nx],float32)
     #
     a2num_chart     = zeros([ny,nx],float32)
@@ -98,68 +105,80 @@ for year in range(iyear, eyear+1):
         #******************************************************
         #-- load gridded chart -
         chartdir  = "/media/disk2/out/chart/ASAS/front/%04d%02d"%(year,mon)
-        chartname = chartdir + "/front.ASAS.%04d.%02d.%02d.%02d.saone"%(year,mon,day,hour)  
+        chartname = chartdir + "/front.ASAS.%04d.%02d.%02d.%02d.sa.one"%(year,mon,day,hour)
         a2chart   = fromfile(chartname, float32).reshape(ny,nx)
+        #--- baiu region -------
+        if ((not mon in [5,6,7,8]) & (ftype=="q")):
+          continue
+        #----
         a2chart   = ma.masked_where(a2chart==miss_out, a2one).filled(0.0)
+
+        a2chart   = ma.masked_where(a2orog > thorog, a2chart).filled(0.0)
+        a2chart   = ma.masked_where(a2grad > thgradorog, a2chart).filled(0.0)
         a2num_chart =  a2num_chart + a2chart
+        #******************************
+        #-- input name
+        tname = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, sresol, plev*0.01, year, mon, day, hour)
+        qname = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, sresol, plev*0.01, year, mon, day, hour)
 
         #******************************************************
         #-- q: mixing ratio --------------------------
-        qname = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, sresol, plev*0.01, year, mon, day, hour)
-        a2q   = fromfile(qname, float32).reshape(ny,nx)
+        if ftype == "q":
+          a2thermo       = fromfile(qname, float32).reshape(ny,nx)
+          a2gradthermo   = dtanl_fsub.mk_a2grad_abs_saone(a2thermo.T).T
+          a2gradthermo   = a2gradthermo * 1000.0*100.0 # [kg/kg (100km)-1]
 
+          a2t            = fromfile(tname, float32).reshape(ny,nx)
+          a2gradt        = dtanl_fsub.mk_a2grad_abs_saone(a2t.T).T
+          a2gradt        = a2gradt * 1000.0*100.0 # [K (100km)-1]
         #-- t: ---------------------------------------
-        tname = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, sresol, plev*0.01, year, mon, day, hour)
-        a2t   = fromfile(tname, float32).reshape(ny,nx)
-
-        #-- tv: --------------------------------------
-        a2tv  = a2t * (1.0+0.61*a2q)
-        #-- a2gradtv ---------------------------------
-        a2gradtv  = dtanl_fsub.mk_a2grad_abs_saone(a2tv.T).T
+        if ftype == "t":
+          a2thermo       = fromfile(tname, float32).reshape(ny,nx)
+          a2gradthermo   = dtanl_fsub.mk_a2grad_abs_saone(a2thermo.T).T
+          a2gradthermo   = a2gradthermo * 1000.0*100.0 # [K (100km)-1]
 
         #-- theta_e -----------------------------------
-        a2theta_e = dtanl_fsub.mk_a2theta_e(plev, a2t.T, a2q.T).T
-        #-- grad.theta_e ------------------------------------
-        a2thermo         = a2theta_e
-        a2gradtheta_e    = dtanl_fsub.mk_a2grad_abs_saone(a2thermo.T).T
+        if ftype == "theta_e":
+          a2t   = fromfile(tname, float32).reshape(ny,nx)
+          a2q   = fromfile(qname, float32).reshape(ny,nx)
+          a2tv  = a2t * (1.0 + 0.61*a2q)
 
-        #**********************************************
-        # base: grad.theta_e
-        a2gradtheta_e  = a2gradtheta_e * 1000.0*100.0 # [K (100km)-1]
-
+          a2thermo       = dtanl_fsub.mk_a2theta_e(plev, a2t.T, a2q.T).T
+          a2gradthermo   = dtanl_fsub.mk_a2grad_abs_saone(a2thermo.T).T
+          a2gradthermo   = a2gradthermo * 1000.0*100.0 # [K (100km)-1]
+          a2gradtv       = dtanl_fsub.mk_a2grad_abs_saone(a2tv.T).T
+          a2gradtv       = a2gradtv * 1000.0*100.0  # [K (100km)-1]
         ##**********************************************
-        # front locator: theta_e
-        a2thermo             = a2theta_e # K
-        a2gradthermo         = a2gradtheta_e   # K/100km
-        #***********
         for thfmask1 in lthfmask1:
           for thfmask2 in lthfmask2:
             key      = (thfmask1,thfmask2)
-            print year,mon,day,hour,thfmask1,thfmask2
+            print "%s"%(ftype), year,mon,day,hour,thfmask1,thfmask2
             #------
             a2loc    = mk_front_loc_contour(a2thermo, a2gradthermo, thfmask1, thfmask2)
             a2loc    = ma.masked_where(a2orog > thorog, a2loc).filled(miss_out)
-            #a2loc    = ma.masked_where(a2gradorogmask > thgradorog, a2loc).filled(miss_out)
-            a2loc    = dtanl_fsub.del_front_2grids(a2loc.T, miss_out).T
-            a2loc    = ctrack_fsub.find_highsidevalue_saone(a2gradtheta_e.T, a2loc.T, a2gradtv.T, highsidedist, miss_out).T
-            a2loc    = ma.masked_equal(a2loc, miss_out).filled(0.0)
+            a2loc    = ma.masked_where(a2grad > thgradorog, a2loc).filled(miss_out)
+            a2loc    = dtanl_fsub.fill_front_gap(a2loc.T, miss_out).T
+            a2loc    = dtanl_fsub.del_front_lesseq_ngrids(a2loc.T, miss_out, thgrids).T
+            if ftype == "q":
+              a2loct  = mk_front_loc_contour(a2t, a2gradt, thfmask1_t, thfmask2_t)
+              a2loct  = ma.masked_where(a2orog > thorog, a2loct).filled(miss_out)
+              a2loct  = ma.masked_where(a2grad > thgradorog, a2loct).filled(miss_out)
+
+              a2loct  = dtanl_fsub.fill_front_gap(a2loct.T, miss_out).T
+              a2loct  = dtanl_fsub.del_front_lesseq_ngrids(a2loct.T, miss_out, thgrids).T
+              a2terrt = ctrack_fsub.mk_territory_deg_saone(a2loct.T, 2, miss_out).T
+              a2locq  = ma.masked_where(a2terrt==1.0, a2loc).filled(miss_out)
+              a2loc   = ma.masked_where( (a2locq==miss_out)&(a2loct==miss_out), a2one).filled(miss_out)
+              
+            #-------
+            if ftype == "theta_e": 
+              a2loc    = ctrack_fsub.find_highsidevalue_saone(a2gradtheta_e.T, a2loc.T, a2gradtv.T, highsidedist, miss_out).T
+            #-------
             #******************************************
-            a2obj    = ma.masked_where(a2loc ==0.0, a2one).filled(0.0)
+            a2obj    = ma.masked_where(a2loc == miss_out, a2one).filled(0.0)
             #******************************************
-            #--- hit ------
-            a2hittmp       =  ma.masked_where(a2obj==0.0,   a2one).filled(0.0)
-            a2hittmp       =  ma.masked_where(a2chart==0.0, a2hittmp).filled(0.0)
-            da2hit[key]    =  da2hit[key]  + a2hittmp
-
-            #--- missed --
-            da2miss[key]   =  da2miss[key] + ma.masked_where(a2obj >= a2chart, a2one).filled(0.0)
-
-            #--- over estimated --
-            da2os[key]     =  da2os[key]   + ma.masked_where(a2obj <= a2chart, a2one).filled(0.0)
-
             #--- count ---
             da2num_obj[key]   =  da2num_obj[key]   + a2obj
-
     #---- write to files -----------
     # names --
     sodir  = "/media/disk2/out/JRA25/sa.one.%s/6hr/front/valid/%04d%02d"%(sresol,year,mon)
@@ -174,18 +193,19 @@ for year in range(iyear, eyear+1):
       for thfmask2 in lthfmask2: 
         key          = thfmask1, thfmask2
         #--
-        namehit      = sodir + "/num.hit.M1-%04.2f.M2-%04.2f.sa.one"%(thfmask1,thfmask2)
-        namemiss     = sodir + "/num.miss.M1-%04.2f.M2-%04.2f.sa.one"%(thfmask1,thfmask2)
-        nameos       = sodir + "/num.os.M1-%04.2f.M2-%04.2f.sa.one"%(thfmask1,thfmask2)
-        namenumobj   = sodir + "/num.obj.M1-%04.2f.M2-%04.2f.sa.one"%(thfmask1,thfmask2)
-        namenumchart = sodir + "/num.chart.M1-%04.2f.M2-%04.2f.sa.one"%(thfmask1,thfmask2)
+        if ftype == "t":
+          namenumobj   = sodir + "/num.%s.obj.M1-%04.2f.M2-%04.2f.gt%02d.sa.one"%(ftype, thfmask1,thfmask2,thgrids)
+          #namenumchart = sodir + "/num.%s.chart.M1-%04.2f.M2-%04.2f.gt%02d.sa.one"%(ftype, thfmask1,thfmask2,thgrids)
+        if ftype == "q":
+          thfmask1_tmp, thfmask2_tmp = thfmask1*1.0e+4, thfmask2*1.0e+3
+          namenumobj   = sodir + "/num.%s.obj.M1-%04.2f.M2-%04.2f.gt%02d.sa.one"%(ftype, thfmask1_tmp,thfmask2_tmp,thgrids)
+          #namenumchart = sodir + "/num.%s.chart.M1-%04.2f.M2-%04.2f.gt%02d.sa.one"%(ftype, thfmask1_tmp,thfmask2_tmp,thgrids)
+          print namenumobj
+
         #--
-        da2hit[key].tofile(namehit)
-        da2miss[key].tofile(namemiss)
-        da2os[key].tofile(nameos)
         da2num_obj[key].tofile(namenumobj)
     #
-    print namehit
+    print namenumobj
 
 
 

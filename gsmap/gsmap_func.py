@@ -1,11 +1,45 @@
 from numpy import *
 import datetime
 import sys
+import subprocess
 #**********************************************
 def gsmap2global_one(a2org_one, miss):
   a2glob = ones([180,360], float32)*miss
   a2glob[30:149+1,:] = a2org_one
   return a2glob
+#**********************************************
+def timeave_gsmap_backward_org(year,mon,day,hour, hlen):
+  lhlen = [1,2,3,6,12,24]
+  if not hlen in lhlen:
+    print "'hlen' should be" ,lhlen
+    sys.exit()
+  #-------------
+  lh_inc     = range(hlen)
+  now       = datetime.datetime(year,mon,day,hour)
+
+  a2ave     = zeros([1200*3600],float32)  
+  for h_inc in lh_inc:
+    dhour   = datetime.timedelta(hours = -h_inc)
+    target  = now + dhour
+    year_t  = target.year
+    mon_t   = target.month
+    day_t   = target.day
+    hour_t  = target.hour
+    idir_root = "/home/utsumi/mnt/iis.data2/GSMaP/standard/v5/hourly"
+    idir      = idir_root + "/%04d/%02d/%02d"%(year_t,mon_t,day_t)
+    iname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat.gz"%(year_t,mon_t,day_t,hour_t)
+    dat_org   = subprocess.Popen(["gzip", "-dc", iname, " >", "/dev/stdout"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+
+    a2in      = fromstring(dat_org, float32)
+    a2ave     = a2ave + ma.masked_less(a2in, 0.0)
+    atmp      = ma.masked_less(a2in, 0.0)/(len(lhlen)*60.*60.)
+    atmp      = flipud( atmp.reshape(1200,3600))[:123]
+
+  #---
+  a2ave       = (a2ave /(len(lhlen)* 60.0*60.0)).filled(-9999.0)
+  a2ave       = flipud(a2ave.reshape(1200,3600))
+  return a2ave
+
 #**********************************************
 def timeave_gsmap_backward_saone(year,mon,day,hour, hlen):
   lhlen = [1,2,3,6,12,24]
