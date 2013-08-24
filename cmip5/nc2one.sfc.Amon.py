@@ -21,13 +21,12 @@ else:
   model = "MIROC5"
   expr  = "historical"
   ens   = "r1i1p1"
-  iyear  = 1996
-  eyear  = 1997
+  iyear  = 1979
+  eyear  = 1999
 
 #--------------
 dattype = "Amon"
 #--------------
-noleapflag = True
 lyear = range(iyear,eyear+1)
 
 miss    = -9999.0
@@ -95,16 +94,18 @@ odir_dump = odir_root
 #####################################################
 # set dlyrange
 #####################################################
-llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,iyear,1,1,0,0,eyear,12,31,23,59,noleapflag)
+llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,iyear,1,1,0,0,eyear,12,31,23,59)
 
 
 print llfileinfo
 for lfileinfo in llfileinfo:
-  fyear0,fmon0,fday0,fhour0,fmin0,fcmiptime0,fyear1,fmon1,fday1,fhour1,fmin1,fcmiptime1,ncname\
+  #fyear0,fmon0,fday0,fhour0,fmin0,fcmiptime0,fyear1,fmon1,fday1,fhour1,fmin1,fcmiptime1,ncname\
+  fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname\
    = lfileinfo 
   print lfileinfo
   #------
-  time0 = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
+  #time0 = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
+  time0 = ftime0
   #------------------------------
   # make heads 
   #------------------------------
@@ -139,7 +140,10 @@ for lfileinfo in llfileinfo:
   #*********
   # ntime
   #---------
-  ntime  = shape(nc.variables["time"])[0]
+  nctime = nc.variables["time"]
+  sunit  = nctime.units
+  scalendar = nctime.calendar
+  a1tnum = nctime[:]
 
   #####
   dumpdata(iname, nc)
@@ -149,23 +153,21 @@ for lfileinfo in llfileinfo:
   #####
   istep = -1
   #--------------------
-  while istep < ntime-1:
-    ##############
-    istep = istep + 1
+  for tnum in a1tnum:
     ##############
     # check cmiptime & file name time
     #-------------
-    cmiptime_tmp  = nc.variables["time"][istep]
-
-    year_tmp, mon_tmp, day_tmp, hour_tmp, min_tmp\
-       = cmip_func.cmiptime2date(cmiptime_tmp, noleapflag=True)
-
+    dtime    = num2date(tnum, units=sunit, calendar=scalendar)
+    year_tmp = dtime.year
+    mon_tmp  = dtime.month
+    day_tmp  = dtime.day
+    hour_tmp = dtime.hour  
     #############
     if (year_tmp not in lyear):
       continue
 
     #############
-    odir = odir_root
+    odir = odir_root + "/%04d"%(year_tmp)
     print odir
     try:
       os.makedirs(odir)
@@ -185,7 +187,7 @@ for lfileinfo in llfileinfo:
     data_one  = array(data_one, float32)
    
     ########
-    oname = odir + "/%s.%s.%s.%s.%s.sa.one"%(var, model, expr, ens, stime)
+    oname = odir + "/%s.%s.%s.sa.one"%(var, ens, stime)
     ########
     f = open(oname, "wb")
     f.write(data_one)

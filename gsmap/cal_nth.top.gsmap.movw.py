@@ -55,7 +55,8 @@ def timeave_gsmap_backward_org(year,mon,day,hour, hlen):
     a2in      = fromstring(dat_org, float32)
     a2ave     = a2ave + ma.masked_less(a2in, 0.0)
   #---
-  a2ave       = (a2ave /(len(lhlen)* 60.0*60.0)).filled(-9999.0)
+  #a2ave       = (a2ave /(len(lhlen)* 60.0*60.0)).filled(-9999.0)
+  a2ave       = (a2ave /(hlen* 60.0*60.0)).filled(-9999.0)
   a2ave       = flipud(a2ave.reshape(1200,3600))
   return a2ave
 
@@ -179,7 +180,7 @@ for season in lseason:
               a2inst_new   = ma.masked_equal( timeave_gsmap_backward_org(year,mon,day,hour,1)[yfirst:ylast,:].copy(),  miss)
               a3in[-icycle] = a2inst_new
               a2in_mask    = ma.any(a3in.mask, axis=0)
-              a2in_seg     = ma.masked_array(sum(a3in,axis=0), mask=a2in_mask).filled(miss)
+              a2in_seg     = ma.masked_array(mean(a3in,axis=0), mask=a2in_mask).filled(miss)
 
               #-- count --
               a2count = a2count + ma.masked_where(a2in_seg == miss, a2one_seg).filled(0.0)

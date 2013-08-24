@@ -16,14 +16,16 @@ singletime = True
 #singletime = False
 
 #lftype = ["t","q"]
-lftype = ["q"]
+lftype = ["t","q"]
 lyear  = [2004]
 #lmon   = [1,4,6,7]
-lmon   = [7]
-iday   = 6
+lmon   = [6]
+iday   = 3
 hour  = 0
-
-thgrids  = 7
+#-- remove short fronts --
+thgrids    = 5
+delwgtflag = 1
+#-------------------------
 resol    = "anl_p"
 
 #--------
@@ -33,8 +35,8 @@ ny,nx  = 180,360
 thfmask1t = 0.3   # sample for "t"
 thfmask2t = 1.0   # sample for "t"
 
-thfmask1q = 2.6 *1.0e-4  # sample for "q"
-thfmask2q = 2.4 *1.0e-3  # sample for "q"
+thfmask1q = 1.5 *1.0e-4  # sample for "q"
+thfmask2q = 1.5 *1.0e-3  # sample for "q"
 
 #-- for Berry et al.
 #year  = 2001
@@ -362,7 +364,7 @@ for year in lyear:
         a2loc     = dtanl_fsub.fill_front_gap(a2loc.T, miss_out).T
         a2loc    = ma.masked_where(a2orog > thorog, a2loc).filled(miss_out)
         a2loc    = ma.masked_where(a2gradorog > thgradorog, a2loc).filled(miss_out)
-        a2loc    = dtanl_fsub.del_front_lesseq_ngrids(a2loc.T, miss_out, thgrids).T
+        a2loc    = dtanl_fsub.del_front_lesseq_ngrids(a2loc.T, delwgtflag, miss_out, thgrids).T
         #--- for q ------
         if ftype == "q":
           a2loct  = mk_front_loc_contour(a2t, a2gradt, thfmask1t, thfmask2t)
@@ -370,7 +372,7 @@ for year in lyear:
           a2loct  = ma.masked_where(a2gradorog > thgradorog, a2loct).filled(miss_out)
 
           a2loct  = dtanl_fsub.fill_front_gap(a2loct.T, miss_out).T
-          a2loct  = dtanl_fsub.del_front_lesseq_ngrids(a2loct.T, miss_out, thgrids).T
+          a2loct  = dtanl_fsub.del_front_lesseq_ngrids(a2loct.T, delwgtflag, miss_out, thgrids).T
           a2terrt = ctrack_fsub.mk_territory_deg_saone(a2loct.T, 2, miss_out).T
           a2loc   = ma.masked_where(a2terrt==1.0, a2loc).filled(miss_out)
 

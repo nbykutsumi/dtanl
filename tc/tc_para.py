@@ -37,25 +37,25 @@ def ret_thrvort(model="org"):
   #--------------------
   if model in ["org","anl_p"]:
       thrvort = 4.7e-05
-  if model=="HadGEM2-ES":
+  elif model=="HadGEM2-ES":
       thrvort = 4.4e-05
-  if model=="IPSL-CM5A-MR":
+  elif model=="IPSL-CM5A-MR":
       thrvort = 3.9e-05
-  if model=="CNRM-CM5":
+  elif model=="CNRM-CM5":
       thrvort = 4.4e-05
-  if model=="MIROC5":
+  elif model=="MIROC5":
       thrvort = 4.4e-05
-  if model=="inmcm4":
+  elif model=="inmcm4":
       thrvort = 4.1e-05
-  if model=="MPI-ESM-MR":
+  elif model=="MPI-ESM-MR":
       thrvort = 4.1e-05
-  if model=="CSIRO-Mk3-6-0":
+  elif model=="CSIRO-Mk3-6-0":
       thrvort = 4.1e-05
-  if model=="NorESM1-M":
+  elif model=="NorESM1-M":
       thrvort = 3.8e-05
-  if model=="IPSL-CM5B-LR":
+  elif model=="IPSL-CM5B-LR":
       thrvort = 3.4e-05
-  if model=="GFDL-CM3":
+  elif model=="GFDL-CM3":
       thrvort = 3.7e-05
 
   #--------------------

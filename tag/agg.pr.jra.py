@@ -45,8 +45,8 @@ dist_f  = 500 #[km]
 
 nx,ny   =[360,180]
 
-thdura_c    = 72
-thdura_tc   = 72
+thdura_c    = 48
+thdura_tc   = thdura_c
 
 thorog    = 1500   # [m]
 miss      = -9999.0
@@ -140,8 +140,15 @@ for prtype in lprtype:
             a2pr_tc  = a2zero
             a2pr_c   = a2zero
             a2pr_fbc = a2zero
-            a2pr_nbc = a2zero
             a2pr_ot  = a2zero
+            # wn:
+            a2prwn_all = a2zero
+            a2prwn_tc  = a2zero
+            a2prwn_c   = a2zero
+            a2prwn_fbc = a2zero
+            a2prwn_nbc = a2zero
+            a2prwn_ot  = a2zero
+
 
             #-- prdir ---
             if prtype in ["GSMaP", "JRA"]:
@@ -185,11 +192,15 @@ for prtype in lprtype:
                 lhtag_inc   = ret_lhtag_inc(timestep, hour)
                 now   = datetime.datetime(year, mon, day, hour)
                 #------------------
-                a2tag_tc    = a2zero
-                a2tag_c     = a2zero
-                a2tag_fbc   = a2zero
-                a2tag_nbc   = a2zero
-                a2tag_ot    = a2zero
+                a2tagtmp_tc    = a2zero
+                a2tagtmp_c     = a2zero
+                a2tagtmp_fbc   = a2zero
+                a2tagtmp_nbc   = a2zero
+                a2tagtmp_ot    = a2zero
+                a2tagtmpwn_ot  = a2zero
+                #------------------ 
+
+
                 #------------------ 
                 for htag_inc in lhtag_inc:
                   dhour       = datetime.timedelta(hours = htag_inc)
@@ -200,7 +211,7 @@ for prtype in lprtype:
                   hour_target = target.hour
                   #-- tag name ---
                   tagdir   = tagdir_root + "/%04d%02d"%(year_target, mon_target)
-                  tagname  = tagdir + "/tag.%stc%02d.c%02d.f%02d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, year_target,mon_target,day_target,hour_target)
+                  tagname  = tagdir + "/tag.%stc%04d.c%04d.f%04d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc, dist_c, dist_f, year_target,mon_target,day_target,hour_target)
         
                   if not os.access(tagname, os.F_OK):
                     print "AAAA"
@@ -210,36 +221,55 @@ for prtype in lprtype:
                     elif (year==eyear)&(mon==12)&(day==eday):
                       continue
                   #-- load -------
-                  a2tag     = fromfile(tagname, int32).reshape(180,360)
-                  lout      = tag_fsub.solve_tag_4type(a2tag.T)
-                  a2tag_tc  = a2tag_tc  + array(lout[0].T, float32)
-                  a2tag_c   = a2tag_c   + array(lout[1].T, float32)
-                  a2tag_fbc = a2tag_fbc + array(lout[2].T, float32)
-                  a2tag_nbc = a2tag_nbc + array(lout[3].T, float32)
-                  a2tag_ot  = a2tag_ot  + ma.masked_where(a2tag !=0, a2one).filled(0.0)
+                  a2tag         = fromfile(tagname, int32).reshape(180,360)
+                  lout          = tag_fsub.solve_tag_4type(a2tag.T)
+                  a2tagtmp_tc   = a2tagtmp_tc   + array(lout[0].T, float32)
+                  a2tagtmp_c    = a2tagtmp_c    + array(lout[1].T, float32)
+                  a2tagtmp_fbc  = a2tagtmp_fbc  + array(lout[2].T, float32)
+                  a2tagtmp_nbc  = a2tagtmp_nbc  + array(lout[3].T, float32)
+                  a2tagtmp_ot   = a2tagtmp_ot   + ma.masked_where((a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc) !=0, a2one).filled(0.0)
+                  # wn: with no n-baroclinic
+                  a2tagtmpwn_ot = a2tagtmpwn_ot + ma.masked_where(a2tag !=0, a2one).filled(0.0)
 
                 ##
-                a2tag_tc  = a2tag_tc  / len(lhtag_inc)
-                a2tag_c   = a2tag_c   / len(lhtag_inc)
-                a2tag_fbc = a2tag_fbc / len(lhtag_inc)
-                a2tag_nbc = a2tag_nbc / len(lhtag_inc)
-                a2tag_ot  = a2tag_ot  / len(lhtag_inc)
+                a2tagtmp_tc    = a2tagtmp_tc   / len(lhtag_inc)
+                a2tagtmp_c     = a2tagtmp_c    / len(lhtag_inc)
+                a2tagtmp_fbc   = a2tagtmp_fbc  / len(lhtag_inc)
+                a2tagtmp_nbc   = a2tagtmp_nbc  / len(lhtag_inc)
+                a2tagtmp_ot    = a2tagtmp_ot   / len(lhtag_inc)
+                a2tagtmpwn_ot  = a2tagtmpwn_ot / len(lhtag_inc)
                 ##
-                a2tag_all = a2tag_tc + a2tag_c + a2tag_fbc + a2tag_nbc + a2tag_ot
+                a2tag_all   = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_ot
+                a2tagwn_all = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_nbc + a2tagtmpwn_ot
                 ##
-                a2tag_tc  = a2tag_tc  / a2tag_all
-                a2tag_c   = a2tag_c   / a2tag_all
-                a2tag_fbc = a2tag_fbc / a2tag_all
-                a2tag_nbc = a2tag_nbc / a2tag_all
-                a2tag_ot  = a2tag_ot  / a2tag_all
+                a2tag_tc    = a2tagtmp_tc  / a2tag_all
+                a2tag_c     = a2tagtmp_c   / a2tag_all
+                a2tag_fbc   = a2tagtmp_fbc / a2tag_all
+                a2tag_ot    = a2tagtmp_ot  / a2tag_all
+                # wn: with non-baroclinic
+                a2tagwn_tc  = a2tagtmp_tc    / a2tagwn_all
+                a2tagwn_c   = a2tagtmp_c     / a2tagwn_all
+                a2tagwn_fbc = a2tagtmp_fbc   / a2tagwn_all
+                a2tagwn_nbc = a2tagtmp_nbc   / a2tagwn_all
+                a2tagwn_ot  = a2tagtmpwn_ot  / a2tagwn_all
+
                 ##*****************************
                 # weight precipitation
                 #-----------------------------
                 a2prtmp_tc   = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_tc
                 a2prtmp_c    = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_c
                 a2prtmp_fbc  = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_fbc
-                a2prtmp_nbc  = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_nbc
                 a2prtmp_ot   = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_ot
+
+                # wn:
+                a2prwntmp_tc   = ma.masked_less(a2pr,0.0).filled(0.0) * a2tagwn_tc
+                a2prwntmp_c    = ma.masked_less(a2pr,0.0).filled(0.0) * a2tagwn_c
+                a2prwntmp_fbc  = ma.masked_less(a2pr,0.0).filled(0.0) * a2tagwn_fbc
+                a2prwntmp_nbc  = ma.masked_less(a2pr,0.0).filled(0.0) * a2tagwn_nbc
+                a2prwntmp_ot   = ma.masked_less(a2pr,0.0).filled(0.0) * a2tagwn_ot
+
+
+
                 #*****************************
                 # sum precipitation
                 #-----------------------------
@@ -247,8 +277,17 @@ for prtype in lprtype:
                 a2pr_tc      = a2pr_tc  + a2prtmp_tc
                 a2pr_c       = a2pr_c   + a2prtmp_c
                 a2pr_fbc     = a2pr_fbc + a2prtmp_fbc
-                a2pr_nbc     = a2pr_nbc + a2prtmp_nbc
                 a2pr_ot      = a2pr_ot  + a2prtmp_ot
+
+                # wn:
+                a2prwn_all     = a2prwn_all + a2pr
+                a2prwn_tc      = a2prwn_tc  + a2prwntmp_tc
+                a2prwn_c       = a2prwn_c   + a2prwntmp_c
+                a2prwn_fbc     = a2prwn_fbc + a2prwntmp_fbc
+                a2prwn_nbc     = a2prwn_nbc + a2prwntmp_nbc
+                a2prwn_ot      = a2prwn_ot  + a2prwntmp_ot
+
+
 
             #*****************************
             # convert unit to mm/s
@@ -260,12 +299,19 @@ for prtype in lprtype:
             #--                         
             totaltimes   = ctrack_para.ret_totaldays(year,year,mon)*len(lhour)
             #
-            a2pr_all     = a2pr_all *coef/ totaltimes 
-            a2pr_tc      = a2pr_tc  *coef/ totaltimes 
-            a2pr_c       = a2pr_c   *coef/ totaltimes 
-            a2pr_fbc     = a2pr_fbc *coef/ totaltimes 
-            a2pr_nbc     = a2pr_nbc *coef/ totaltimes 
-            a2pr_ot      = a2pr_ot  *coef/ totaltimes 
+            a2pr_all    = a2pr_all   *coef/ totaltimes 
+            a2pr_tc     = a2pr_tc    *coef/ totaltimes 
+            a2pr_c      = a2pr_c     *coef/ totaltimes 
+            a2pr_fbc    = a2pr_fbc   *coef/ totaltimes 
+            a2pr_ot     = a2pr_ot    *coef/ totaltimes 
+            # wn:
+            a2prwn_all  = a2prwn_all *coef/ totaltimes 
+            a2prwn_tc   = a2prwn_tc  *coef/ totaltimes 
+            a2prwn_c    = a2prwn_c   *coef/ totaltimes 
+            a2prwn_fbc  = a2prwn_fbc *coef/ totaltimes 
+            a2prwn_nbc  = a2prwn_nbc *coef/ totaltimes 
+            a2prwn_ot   = a2prwn_ot  *coef/ totaltimes 
+
 
             #print "all",mon, a2pr_all.sum()
             #print "tc", mon, a2pr_tc.sum()
@@ -277,22 +323,44 @@ for prtype in lprtype:
             #-- save monthly data ---
             #-----------------------------
             sodir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagpr/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
-            sodir      = sodir_root + "/%04d%02d"%(year, mon)
+            sodirwn_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagpr/wn.c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
+            #
+            sodir      = sodir_root   + "/%04d%02d"%(year, mon)
+            sodirwn    = sodirwn_root + "/%04d%02d"%(year, mon)
             ctrack_func.mk_dir(sodir)
+            ctrack_func.mk_dir(sodirwn)
+            #
+            sname_all  =  sodir  + "/pr.plain.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one" %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            sname_tc   =  sodir  + "/pr.tc.%stc%04d.c%04d.f%04d.%04d.%04d.%s.sa.one" %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            sname_c    =  sodir  + "/pr.c.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one"  %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            sname_fbc  =  sodir  + "/pr.fbc.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one"%(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            sname_ot   =  sodir  + "/pr.ot.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one" %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
 
-            sname_all  =  sodir  + "/pr.plain.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
-            sname_tc   =  sodir  + "/pr.tc.%stc%02d.c%02d.f%02d.%04d.%04d.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
-            sname_c    =  sodir  + "/pr.c.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one"  %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
-            sname_fbc  =  sodir  + "/pr.fbc.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
-            sname_nbc  =  sodir  + "/pr.nbc.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
-            sname_ot   =  sodir  + "/pr.ot.%stc%02d.c%02d.f%02d.%04d.%02d.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, year, mon, prtype)
+            # wn:
+            snamewn_all  =  sodirwn  + "/pr.wn.plain.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one" %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            snamewn_tc   =  sodirwn  + "/pr.wn.tc.%stc%04d.c%04d.f%04d.%04d.%04d.%s.sa.one" %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            snamewn_c    =  sodirwn  + "/pr.wn.c.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one"  %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            snamewn_fbc  =  sodirwn  + "/pr.wn.fbc.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one"%(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            snamewn_nbc  =  sodirwn  + "/pr.wn.nbc.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one"%(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+            snamewn_ot   =  sodirwn  + "/pr.wn.ot.%stc%04d.c%04d.f%04d.%04d.%02d.%s.sa.one" %(tctype, dist_tc, dist_c, dist_f, year, mon, prtype)
+
+
             #-----------------------------
             a2pr_all.tofile(sname_all)
             a2pr_tc.tofile(sname_tc)
             a2pr_c.tofile(sname_c)
             a2pr_fbc.tofile(sname_fbc)
-            a2pr_nbc.tofile(sname_nbc)
             a2pr_ot.tofile(sname_ot)
             print sname_c
+
+            # wn:
+            a2prwn_all.tofile(snamewn_all)
+            a2prwn_tc.tofile(snamewn_tc)
+            a2prwn_c.tofile(snamewn_c)
+            a2prwn_fbc.tofile(snamewn_fbc)
+            a2prwn_nbc.tofile(snamewn_nbc)
+            a2prwn_ot.tofile(snamewn_ot)
+            print snamewn_c
+
 
 

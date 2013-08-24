@@ -1,8 +1,33 @@
 import datetime
-import calendar
+import calendar, netCDF4
+from numpy import *
+#***************************************
+def ret_times(iyear,eyear,lmon, sunit, scalendar, stepday):
+  ldtime  = []
+  ltnum   = []
+  #-------
+  for year in range(iyear, eyear+1):
+    for mon in lmon:
+      idtime = netCDF4.netcdftime.datetime(year, mon,1,0,0)
+      itnum  = netCDF4.date2num(idtime, sunit, scalendar)
+      tnum   = itnum - stepday
+      while 1==1:
+        tnum   = tnum + stepday
+        dtime  = netCDF4.num2date(tnum, sunit, scalendar)
+        #------------
+        mont   = dtime.month
+        #-- check ---
+        if mont != mon:
+          break
+        #------------ 
+        ldtime.append(dtime)
+        ltnum.append(tnum)
+  #---------
+  return array(ldtime), array(ltnum)
+
 
 #***************************************
-def ret_filedate(var, dattype, model, expr, ens, iyear, imon, iday, ihour, imin, eyear, emon, eday, ehour, emin, noleapflag):
+def ret_filedate(var, dattype, model, expr, ens, iyear, imon, iday, ihour, imin, eyear, emon, eday, ehour, emin):
   #var    = "psl"
   #dattype= "6hrPlev"
   #model  = "MIROC5"
@@ -19,8 +44,11 @@ def ret_filedate(var, dattype, model, expr, ens, iyear, imon, iday, ihour, imin,
   f = open(listname, "r")
   lines = f.readlines()
   f.close()
-  itime  = date2cmiptime(iyear,imon,iday,ihour,imin, noleapflag)
-  etime  = date2cmiptime(eyear,emon,eday,ehour,emin, noleapflag)
+  itime  = datetime.datetime(iyear,imon,iday,ihour,imin)
+  etime  = datetime.datetime(eyear,emon,eday,ehour,emin)
+
+  #itime  = date2cmiptime(iyear,imon,iday,ihour,imin, noleapflag)
+  #etime  = date2cmiptime(eyear,emon,eday,ehour,emin, noleapflag)
   #---------------
   lout  = []
   for line in lines:
@@ -35,16 +63,22 @@ def ret_filedate(var, dattype, model, expr, ens, iyear, imon, iday, ihour, imin,
     fday0       = int(line[7])
     fhour0      = int(line[8])
     fmin0       = int(line[9])
-    ftime0      = float(line[10])
+    #fdate0      = line[10]
     fyear1      = int(line[11])
     fmon1       = int(line[12])
     fday1       = int(line[13])
     fhour1      = int(line[14])
     fmin1       = int(line[15])
-    ftime1      = float(line[16])
-    ncname      = line[17].strip()
+    #fdate1      = line[16]
+    sunit       = line[17]
+    scalendar   = line[18]
+    ncname      = line[19].strip()
+    #-- datetime ----
+    ftime0      = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
+    ftime1      = datetime.datetime(fyear1,fmon1,fday1,fhour1,fmin1)
+
     #----
-    lout_tmp    = [fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime0,ncname]
+    lout_tmp    = [fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname]
     #-- check -----
     if ((var_tmp == var)&(dattype_tmp==dattype)&(model_tmp==model)&(expr_tmp==expr)&(ens_tmp==ens)):
       #

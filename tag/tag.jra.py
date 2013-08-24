@@ -24,6 +24,8 @@ lbstflag_tc = ["bst",""]
 #lbstflag_f = ["","bst"]
 lbstflag_f = [""]
 #
+#iyear  = 2001
+#eyear  = 2001
 iyear  = 1997
 eyear  = 2012
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
@@ -31,26 +33,23 @@ lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 iday   = 1
 lhour  = [0,6,12,18]
 #lhour  = [0]
-#thdura = 48
-thdura = 72
+thdura = 48
+#thdura = 72
 thdura_tc = thdura
-##- dist ----
-#dist_tc    = 1000.0 *1000.0 # [m]
-#dist_c     = 1000.0*1000.0 # [m]
-#dist_f     = 500.0*1000.0  # [m]
+#- dist ----
+dist_tc    = 1000.0 *1000.0 # [m]
+dist_c     = 1000.0*1000.0 # [m]
+dist_f     = 500.0*1000.0  # [m]
 
 ## 80% area
 #dist_tc    = 894.0 *1000.0 # [m]
 #dist_c     = 894.0*1000.0 # [m]
 #dist_f     = 400.0*1000.0  # [m]
 
-# 120% area
-dist_tc    = 1095 *1000.0 # [m]
-dist_c     = 1095 *1000.0 # [m]
-dist_f     = 600.0*1000.0  # [m]
-
-
-
+## 120% area
+#dist_tc    = 1095 *1000.0 # [m]
+#dist_c     = 1095 *1000.0 # [m]
+#dist_f     = 600.0*1000.0  # [m]
 
 #-----------
 pgradmin = ctrack_para.ret_dpgradrange()[2][0]  # Pa/1000km
@@ -65,10 +64,6 @@ thsst    = tc_para.ret_thsst()
 thwind   = tc_para.ret_thwind()
 thwcore  = tc_para.ret_thwcore()
 thrvort  = tc_para.ret_thrvort()
-
-#--front ---
-thfmask1, thfmask2 = front_para.ret_thfmask(sresol)
-thbc               = front_para.ret_thbc()   # (K/m)
 #-----------
 nx, ny     = (360,180)
 miss       = -9999.0
@@ -76,11 +71,24 @@ miss_int   = -9999
 lat_first  = -89.5
 dlat       = 1.0
 dlon       = 1.0
+
+#--front ---
+thorog     = ctrack_para.ret_thorog()
+thgradorog = ctrack_para.ret_thgradorog()
+thgrids    = front_para.ret_thgrids()
+thfmask1t, thfmask2t, thfmask1q, thfmask2q   = front_para.ret_thfmasktq(sresol)
+orogname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
+gradname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxgrad.0200km.sa.one"
+a2orog     = fromfile(orogname, float32).reshape(ny,nx)
+a2gradorog = fromfile(gradname, float32).reshape(ny,nx)
+
+
 #-----------
 pgraddir_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/pgrad"%(sresol)
 lifedir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/life"%(sresol)
 tcdir_root      = "/media/disk2/out/JRA25/sa.one.%s/6hr/tc/%02dh"%(sresol, thdura_tc)
-frontdir_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/front"%(sresol)
+frontdir_t_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/front.t"%(sresol)
+frontdir_q_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/front.q"%(sresol)
 
 #
 tagdir_root     = "/media/disk2/out/JRA25/sa.one.%s/6hr/tag/c%02dh.tc%02dh"%(sresol, thdura, thdura_tc)
@@ -132,12 +140,17 @@ for bstflag_tc in lbstflag_tc:
             pgraddir    = pgraddir_root   + "/%04d%02d"%(year, mon)
             lifedir     = lifedir_root    + "/%04d%02d"%(year, mon)
             tcdir       = tcdir_root      + "/%04d/%02d"%(year,mon)
-            frontdir    = frontdir_root   + "/%04d%02d"%(year, mon)
+            frontdir_t  = frontdir_t_root   + "/%04d%02d"%(year, mon)
+            frontdir_q  = frontdir_q_root   + "/%04d%02d"%(year, mon)
             #---- name -----------------
             pgradname   = pgraddir   + "/pgrad.%s.sa.one"%(stime)
             lifename    = lifedir    + "/life.%s.sa.one"%(stime)
             tcname      = tcdir      + "/tc.wc%4.2f.sst%02d.wind%02d.vor%.1e.%s.sa.one"%(thwcore, thsst-273.15, thwind, thrvort, stime)
-            frontname   = frontdir   + "/front.M1_%03.1f.M2_%03.1f.%04d.%02d.%02d.%02d.sa.one"%(thfmask1, thfmask2, year, mon, day, hour)
+            # Front
+            fronttname1 = frontdir_t + "/front.t.M1.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+            fronttname2 = frontdir_t + "/front.t.M2.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+            frontqname1 = frontdir_q + "/front.q.M1.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+            frontqname2 = frontdir_q + "/front.q.M2.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
             ##########################
             #--- load for c ----------
             a2pgrad     = fromfile(pgradname, float32).reshape(ny,nx)
@@ -149,7 +162,6 @@ for bstflag_tc in lbstflag_tc:
               a2f         = front_func.mk_a2chart_gradtv_highside_saone(sresol, year, mon,day, hour)
               a2fbc       = ma.masked_less(a2f, thbc).filled(miss)
               a2nbc       = ma.masked_greater_equal(a2f, thbc).filled(miss)
-
     
             elif bstflag_f == "bst.type":
               frontname = "/media/disk2/out/chart/ASAS/front/%04d%02d/front.ASAS.%04d.%02d.%02d.%02d.saone"%(year,mon,year,mon,day,hour)
@@ -159,10 +171,15 @@ for bstflag_tc in lbstflag_tc:
               a2nbc       = ma.masked_not_equal(a2f, 4.0).filled(miss)
      
             elif bstflag_f == "":
-              a2f         = fromfile(frontname, float32).reshape(ny,nx)
-              a2fbc       = ma.masked_less(a2f, thbc).filled(miss)
-              a2nbc       = ma.masked_greater_equal(a2f, thbc).filled(miss)
-            #-- front baroclinic & non-baroclinic
+              #-- front.t ---
+              a2fbc1      = fromfile(fronttname1, float32).reshape(ny,nx)
+              a2fbc2      = fromfile(fronttname2, float32).reshape(ny,nx)
+              a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss )
+
+              #-- front.q ---
+              a2nbc1      = fromfile(frontqname1, float32).reshape(ny,nx)
+              a2nbc2      = fromfile(frontqname2, float32).reshape(ny,nx)
+              a2nbc       = front_func.complete_front_q_saone(a2fbc, a2nbc1, a2nbc2, thfmask1q, thfmask2q, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss)
             ##########################
             #--- load  TC -----------------
             ## BEST TC  ###
@@ -176,8 +193,11 @@ for bstflag_tc in lbstflag_tc:
             #-- make exC ---------------
             a2dura      = ctrack_fsub.solvelife(a2life.T, miss_int)[0].T
             a2c         = ma.masked_where(a2dura<thdura, a2pgrad)
-            a2c         = ma.masked_where(a2tc != miss,   a2c)
-            a2c         = ma.masked_less(a2c, pgradmin)  
+            a2c         = ma.masked_less(a2c, pgradmin)
+            #-- close to TC --
+            a2tcsurr    = ctrack_fsub.mk_8gridsmask_saone(a2tc.T, miss).T
+            a2c         = ma.masked_where( a2tcsurr != miss, a2c)
+            #----------------- 
             a2c         = a2c.filled(miss)
             #-- territory---------------
             a2trr_tc    = ctrack_fsub.mk_territory_saone(a2tc.T, dist_tc, miss, lat_first, dlat, dlon).T

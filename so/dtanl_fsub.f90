@@ -306,11 +306,14 @@ a1y(8) = iys
 !------
 return
 END SUBROUTINE mk_8gridsxy
+
 !*********************************************************
-SUBROUTINE del_front_lesseq_ngrids(a2in, miss, thnum, nx, ny, a2out)
+SUBROUTINE del_front_lesseq_ngrids(a2in, wgtflag, miss, thnum, nx, ny, a2out)
 implicit none
 !--- in ---------
 integer                     nx, ny
+integer                     wgtflag
+!f2py intent(in)            wgtflag
 integer                     thnum
 !f2py intent(in)            thnum
 real,dimension(nx,ny)    :: a2in
@@ -329,14 +332,12 @@ integer                     stopflag
 integer                     idMAX, idMIN, MAXmin, MINmin
 integer,dimension(8)     :: a1x, a1y
 integer,dimension(nx,ny) :: a2id
-integer,dimension(nx*ny) :: a1connect, a1num
-real,dimension(nx,ny)    :: a2in_tmp
+integer,dimension(nx*ny) :: a1connect
+real,dimension(nx*ny)    :: a1num
+real,dimension(nx,ny)    :: a2in_tmp, a2arearat
+real                        arearat
 !--- parameter --
 integer,parameter        :: miss_int = -9999
-!------
-!5!1!2!
-!6! !3!
-!7!8!4l
 !------
 !-- initialize ---
 a2in_tmp  = a2in
@@ -344,7 +345,6 @@ a1connect = miss_int
 a1num     = 0
 a2id      = miss_int
 id        = 0
-a2out     = a2in
 !----------------
 do iy = 1,ny
   do ix = 1,nx
@@ -431,9 +431,9 @@ end do
 !-----
 do iy = 1, ny
   do ix = 1,nx
-    if (a2id(ix,iy).ne.miss)then
+    if (a2id(ix,iy).ne.miss_int)then
       ik = a2id(ix,iy)
-      if (a1connect(ik).ne.miss)then
+      if (a1connect(ik).ne.miss_int)then
         a2id(ix,iy) = a1connect(ik)
       else
         continue
@@ -441,29 +441,58 @@ do iy = 1, ny
     end if
   end do
 end do
+!!********************************
+!! count id
+!!-----------------------
+!do iy = 1,ny
+!  do ix = 1,nx
+!    if (a2id(ix,iy).ne.miss)then
+!      id = a2id(ix,iy)
+!      a1num(id) = a1num(id) + 1
+!    end if
+!  end do
+!end do
+!
+
 !********************************
 ! count id
 !-----------------------
-do iy = 1,ny
-  do ix = 1,nx
-    if (a2id(ix,iy).ne.miss)then
-      id = a2id(ix,iy)
-      a1num(id) = a1num(id) + 1
-    end if
+if (wgtflag .eq. 0)then
+  do iy = 1,ny
+    do ix = 1,nx
+      if (a2id(ix,iy).ne.miss_int)then
+        id = a2id(ix,iy)
+        a1num(id) = a1num(id) + 1
+      end if
+    end do
   end do
-end do
+else if (wgtflag .eq. 1)then
+  do iy = 1,ny
+    CALL mk_a2arearat_sphere_saone(a2arearat)
+    arearat   = a2arearat(1,iy)
+    do ix = 1,nx
+      if (a2id(ix,iy).ne.miss_int)then
+        id = a2id(ix,iy)
+        a1num(id) = a1num(id) + 1*arearat
+      end if
+    end do
+  end do
+end if
 !********************************
 ! remove small segments
 !-----------------------
+a2out = a2in_tmp
 do iy = 1,ny
   do ix = 1,nx
     id = a2id(ix,iy)
-    if (a1num(id).le.thnum)then
+    if (id.eq.miss_int)then
+      cycle
+    end if
+    if (a1num(id).le.real(thnum))then
       a2out(ix,iy) = miss
     end if
   end do
 end do
-
 !--------------------------------
 !a2out = real(a2id)
 return
@@ -471,6 +500,78 @@ END SUBROUTINE del_front_lesseq_ngrids
 !
 !*********************************************************
 
+
+!*********************************************************
+SUBROUTINE mk_a2arearat_sphere_saone(a2arearat)
+implicit none
+!--------------------------
+! make ratio of area relative to 1.0x1.0 grid located on the equator
+!-- out -----------------
+real,dimension(360,180)              :: a2arearat
+!f2py intent(out)                       a2arearat
+!-- calc ----------------
+integer                                 iy
+real                                    lats, latn, lonw, lone
+real                                    area_eq
+!------------------------
+area_eq  = cal_area_sphere(-0.5, 0.5, 0.0, 1.0)
+do iy =1,180
+  latn = -90.0 + real(iy)
+  lats = latn - 1.0
+  lonw = 0.0
+  lone = 1.0
+  a2arearat(:,iy) = cal_area_sphere(lats, latn, lonw, lone) / area_eq
+end do
+!------------------------
+return
+END SUBROUTINE mk_a2arearat_sphere_saone
+!*********************************************************
+SUBROUTINE mk_a2area_sphere_saone(a2area)
+implicit none
+!-- out -----------------
+real,dimension(360,180)              :: a2area 
+!f2py intent(out)                       a2area
+!-- calc ----------------
+integer                                 iy
+real                                    lats, latn, lonw, lone
+!------------------------
+do iy =1,180
+  latn = -90.0 + real(iy)
+  lats = latn - 1.0
+  lonw = 0.0
+  lone = 1.0
+  a2area(:,iy) = cal_area_sphere(lats, latn, lonw, lone)
+end do
+!------------------------
+return
+END SUBROUTINE mk_a2area_sphere_saone
+!*********************************************************
+FUNCTION cal_area_sphere(lats, latn, lonw, lone)
+!----------------------
+! estimate area (km2) assuming that the eath is a sphere
+! S = r2 * dlon * pi / 180 * (sin(lat2) - sin(lat1))
+! lat, lon are in degree
+!----------------------
+implicit none
+!--- in -----------
+real                                    lats, latn, lonw, lone  ! (deg.)
+!f2py intent(in)                        lats, latn, lonw, lone
+
+!--- out ----------
+real                                    cal_area_sphere
+!f2py intent(out)                       cal_area_sphere
+!--- para ---------
+real,parameter                       :: r = 6371.012  ! (km)
+real,parameter                       :: pi = 3.1416
+!--- calc ---------
+real                                    dlon
+!----------------------
+dlon = min( abs(lone-lonw), abs(360.0-(lone-lonw)))
+
+cal_area_sphere = r**2.0 *dlon*pi/180.0 *(sin(latn/180.0*pi)-sin(lats/180.0*pi))
+!----------------------
+return
+END FUNCTION cal_area_sphere
 
 
 !*********************************************************

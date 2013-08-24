@@ -27,16 +27,22 @@ def timeave_gsmap_backward_org(year,mon,day,hour, hlen):
     hour_t  = target.hour
     idir_root = "/home/utsumi/mnt/iis.data2/GSMaP/standard/v5/hourly"
     idir      = idir_root + "/%04d/%02d/%02d"%(year_t,mon_t,day_t)
-    iname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat.gz"%(year_t,mon_t,day_t,hour_t)
-    dat_org   = subprocess.Popen(["gzip", "-dc", iname, " >", "/dev/stdout"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+    ##--- for compressed files ------
+    #iname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat.gz"%(year_t,mon_t,day_t,hour_t)
+    #dat_org   = subprocess.Popen(["gzip", "-dc", iname, " >", "/dev/stdout"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 
-    a2in      = fromstring(dat_org, float32)
+    #a2in      = fromstring(dat_org, float32)
+    #---- for decompressed files ---
+    iname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat"%(year_t,mon_t,day_t,hour_t)
+    a2in      = fromfile(iname,float32)
+
+
+
     a2ave     = a2ave + ma.masked_less(a2in, 0.0)
-    atmp      = ma.masked_less(a2in, 0.0)/(len(lhlen)*60.*60.)
-    atmp      = flipud( atmp.reshape(1200,3600))[:123]
 
   #---
-  a2ave       = (a2ave /(len(lhlen)* 60.0*60.0)).filled(-9999.0)
+  #a2ave       = (a2ave /(len(lhlen)* 60.0*60.0)).filled(-9999.0)  # original data is in [mm/hour]
+  a2ave       = (a2ave /(hlen* 60.0*60.0)).filled(-9999.0)  # original data is in [mm/hour]
   a2ave       = flipud(a2ave.reshape(1200,3600))
   return a2ave
 
@@ -60,12 +66,11 @@ def timeave_gsmap_backward_saone(year,mon,day,hour, hlen):
     hour_t  = target.hour
     idir_root = "/media/disk2/data/GSMaP/sa.one/1hr/ptot"
     idir      = idir_root + "/%04d%02d"%(year_t,mon_t)
-    iname     = idir + "/gsmap_mvk.1rh.20010116.0200.v5.222.1.sa.one"
     iname     = idir + "/gsmap_mvk.1rh.%04d%02d%02d.%02d00.v5.222.1.sa.one"%(year_t,mon_t,day_t,hour_t)
     a2in      = fromfile(iname, float32).reshape(120,360)
     a2ave     = a2ave + ma.masked_equal(a2in, -9999.0)
   #---
-  a2ave       = a2ave / len(lhlen)
+  a2ave       = a2ave / hlen
   a2ave       = a2ave.filled(-9999.0)
   return a2ave
 

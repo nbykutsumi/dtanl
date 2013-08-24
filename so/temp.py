@@ -1,26 +1,31 @@
 from dtanl_fsub import *
 from numpy import *
 import ctrack_fig
-#---------------------------
-lllat = 0.0
-lllon = 60.0
-urlat = 60.0
-urlon = 230.0
-miss  = -9999.0
 ny,nx = 180,360
-thnum = 9
-idir = "/media/disk2/out/JRA25/sa.one.anl_p/6hr/front/200401"
-iname = idir + "/front.M1_0.7.M2_4.0.2004.01.02.00.sa.one"
-a2in = fromfile(iname, float32).reshape(180,360)
+miss  = 0.0
+thnum = 8.0
+wgtflag = 0
 
-a2out = dtanl_fsub.del_front_lesseq_ngrids(a2in.T, miss,thnum).T
+a2rat = dtanl_fsub.mk_a2arearat_sphere_saone().T
 
-fig1  = "/home/utsumi/bin/dtanl/so/fig_in.png"
-fig2  = "/home/utsumi/bin/dtanl/so/fig_out.png"
-ctrack_fig.mk_pict_saone_reg(a2in, soname=fig1, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
-ctrack_fig.mk_pict_saone_reg(a2out, soname=fig2, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
+a2in = zeros([ny,nx],float32)
+a2in[90,100:108] = 1.0
+a2in[91,104:108] = 1.0
+a2in[80,100:108] = 1.0
+a2in[81,104:108] = 1.0
+a2in[70,100:108] = 1.0
+a2in[71,104:108] = 1.0
+a2in[60,100:108] = 1.0
+a2in[61,104:108] = 1.0
+a2in[50,100:108] = 1.0
+a2in[51,104:108] = 1.0
+a2in[40,100:108] = 1.0
+a2in[41,104:108] = 1.0
+a2in[30,100:108] = 1.0
+a2in[31,104:108] = 1.0
+a2in[20,100:108] = 1.0
+a2in[21,104:108] = 1.0
 
-print fig1
-
-
+a2out = dtanl_fsub.del_front_lesseq_ngrids(a2in.T, miss, thnum, wgtflag).T
+print sum(a2out)
 

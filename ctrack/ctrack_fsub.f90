@@ -1728,6 +1728,10 @@ SUBROUTINE connectc(&
   !integer,dimension(nx*ny)                      :: a1x, a1y
   !integer,dimension(8)                           :: a1surrx, a1suury
   integer                                          cflag
+  !**************************************
+  !** parameter
+  !**************************************
+  double precision,parameter                    :: speedfactor=0.5d0
 !------------------------------------------------------------
 dlat  = a1lat(2) - a1lat(1)
 dlon  = a1lon(2) - a1lon(1)
@@ -1752,11 +1756,19 @@ do iy0 = 1, ny
         lon0    = a1lon(ix0) 
         ua0     = a2ua0(ix0, iy0)
         va0     = a2va0(ix0, iy0)
+        !-----------------
+        if (ua0.eq.miss_dbl)then
+          ua0 = 0.0d0
+        end if
+        if (va0.eq.miss_dbl)then
+          va0 = 0.0d0
+        end if
+        !-----------------
         !pmean0  = a2pmean0(ix0, iy0)
         !psl0    = a2psl0(ix0, iy0)
         !-----------------
-        londist = ua0 * 60d0 * 60d0 * hinc ! [m]
-        latdist = va0 * 60d0 * 60d0 * hinc ! [m]
+        londist = ua0 * 60d0 * 60d0 * hinc * speedfactor ! [m]
+        latdist = va0 * 60d0 * 60d0 * hinc * speedfactor ! [m]
         ix1     = ix0 + longrids(lat0, dlon, londist)
         iy1     = iy0 + latgrids(lat0, dlat, latdist)
         call ixy2iixy(ix1, iy1, nx, ny, iix1, iiy1)
@@ -2065,6 +2077,44 @@ RETURN
 END SUBROUTINE connectc_old
 
 !*****************************************************************
+SUBROUTINE mk_8gridsmask_saone(a2in, miss, a2out)
+implicit none
+!-- input ------
+real,dimension(360,180)                     :: a2in
+!f2py intent(in)                               a2in
+real                                           miss
+!f2py intent(in)                               miss
+!-- output -----
+real,dimension(360,180)                     :: a2out
+!f2py intent(out)                              a2out
+!-- calc -------
+integer                                        ix,iy, ixt, iyt
+integer                                        it
+integer,dimension(8)                        :: a1surrx, a1surry
+!-- parameter --
+integer,parameter                           :: nx=360
+integer,parameter                           :: ny=180
+!---------------
+a2out = miss
+
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      !-----
+      a2out(ix,iy) = 1.0
+      !-----
+      CALL mk_8gridsxy(ix,iy,nx,ny,a1surrx,a1surry)
+      do it = 1,8
+        ixt = a1surrx(it)
+        iyt = a1surry(it)
+        a2out(ixt,iyt) = 1.0  
+      end do
+    end if
+  end do
+end do
+!---------------
+return
+END SUBROUTINE mk_8gridsmask_saone
 !*****************************************************************
 SUBROUTINE mk_8gridsxy(x, y, nx, ny, a1surrx, a1surry)
   implicit none

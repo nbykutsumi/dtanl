@@ -5,22 +5,23 @@ from numpy import *
 iyear   = 2001
 eyear   = 2004
 
-#----
 #lseason = ["ALL","DJF","JJA"]
 lseason = ["ALL"]
 lbaiumon= [6,7]
 sresol  = "anl_p"
-ftype   = "t"
+ftype   = "q"
 if ftype == "t":
   #lthfmask1  = [0.25,0.26,0.27,0.28,0.29,0.30,0.31]
   #lthfmask2  = [0.2,0.4,0.6,0.8,1.0,1.2]
-  lthfmask1  = [0.18,0.22,0.25,0.26,0.27,0.28,0.29,0.30,0.31]
-  lthfmask2  = [0.2,0.4,0.6,0.8,1.0,1.2]
+  lthfmask1  = [0.18,0.22,0.26,0.30,0.34,0.38,0.42,0.46]
+  lthfmask2  = [0.2,0.6,1.0,1.4,1.8]
 elif ftype == "q":
-  lthfmask1  = array([2.0,2.2,2.4,2.6,2.8,3.0,3.2]) #*1.0e-4
-  lthfmask2  = array([2.2,2.4,2.6,2.8,3.0,3.2])     #*1.0e-3
+  #lthfmask1  = array([2.0,2.2,2.4,2.6,2.8,3.0,3.2]) #*1.0e-4
+  #lthfmask2  = array([2.2,2.4,2.6,2.8,3.0,3.2])     #*1.0e-3
+  lthfmask1  = array([0.5,1.0,1.5,2.0,2.5])          #*1.0e-4
+  lthfmask2  = array([0.5,1.0,1.5,2.0,2.5,3.0])      #*1.0e-3
 
-thgrids    = 7
+thgrids    = 6
 #----
 nx,ny      = 360,180
 lat_first  = -89.5
@@ -92,6 +93,13 @@ for season in lseason:
           a2numobj_tmp   = fromfile(namenumobj, float32).reshape(ny,nx)
           #----
           a2numobj_tmp   = ma.masked_where(a2regionmask==0.0, a2numobj_tmp)
+          #-- screen out baiu  ---
+          if (ftype=="t")&(mon in lbaiumon):
+            a2numobj_tmp  = ma.masked_where(a2baiu_region ==1.0, a2numobj_tmp)
+          #-- pick up baiu  ---
+          if (ftype=="q")&(mon in lbaiumon):
+            a2numobj_tmp  = ma.masked_where(a2baiu_region ==0.0, a2numobj_tmp)
+          #--------------------
           print namenumobj
           print "mean",mean(a2numobj_tmp)
           #---- 
@@ -104,7 +112,7 @@ for season in lseason:
       #---
       key        = thfmask1, thfmask2
       #---
-      drmse[key] = ((a2numchart - da2numobj[key])**2.0)/ntimes
+      drmse[key] = (((a2numchart - da2numobj[key])/ntimes)**2.0)
       drmse[key] = (drmse[key].mean())**0.5
   #*******************************
   #-----  save ----------

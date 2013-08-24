@@ -20,19 +20,21 @@ for year in lyear:
     #----
     for day in range(iday,eday+1):
       for hour in lhour:
-        tname1 = idir + "/front.loc.t.%04d.%02d.%02d.%02d.M1-0.28.M2-0.80.png"%(year,mon,day,hour)
-        tname2 = idir + "/front.loc.t.%04d.%02d.%02d.%02d.M1-0.30.M2-1.00.png"%(year,mon,day,hour)
-        qname  = idir + "/front.loc.q.%04d.%02d.%02d.%02d.M1-2.60.M2-2.40.png"%(year,mon,day,hour)
+        tname1 = idir + "/front.loc.t.%04d.%02d.%02d.%02d.M1-0.30.M2-1.00.png"%(year,mon,day,hour)
+        qname1 = idir + "/front.loc.q.%04d.%02d.%02d.%02d.M1-1.50.M2-1.50.png"%(year,mon,day,hour)
+        qname2 = idir + "/front.loc.q.%04d.%02d.%02d.%02d.M1-2.00.M2-1.50.png"%(year,mon,day,hour)
         imgt1 = Image.open(tname1)
-        imgt2 = Image.open(tname2)
-        imgq  = Image.open(qname)
+        #imgt2 = Image.open(tname2)
+        imgq1 = Image.open(qname1)
+        imgq2 = Image.open(qname2)
         a2t1  = asarray(imgt1)
-        a2t2  = asarray(imgt2)
-        a2q   = asarray(imgq)
-        a2blank = ones(shape(a2q), dtype=uint8) *255
+        #a2t2  = asarray(imgt2)
+        a2q1  = asarray(imgq1)
+        a2q2  = asarray(imgq2)
+        a2blank = ones(shape(a2t1), dtype=uint8) *255
         #--------
-        a2join1  = concatenate((a2t1,a2t2),axis=1)
-        a2join2  = concatenate((a2blank, a2q) ,axis=1)
+        a2join1  = concatenate((a2t1,a2blank),axis=1)
+        a2join2  = concatenate((a2q1, a2q2) ,axis=1)
         a2join   = concatenate( (a2join1, a2join2), axis=0)
         imgjoin = Image.fromarray(a2join)
         oname   = idir + "/join.front.%04d.%02d.%02d.%02d.png"%(year,mon,day,hour)

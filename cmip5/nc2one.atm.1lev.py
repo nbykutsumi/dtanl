@@ -120,15 +120,16 @@ odir_dump = odir_root
 #####################################################
 # set dlyrange
 #####################################################
-llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59,noleapflag)
+llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59)
 
 print llfileinfo
 for lfileinfo in llfileinfo:
-  fyear0,fmon0,fday0,fhour0,fmin0,fcmiptime0,fyear1,fmon1,fday1,fhour1,fmin1,fcmiptime1,ncname\
+  fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname\
    = lfileinfo 
   print lfileinfo
   #------
-  time0 = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
+  #time0 = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
+  time0 = ftime0
   #------------------------------
   # make heads 
   #------------------------------
@@ -161,10 +162,13 @@ for lfileinfo in llfileinfo:
   print "iname=", iname
   nc = Dataset(iname, "r", format="NETCDF")
   #*********
-  # ntime
+  # a1tnum
   #---------
-  ntime  = shape(nc.variables["time"])[0]
-
+  #ntime     = shape(nc.variables["time"])[0]
+  nctime    = nc.variables["time"]
+  a1tnum    = nc.variables["time"][:]
+  sunit     = nc.variables["time"].units
+  scalendar = nc.variables["time"].calendar
   #####
   dumpdata(iname, nc)
   ny    = len(nc.variables["lat"][:])
@@ -175,43 +179,19 @@ for lfileinfo in llfileinfo:
   else:
     nz  = len(nc.variables["plev"][:])
   #--
-  #####
-  istep = -1
-  istep_withleap = -1
-  #--------------------
-  while istep <= ntime:
-    istep_withleap = istep_withleap + 1
-    time = time0 + datetime.timedelta(hours=istep_withleap *tinc)
+  ################
+  for tnum in a1tnum:
+    time     = num2date(tnum, units=sunit, calendar=scalendar)
     year_tmp = time.year
     mon_tmp  = time.month
     day_tmp  = time.day
     hour_tmp = time.hour
     min_tmp = time.minute
-  
-    ##############
-    # no leap
-    ##############
-    if ( calendar.isleap(year_tmp)& (mon_tmp == 2)&(day_tmp==29)):
-      continue
-    ##############
-    istep = istep + 1
     #############
     if ((year_tmp not in lyear) or (mon_tmp not in lmon)):
       continue
     ##############
-    # check cmiptime & file name time
-    #-------------
-    cmiptime_tmp  = nc.variables["time"][istep]
-
-    year_cmip, mon_cmip, day_cmip, hour_cmip, min_cmip\
-       = cmip_func.cmiptime2date(cmiptime_tmp, noleapflag=True)
-
-    if not (year_cmip, mon_cmip, day_cmip, hour_cmip, min_cmip\
-       == year_tmp, mon_tmp, day_tmp, hour_tmp, min_tmp):
-      print "not much in time"
-      print "time_cmip",year_cmip, mon_cmip, day_cmip, hour_cmip, min_cmip
-      print "time_tmp ",year_tmp, mon_tmp, day_tmp, hour_tmp, min_tmp
-      sys.exit()
+    istep         = date2index(time, nctime, calendar=nctime.calendar)
  
     #############
     odir = odir_root + "/%04d%02d"%(year_tmp,mon_tmp)
@@ -234,7 +214,7 @@ for lfileinfo in llfileinfo:
     data_one  = array(data_one, float32)
    
     ########
-    oname = odir + "/%s.%s.%s.%s.%s.%04dPa.sa.one"%(var, model, expr, ens, stime, lev)
+    oname = odir + "/%s.%04dhPa.%s.%s.sa.one"%(var, lev, ens, stime)
     ########
     f = open(oname, "wb")
     f.write(data_one)

@@ -1,43 +1,68 @@
 from tag_fsub import *
+from gsmap_fsub import *
 from numpy import *
 import ctrack_para, ctrack_func, ctrack_fig, chart_para
-import gsmap_func
 import calendar
 import gsmap_func
 import datetime
-import os
+import os, sys
 #---------------------------
 #singletime = True
 singletime = False
 calcflag   = True
 #calcflag   = False
-#lbstflag    = [True,False]
-lbstflag   = [False]
-iyear   = 2001
-eyear   = 2004
-#lseason = [1]
+lbstflag_tc   = ["bst"]
+#lbstflag_tc   = ["bst"]
+#lbstflag_f    = ["bst.high","bst.type"]
+lbstflag_f = [""]
+#lprtype  = ["GSMaP"]
+lprtype  = ["GSMaP.dec"]
+
+
+sresol  = "anl_p"
+iyear   = 2003
+eyear   = 2009
+#iyear    = 2001
+#eyear    = 2009
 #lseason = ["NDJFMA","JJASON"]
-#lseason = ["NDJFMA","JJASON","DJF","JJA","ALL"]
+#lseason = ["ALL","NDJFMA","JJASON"]
+#lseason = ["NDJFMA","JJASON","DJF","JJA"]
+#lseason = ["DJF"]
 lseason = ["ALL"]
+#lseason = [10,11,12]
+
 iday    = 1
-ptile   = 99 # (%)
-ltag    = ["tc","c","fbc","nbc","ot","o.tc","o.fbc","o.nbc","TCF","TCFC","TCB","TCBC"]
-#ltag    = ["o.tc"]
+ptile   = 99.9 # (%)
+lfbctype= ["nn","wn"]
+lnhour  = [1,6,24]
+#lnhour  = [1,3,6,12,24]
+#lnhour  = [24]
+#ltag    = ["nbcot","nbcot","tc","c","fbc","nbc","ot","o.tc","o.c","o.fbc","o.nbc","TCF","TCFC","TCB","TCBC"]
+ltag    = ["tc","c","fbc","nbc","ot"]
+#ltag    = ["nbcot"]
+thdura_c  = 48
+thdura_tc = thdura_c
 
 iyear_dat= 2001
-eyear_dat= 2004
+eyear_dat= 2009
+itime_dat = datetime.datetime(iyear_dat,1,1,0)
 #--------------------------------
-#prtype   = "GPCP1DD"
-#prtype    = "JRA"
-#lprtype  = ["JRA"]
-#lprtype  = ["GPCP1DD"]
-lprtype  = ["GSMaP.03hr"]
-#--------------------------------
-
-dist_tc = 500 #[km]
+# 100% area
+dist_tc = 1000 #[km]
 dist_c  = 1000 #[km]
 dist_f  = 500 #[km]
-nx,ny   =[360,180]
+
+## 80% area
+#dist_tc    = 894 # [km]
+#dist_c     = 894 # [km]
+#dist_f     = 400 # [km]
+
+## 120% area
+#dist_tc    = 1095 # [km]
+#dist_c     = 1095 # [km]
+#dist_f     = 600  # [km]
+
+nx,ny     = [360,180]
 
 thorog    = 1500   # [m]
 miss      = -9999.0
@@ -48,372 +73,450 @@ miss_gpcp = -99999.
 region    = "GLOB"
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 
-#---------------------
+#--------------
+#calcoef  = 60*60*24.0
+calcoef = 1.0e+9   # for floating number calculation reason.
+#calcoef = 1.0   # for floating number calculation reason.
+#**********************************
 for prtype in lprtype:
-  #-- load ptile -------
-  if prtype == "JRA":
-    ptiledir_root = "/media/disk2/data/JRA25/sa.one/6hr/PR/ptile" 
-    ptiledir      = ptiledir_root + "/%04d-%04d"%(2001,2004)
-    ptilename     = ptiledir + "/fcst_phy2m.PR.p%05.2f.%s.sa.one"%(ptile,"ALL")
-    #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
-    #ptilename     = ptiledir + "/fcst_phy2m.PR.p%05.2f.%s.sa.one"%(ptile,season)
-    a2ptile       = fromfile(ptilename, float32).reshape(ny,nx)
-  if prtype == "GPCP1DD":
-    ptiledir_root = "/media/disk2/data/GPCP1DD/v1.2/1dd/ptile" 
-    ptiledir      = ptiledir_root + "/%04d-%04d"%(2000,2010)
-    ptilename     = ptiledir + "/pr.gpcp.p%05.2f.%s.bn"%(ptile,"ALL")
-    #ptiledir      = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
-    #ptilename     = ptiledir + "/pr.gpcp.p%05.2f.%s.bn"%(ptile,season)
-    a2ptile       = fromfile(ptilename, float32).reshape(ny,nx)
+  da2zero  = {}
+  da2one   = {}
+  dext     = {}
+  if prtype in ["GSMaP"]:
+    da2zero[prtype] = zeros([120,360],float32)
+    da2one[prtype]  = ones([120,360],float32)
+    dext[prtype]    = "sa.one"
+  elif prtype in ["GSMaP.dec"]: 
+    da2zero[prtype] = zeros([1200,3600],float32)
+    da2one[prtype]  = ones([1200,3600],float32)
+    dext[prtype]    = "sa.dec"
+#
+a2one_saone = ones([ny,nx],float32)
+#**********************************
+# FUNCTIONS
+#----------------------------------
+def mk_initial_a2accpr( tctype, ftype, dist_tc, dist_c, dist_f, year,mon,day,hour):
+  #-----------------------------
+  now            = datetime.datetime(year,mon,day,hour)
+  da2accpr       = {}
+  da2accpr_plain = {}
+  #***** init ******
+  for fbctype,tag,nhour in ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=True):
+    da2accpr[fbctype,tag,nhour] = da2zero[prtype].copy()
+  for nhour in lnhour:
+    da2accpr_plain[nhour]       = da2zero[prtype].copy()      
+  #*****************
+  for nhour in lnhour:
+    for inc_hour in range(1,nhour+1):
+      timetarget = now + datetime.timedelta(hours= -inc_hour)
+      yeart      = timetarget.year
+      mont       = timetarget.month
+      dayt       = timetarget.day
+      hourt      = timetarget.hour
+      #** check time ***
+      if timetarget < itime_dat: 
+        continue
+      #-----------------
+      #a2pr   = ma.masked_equal(ret_pr(prtype, yeart, mont, dayt, hourt),miss).filled(0.0) 
+      a2pr   = ret_pr(prtype, yeart, mont, dayt, hourt).filled(0.0) 
+      #*****************************
+      # load corresponding tags 
+      #-----------------------------
+      da2tag = load_tag(tctype, ftype, dist_tc, dist_c, dist_f, yeart, mont, dayt, hourt)   # load 180x360 sa.one shape
+      for fbctype,tag in ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=False):
+        da2tag[fbctype,tag] = fitshape(da2tag[fbctype,tag], prtype)
 
-  if prtype == "GSMaP.03hr":
-    ptiledir_root = "/media/disk2/data/GSMaP/sa.one/3hr/ptot/ptile" 
-    ptiledir      = ptiledir_root + "/%04d-%04d"%(2001, 2004)
-    ptilename     = ptiledir + "/gsmap_mvk.3rh.v5.222.1.p%05.2f.%s.sa.one"%(ptile,"ALL")
-    a2ptile       = fromfile(ptilename, float32).reshape(120,360)
-    a2ptile       = gsmap_func.gsmap2global_one(a2ptile, miss_out)
+      #*****************************
+      # Partial precip for each system
+      #-----------------------------
+      lkeys  = ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=False)
+      for fbctype,tag in lkeys:
+        da2accpr[fbctype,tag,nhour] = da2accpr[fbctype,tag,nhour] \
+                                  + a2pr * da2tag[fbctype, tag]
+
+      #---
+      da2accpr_plain[nhour]  = da2accpr_plain[nhour]\
+                             + a2pr 
+
+  #-----
+  return da2accpr_plain, da2accpr
+ 
+#---------------------------
+def fitshape(a2saone, prtype):
+  if prtype in ["GSMaP"]:
+    a2out = a2saone[30:150]
+  elif prtype in ["GSMaP.dec"]:
+    a2in  = a2saone[30:150]
+    a2out = gsmap_fsub.saone_gsmap2dec_gsmap(a2in.T).T
+  #-----
+  return a2out
+
+#---------------------------
+def ret_da2pr_kick(now, prtype, tctype, ftype, dist_tc, dist_c, dist_f):
+  #----
+  da2prplain_kick  = {}
+  da2pr_kick       = {}
+  #----
+  for nhour in lnhour:
+    timekick     = now + datetime.timedelta(hours = -nhour)
+    year_kick    = timekick.year
+    mon_kick     = timekick.month
+    day_kick     = timekick.day
+    hour_kick    = timekick.hour
+    #
+    #-- in nofiles ---
+    if timekick < itime_dat:
+      da2prplain_kick[nhour] = da2zero[prtype]
+      for fbctype, tag in ret_lkeys(fbctypeflag=True, tagflag=True, nhourflag=False):
+        da2pr_kick[fbctype,tag,nhour] = da2zero[prtype]
+    #-----------------
+    else: 
+      #da2prplain_kick[nhour] = ma.masked_equal(ret_pr(prtype,year_kick,mon_kick,day_kick,hour_kick), miss).filled(0.0)
+      da2prplain_kick[nhour] = ret_pr(prtype,year_kick,mon_kick,day_kick,hour_kick).filled(0.0)
+      #
+      da2tag_kick  = load_tag(tctype, ftype, dist_tc,dist_c,dist_f, year_kick,mon_kick,day_kick,hour_kick)
+      #
+      for fbctype, tag in ret_lkeys(fbctypeflag=True, tagflag=True, nhourflag=False):
+        a2tag_kick_tmp  = fitshape(da2tag_kick[fbctype,tag], prtype)
+        da2pr_kick[fbctype,tag,nhour] = a2tag_kick_tmp * da2prplain_kick[nhour]
+
+    #
+  return da2prplain_kick, da2pr_kick
+#---------------------------
+def ret_pr(prtype,yeart,mont,dayt,hourt):
+  #---
+  if prtype =="GSMaP": 
+    a2pr  = gsmap_func.timeave_gsmap_backward_saone(yeart,mont,dayt,hourt,1)
+
+    #-- test --
+    #a2pr  = ones([120,360],float32) 
+
+  if prtype =="GSMaP.dec": 
+    a2pr  = gsmap_func.timeave_gsmap_backward_org(yeart,mont,dayt,hourt,1)
+  #---
+  return ma.masked_equal(a2pr, miss) * calcoef
+
+#---------------------------
+def load_tag(tctype,ftype, dist_tc,dist_c,dist_f,year,mon,day,hour):
+  #--
+  htag_inc    = ret_htag_inc(hour)
+  timetarget  = datetime.datetime(year,mon,day,hour) + datetime.timedelta(hours=htag_inc)
+  yeart       = timetarget.year
+  mont        = timetarget.month
+  dayt        = timetarget.day
+  hourt       = timetarget.hour
+  #
+  tagdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tag/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
+  tagdir   = tagdir_root + "/%04d%02d"%(yeart, mont)
+  tagname  = tagdir + "/tag.%stc%04d.c%04d.%sf%04d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc, dist_c, ftype, dist_f, yeart,mont,dayt,hourt)
+  #-- load -------
+  a2tag     = fromfile(tagname, int32).reshape(180,360)
+  lout      = tag_fsub.solve_tag_4type(a2tag.T)
+  
+  a2tag_tmp_tc  = array(lout[0].T, float32)
+  a2tag_tmp_c   = array(lout[1].T, float32)
+  a2tag_tmp_fbc = array(lout[2].T, float32)
+  a2tag_tmp_nbc = array(lout[3].T, float32)
+  a2tag_tmp_ot  = ma.masked_where(a2tag !=0, a2one_saone).filled(0.0)
+  
+  a2tag_sum     = a2tag_tmp_tc + a2tag_tmp_c + a2tag_tmp_fbc
+
+  #---------------
+  da2tag           = {}
+  da2tag["nn","tc" ] = (ma.masked_where(a2tag_sum ==0.0, a2tag_tmp_tc ) / a2tag_sum).filled(0.0)
+  da2tag["nn","c"  ] = (ma.masked_where(a2tag_sum ==0.0, a2tag_tmp_c  ) / a2tag_sum).filled(0.0)
+  da2tag["nn","fbc"] = (ma.masked_where(a2tag_sum ==0.0, a2tag_tmp_fbc) / a2tag_sum).filled(0.0)
+  da2tag["nn","ot" ] =  ma.masked_where(a2tag_sum !=0.0, a2one_saone).filled(0.0)
+  
+  # wn: with non-baroclinic    
+  a2tagwn_sum     = a2tag_tmp_tc + a2tag_tmp_c + a2tag_tmp_fbc + a2tag_tmp_nbc
+  da2tag["wn","tc" ]  = (ma.masked_where(a2tagwn_sum ==0.0, a2tag_tmp_tc ) / a2tagwn_sum).filled(0.0)
+  da2tag["wn","c"  ]  = (ma.masked_where(a2tagwn_sum ==0.0, a2tag_tmp_c  ) / a2tagwn_sum).filled(0.0)
+  da2tag["wn","fbc"]  = (ma.masked_where(a2tagwn_sum ==0.0, a2tag_tmp_fbc) / a2tagwn_sum).filled(0.0)
+  da2tag["wn","nbc"]  = (ma.masked_where(a2tagwn_sum ==0.0, a2tag_tmp_nbc) / a2tagwn_sum).filled(0.0) 
+  da2tag["wn","ot" ]  =  ma.masked_where(a2tagwn_sum !=0.0, a2one_saone).filled(0.0)
+  #
+  return da2tag   
+
+#---------------------------
+def ret_lkeys(fbctypeflag, tagflag, nhourflag):
+  if (fbctypeflag, tagflag, nhourflag) == (True,True,True):
+    lkeys = [ [fbctype,tag,nhour] for fbctype in lfbctype\
+                                for tag   in ltag\
+                                for nhour in lnhour]
+    if (("nn" in lfbctype)&("nbc" in ltag)):
+      for nhour in lnhour:
+        lkeys.remove(["nn","nbc",nhour])
+  #----
+  if (fbctypeflag, tagflag, nhourflag) == (True,True,False):
+    lkeys = [ [fbctype,tag] for fbctype in lfbctype\
+                                for tag   in ltag]
+    if (("nn" in lfbctype)&("nbc" in ltag)):
+      lkeys.remove(["nn","nbc"])
+  #----
+  return lkeys
+
+#----------------------------------- 
+def ret_htag_inc(hour):
+  #--------------------------
+  # for backward precipitation
+  #--------------------------
+  if hour in [0,6,12,18]:
+    htag_inc = 0
+  elif hour in [1,7,13,19]:
+    htag_inc = -1
+  elif hour in [2,8,14,20]:
+    htag_inc = -2
+  elif hour in [3,9,15,21]:
+    htag_inc = -3
+  elif hour in [4,10,16,22]:
+    htag_inc = +2
+  elif hour in [5,11,17,23]:
+    htag_inc = +1
+  #
+  return htag_inc
+#----------------------------------- 
+#**************************************************
+#  START 
+#---------------------
+for season, prtype in [[season,prtype]\
+                    for season in lseason\
+                    for prtype in lprtype]:
+  #-- load ptile -------
+  da2ptile  = {}
+  for nhour in lnhour:
+    #if prtype == "JRA":
+    #  ptiledir_root   = "/media/disk2/data/JRA25/sa.one/6hr/PR/ptile" 
+    #  ptiledir        = ptiledir_root + "/%04d-%04d"%(2001,2004)
+    #  ptilename       = ptiledir + "/fcst_phy2m.PR.p%05.2f.%s.sa.one"%(ptile,"ALL")
+    #  #ptiledir        = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
+    #  da2ptile[nhour] = fromfile(ptilename, float32).reshape(ny,nx)
+    #if prtype == "GPCP1DD":
+    #  ptiledir_root   = "/media/disk2/data/GPCP1DD/v1.2/1dd/ptile" 
+    #  ptiledir        = ptiledir_root + "/%04d-%04d"%(2000,2010)
+    #  ptilename       = ptiledir + "/pr.gpcp.p%05.2f.%s.bn"%(ptile,"ALL")
+    #  #ptiledir        = ptiledir_root + "/%04d-%04d"%(iyear,eyear)
+    #  da2ptile[nhour] = fromfile(ptilename, float32).reshape(ny,nx)
+
+    if prtype == "GSMaP":
+      thmissrat = 0.8
+      ptiledir_root   = "/media/disk2/data/GSMaP/sa.one/1hr/ptot/ptile" 
+      ptiledir        = ptiledir_root + "/%04d-%04d"%(2001, 2009)
+      ptilename       = ptiledir  + "/gsmap_mvk.v5.222.1.movw%02dhr.%3.1f.p%05.2f.ALL.sa.one"%(nhour, thmissrat, ptile)
+      da2ptile[nhour] = fromfile(ptilename, float32).reshape(120,360)
+
+      #- test --
+      #da2ptile[nhour] = ones([120,360],float32)*0.5
+ 
+    if prtype == "GSMaP.dec":
+      thmissrat = 0.8
+      ptiledir_root   = "/home/utsumi/mnt/iis.data1/utsumi/GSMaP/ptile.dec" 
+      ptiledir        = ptiledir_root + "/%04d-%04d"%(2001, 2009)
+      ptilename       = ptiledir  + "/gsmap_mvk.v5.222.1.movw%02dhr.%3.1f.p%05.2f.ALL.sa.dec"%(nhour, thmissrat, ptile)
+      da2ptile[nhour] = fromfile(ptilename, float32).reshape(1200,3600)
+    print ptilename
+  #-- mask a2ptile ---
+  for nhour in lnhour:
+    da2ptile[nhour] = ma.masked_equal(da2ptile[nhour], miss) * calcoef
 
   #-----------------------
-  for bstflag in lbstflag:
+  for bstflag_tc, bstflag_f in [[bstflag_tc, bstflag_f]\
+                                 for bstflag_tc in lbstflag_tc\
+                                 for bstflag_f  in lbstflag_f]:
     #-- TC type ----------
-    if bstflag ==True:
+    if bstflag_tc =="bst":
       tctype = "bst"
     else:
-      tctype = ""
+      tctype = "obj"
+    #-- front type  ------
+    if bstflag_f   == "bst.high":
+      ftype  = "bst.high"
+    elif bstflag_f == "bst.type":
+      ftype  = "bst.type"
+    elif bstflag_f == "":
+      ftype  = ""
     #---------------------
     if prtype in ["GPCP1DD"]:
       coef       = 1.0/(60*60*24.0)
     else:
       coef       = 1.0
     #--- tag dir_root -------------------
-    tagdir_root = "/media/disk2/out/JRA25/sa.one/6hr/tag"
-    #--- precipitation directory & timestep-----
-    if prtype   == "GSMaP.03hr":
-      prdir_root  = "/media/disk2/data/GSMaP/sa.one/3hr/ptot"
-      timestep    = "3hr"
-
-    elif prtype == "JRA":
-      prdir_root  = "/media/disk2/data/JRA25/sa.one/6hr/PR"
-      timestep    = "6hr"
-    
-    elif prtype == "GPCP1DD":
-      prdir_root  = "/media/disk2/data/GPCP1DD/v1.2/1dd"
-      timestep    = "day"
-    
-    elif prtype == "APHRO_MA":
-      prdir_root  = "/media/disk2/data/aphro/MA/sa.one"
-      timestep    = "day"
+    tagdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tag/c%02dh.tc%02dh"%(sresol, thdura_c, thdura_tc)
     #--- lhour -----------------------
-    if timestep == "day":
-      lhour = [0]
-
-    elif timestep == "12hr":
-      hlen  = 12
-      lhour = [0,12]
-    elif timestep == "6hr":
-      hlen  = 6
-      lhour = [0,6,12,18]
-    elif timestep == "3hr":
-      hlen  = 3
-      lhour = [0,3,6,9,12,15,18,21]
-    elif timestep == "1hr":
-      hlen  = 1
-      lhour = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
-    
+    lhour = range(24) 
     #--- corresponding tag time ------
-    def ret_lhtag_inc(timestep, hour):
-      if timestep == "day":
-        lhtag_inc = [0,-6,-12,-18]
-
-      elif timestep == "6hr":
-        lhtag_inc = [0, -6]
-
-      elif timestep == "3hr":
-        if hour in  [0,6,12,18]:
-          lhtag_inc = [0]
-        elif hour in [3,9,15,21]:
-          lhtag_inc = [-3]
-
-      elif timestep == "1hr":
-        if hour in [0,6,12,18]:
-          lhtag_inc = [0]
-        elif hour in [1,7,13,19]:
-          lhtag_inc = [-1]
-        elif hour in [2,8,14,20]:
-          lhtag_inc = [-2]
-        elif hour in [3,9,15,21]:
-          lhtag_inc = [-3]
-        elif hour in [4,10,16,22]:
-          lhtag_inc = [+2]
-        elif hour in [5,11,17,23]:
-          lhtag_inc = [+1]
-      #
-      return lhtag_inc
 
     #-- orog ------------------------
-    orogname = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
+    orogname = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
     a2orog   = fromfile(orogname, float32).reshape(ny,nx)
     
     a2shade  = ma.masked_where(a2orog >thorog, a2orog).filled(miss)
     #***************************************
-    
-    
-    for season in lseason:
+    if calcflag == True:
       #-----------------
-      if calcflag == True:
+      lmon = ctrack_para.ret_lmon(season)
+      #--------------------------------
+      for year in range(iyear, eyear+1):
         #-----------------
-        lmon = ctrack_para.ret_lmon(season)
-        #--------------------------------
-        a2one       = ones([ny,nx],float32)
-        a2zero      = zeros([ny,nx],float32)
-        a2num_all   = a2zero.copy()
-        a2num_tc    = a2zero.copy()
-        a2num_c     = a2zero.copy()
-        a2num_fbc   = a2zero.copy()
-        a2num_nbc   = a2zero.copy()
-        a2num_ot    = a2zero.copy()
-        ##
-        a2num_o_tc  = a2zero.copy()
-        a2num_o_c   = a2zero.copy()
-        a2num_o_fbc = a2zero.copy()
-        a2num_o_nbc = a2zero.copy()
-        a2num_o_ot  = a2zero.copy()
-        ##
-        a2num_TCF   = a2zero.copy()
-        a2num_TCFC  = a2zero.copy()
-        a2num_TCB   = a2zero.copy()
-        a2num_TCBC  = a2zero.copy()
+        for mon in lmon:
+          #**** init da2accpr *********
+          da2accpr_plain , da2accpr = mk_initial_a2accpr(tctype, ftype, dist_tc, dist_c, dist_f, year, mon, iday, 0)
+
+          da2accpr_plain_init , da2accpr_init = mk_initial_a2accpr(tctype, ftype, dist_tc, dist_c, dist_f, year, mon, iday, 0)
+
+          #**** init da2num ***********
+          lkeys = ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=True)
+          da2num          = {}
+          for fbctype, tag, nhour in lkeys:
+            da2num[fbctype,tag,nhour]   = da2zero[prtype].copy()
+
+          da2num_plain    = {}
+          for nhour in lnhour:
+            da2num_plain[nhour]         = da2zero[prtype].copy()
+          #**** init others ***********
+          a2totalcount    = da2zero[prtype].copy()
  
-        #--------------------------------
-        for year in range(iyear, eyear+1):
-          #-----------------
-          for mon in lmon:
-            #-- prdir ---
-            if prtype in ["GSMaP.03hr", "JRA"]:
-              prdir    = prdir_root + "/%04d%02d"%(year, mon)
-            elif prtype in ["GPCP1DD"]:
-              prdir    = prdir_root + "/%04d"%(year)
-            #--------------------
-            eday  = calendar.monthrange(year,mon)[1]
-            #--------------------
-            if singletime ==True:
-              eday = iday
-              lhour = [0]
-            #-- leap year -------
-            if (mon==2)&(eday==29):
-              eday = 28
-            #--------------------
-            for day in range(iday, eday+1):
-              #***
-              if (year==iyear_dat)&(mon==1)&(day==1):
-                continue
-              elif (year==eyear_dat)&(mon==12)&(day==eday):
-                continue
-              print prtype, season, year, mon, day
-              #*** 
-              for hour in lhour:
-                #-- prec name ----
-                if prtype == "GSMaP.03hr":
-                  prname    = prdir    + "/gsmap_mvk.3rh.%04d%02d%02d.%02d00.v5.222.1.sa.one"%(year, mon, day, hour)
-                elif prtype == "JRA":
-                  prname    = prdir    + "/fcst_phy2m.PR.%04d%02d%02d%02d.sa.one"%(year, mon, day, hour)
-                elif prtype == "GPCP1DD":
-                  prname    = prdir    + "/gpcp_1dd_v1.2_p1d.%04d%02d%02d.bn"%(year, mon, day)
-        
-                #-- load prec ----
-                if prtype   in ["GSMaP.03hr","GSMaP.01hr"]:
-                  a2pr      = fromfile(prname,  float32).reshape(120, 360)
-                  a2pr      = gsmap_func.gsmap2global_one(a2pr, miss_out)
-                elif prtype == "JRA":
-                  a2pr      = fromfile(prname,  float32).reshape(ny, nx)
-                elif prtype == "GPCP1DD":
-                  a2pr      = flipud(fromfile(prname,  float32).reshape(ny, nx))
-                  a2pr      = ma.masked_equal(a2pr, miss_gpcp).filled(0.0)
+          #-- prdir ---
+          if prtype in ["GSMaP.03hr", "JRA"]:
+            prdir    = prdir_root + "/%04d%02d"%(year, mon)
+          elif prtype in ["GPCP1DD"]:
+            prdir    = prdir_root + "/%04d"%(year)
+          #--------------------
+          eday  = calendar.monthrange(year,mon)[1]
+          #--------------------
+          if singletime ==True:
+            eday = iday
+            lhour = [0]
+          ##-- leap year -------
+          #if (mon==2)&(eday==29):
+          #  eday = 28
+          #--------------------
+          for day in range(iday, eday+1):
+            ##***
+            #if (year==iyear_dat)&(mon==1)&(day==1):
+            #  continue
+            #elif (year==eyear_dat)&(mon==12)&(day==eday):
+            #  continue
+            #*** 
+            for hour in lhour:
+              now = datetime.datetime(year,mon,day,hour)
+              print year,mon,day,hour
+              #*****************************
+              #-- load prec ----
+              # prtype == GSMaP: 120x360
+              # prtype == GSMaP.dec: 1200x3600
+              #-----------------------------
+              a2pr         = ret_pr(prtype, year, mon, day, hour)
 
-                #*****************************
-                # load corresponding tags 
-                #-----------------------------
-                lhtag_inc   = ret_lhtag_inc(timestep, hour)
-                now   = datetime.datetime(year, mon, day, hour)
-                #------------------
-                a2tag_tc    = a2zero.copy()
-                a2tag_c     = a2zero.copy()
-                a2tag_fbc   = a2zero.copy()
-                a2tag_nbc   = a2zero.copy()
-                a2tag_ot    = a2zero.copy()
-                #------------------ 
-                for htag_inc in lhtag_inc:
-                  dhour       = datetime.timedelta(hours = htag_inc)
-                  target      = now + dhour
-                  year_target = target.year
-                  mon_target  = target.month
-                  day_target  = target.day
-                  hour_target = target.hour
-                  #-- tag name ---
-                  tagdir   = tagdir_root + "/%04d%02d"%(year_target, mon_target)
-                  tagname  = tagdir + "/tag.%stc%02d.c%02d.f%02d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc/100, dist_c/100, dist_f/100, year_target,mon_target,day_target,hour_target)
-        
-                  if not os.access(tagname, os.F_OK):
-                    print "AAAA"
-                    print "nofile", tagname
-                    if (year==iyear)&(mon==1)&(day==1):
-                      continue
-                    elif (year==eyear)&(mon==12)&(day==eday):
-                      continue
-                  #-- load -------
-                  a2tag     = fromfile(tagname, int32).reshape(180,360)
-                  lout      = tag_fsub.solve_tag_4type(a2tag.T)
-                  a2tag_tc  = a2tag_tc  + array(lout[0].T, float32)
-                  a2tag_c   = a2tag_c   + array(lout[1].T, float32)
-                  a2tag_fbc = a2tag_fbc + array(lout[2].T, float32)
-                  a2tag_nbc = a2tag_nbc + array(lout[3].T, float32)
-                  a2tag_ot  = a2tag_ot  + ma.masked_where(a2tag !=0, a2one).filled(0.0)
-            
+              a2totalcount = a2totalcount + ma.masked_where(a2pr.mask, da2one[prtype]).filled(0.0)
+              a2pr         = a2pr.filled(0.0)
+
+              #a2totalcount = a2totalcount + ma.masked_where(a2pr==miss, da2one[prtype]).filled(0.0)
+
+              #a2pr         = ma.masked_equal(a2pr, miss).filled(0.0)
+
+              #*****************************
+              # load corresponding tags 
+              #-----------------------------
+              da2tag = load_tag(tctype, ftype, dist_tc, dist_c, dist_f, year, mon, day, hour)   # load 180x360 sa.one shape
+              for fbctype,tag in ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=False):
+                da2tag[fbctype,tag] = fitshape(da2tag[fbctype,tag], prtype)
+
+              #*****************************
+              # update da2pr_kick
+              #-----------------------------
+              da2prplain_kick, da2pr_kick\
+                 = ret_da2pr_kick(now, prtype, tctype, ftype, dist_tc, dist_c, dist_f)
+
+              #*****************************
+              # Partial precip for each system
+              #-----------------------------
+              lkeys  = ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=True)
+
+              for [fbctype,tag,nhour] in lkeys:
+                da2accpr[fbctype,tag,nhour] = da2accpr[fbctype,tag,nhour] \
+                                          - da2pr_kick[fbctype,tag, nhour]\
+                                          + a2pr * da2tag[fbctype, tag]
 
 
-                ##
-                a2tag_tc  = a2tag_tc  / len(lhtag_inc)
-                a2tag_c   = a2tag_c   / len(lhtag_inc)
-                a2tag_fbc = a2tag_fbc / len(lhtag_inc)
-                a2tag_nbc = a2tag_nbc / len(lhtag_inc)
-                a2tag_ot  = a2tag_ot  / len(lhtag_inc)
-                ##
+              #---
+              for nhour in lnhour:
 
-                a2tag_all = a2tag_tc + a2tag_c + a2tag_fbc + a2tag_nbc + a2tag_ot
-
-                #************************************
-                # make tag with only one type
-                #------------------------------------
-                a2tag_o_tc     = ma.masked_where(a2tag_all !=a2tag_tc, a2tag_tc).filled(0.0)
-                a2tag_o_c      = ma.masked_where(a2tag_all !=a2tag_c,  a2tag_c).filled(0.0)
-                a2tag_o_fbc    = ma.masked_where(a2tag_all !=a2tag_fbc, a2tag_fbc).filled(0.0)
-                a2tag_o_nbc    = ma.masked_where(a2tag_all !=a2tag_nbc, a2tag_nbc).filled(0.0)
-                a2tag_o_ot     = a2tag_ot
-
-                #****************
-                # tag for overlap
-                #----------------
-                a2tag_TCF      = ma.masked_where(a2tag_tc  ==0.0,  (a2tag_tc + a2tag_fbc + a2tag_nbc)/3.0 ).filled(0.0)
-                a2tag_TCF      = ma.masked_where((a2tag_fbc==0.0)&(a2tag_nbc==0.0), a2tag_TCF).filled(0.0)
-                a2tag_TCF      = ma.masked_where((a2tag_c  !=0.0), a2tag_TCF).filled(0.0)
-                ##
-                a2tag_TCFC     = ma.masked_where(a2tag_tc  ==0.0, (a2tag_tc + a2tag_fbc + a2tag_nbc + a2tag_c)/4.0 ).filled(0.0)
-                a2tag_TCFC     = ma.masked_where((a2tag_fbc==0.0)&(a2tag_nbc==0.0)&(a2tag_c==0.0), a2tag_TCFC).filled(0.0)
-                ##
-                a2tag_TCB      = ma.masked_where(a2tag_tc  ==0.0, (a2tag_tc + a2tag_fbc)/2.0).filled(0.0)
-                a2tag_TCB      = ma.masked_where(a2tag_fbc ==0.0, a2tag_TCB).filled(0.0)
-                a2tag_TCB      = ma.masked_where(a2tag_nbc !=0.0, a2tag_TCB).filled(0.0)
-                a2tag_TCB      = ma.masked_where(a2tag_c   !=0.0, a2tag_TCB).filled(0.0)
-                ##
-                a2tag_TCBC     = ma.masked_where(a2tag_tc  ==0.0, (a2tag_tc + a2tag_fbc + a2tag_c)/3.0).filled(0.0)
-                a2tag_TCBC     = ma.masked_where((a2tag_fbc==0.0)&(a2tag_c==0.0), a2tag_TCBC).filled(0.0)
-                a2tag_TCBC     = ma.masked_where(a2tag_nbc !=0.0, a2tag_TCBC).filled(0.0)
-
-                #*****************************
-                # check Pex
-                #-----------------------------
-                a2tag_tc    = ma.masked_where(a2pr < a2ptile, a2tag_tc ).filled(0.0)
-                a2tag_c     = ma.masked_where(a2pr < a2ptile, a2tag_c  ).filled(0.0)
-                a2tag_fbc   = ma.masked_where(a2pr < a2ptile, a2tag_fbc).filled(0.0)
-                a2tag_nbc   = ma.masked_where(a2pr < a2ptile, a2tag_nbc).filled(0.0)
-                a2tag_ot    = ma.masked_where(a2pr < a2ptile, a2tag_ot ).filled(0.0)
- 
-                ##
-
-                a2tag_o_tc  = ma.masked_where(a2pr < a2ptile, a2tag_o_tc ).filled(0.0)
-                a2tag_o_c   = ma.masked_where(a2pr < a2ptile, a2tag_o_c  ).filled(0.0)
-                a2tag_o_fbc = ma.masked_where(a2pr < a2ptile, a2tag_o_fbc).filled(0.0)
-                a2tag_o_nbc = ma.masked_where(a2pr < a2ptile, a2tag_o_nbc).filled(0.0)
-                a2tag_o_ot  = ma.masked_where(a2pr < a2ptile, a2tag_o_ot ).filled(0.0)
-                ##
-                a2tag_TCF   = ma.masked_where(a2pr < a2ptile, a2tag_TCF).filled(0.0)
-                a2tag_TCFC  = ma.masked_where(a2pr < a2ptile, a2tag_TCFC).filled(0.0)
-                a2tag_TCB   = ma.masked_where(a2pr < a2ptile, a2tag_TCB).filled(0.0)
-                a2tag_TCBC  = ma.masked_where(a2pr < a2ptile, a2tag_TCBC).filled(0.0)
-
-                #****************
-                a2num_all   = a2num_all + ma.masked_where(a2pr < a2ptile, a2one).filled(0.0)
-                a2num_tc    = a2num_tc  + a2tag_tc
-                a2num_c     = a2num_c   + a2tag_c
-                a2num_fbc   = a2num_fbc + a2tag_fbc
-                a2num_nbc   = a2num_nbc + a2tag_nbc
-                a2num_ot    = a2num_ot  + a2tag_ot
-                ##
-                a2num_o_tc  = a2num_o_tc  + a2tag_o_tc
-                a2num_o_c   = a2num_o_c   + a2tag_o_c
-                a2num_o_fbc = a2num_o_fbc + a2tag_o_fbc
-                a2num_o_nbc = a2num_o_nbc + a2tag_o_nbc
-                ##
-                a2num_TCF   = a2num_TCF   + a2tag_TCF
-                a2num_TCFC  = a2num_TCFC  + a2tag_TCFC
-                a2num_TCB   = a2num_TCB   + a2tag_TCB
-                a2num_TCBC  = a2num_TCBC  + a2tag_TCBC
-                ##
-        #-------------------------------------
-        da2rfreq         = {}
-        da2rfreq["tc"]   = (ma.masked_where(a2num_all==0.0, a2num_tc ) / a2num_all).filled(0.0)
-        da2rfreq["c"]    = (ma.masked_where(a2num_all==0.0, a2num_c  ) / a2num_all).filled(0.0)
-        da2rfreq["fbc"]  = (ma.masked_where(a2num_all==0.0, a2num_fbc) / a2num_all).filled(0.0)
-        da2rfreq["nbc"]  = (ma.masked_where(a2num_all==0.0, a2num_nbc) / a2num_all).filled(0.0)
-        da2rfreq["ot"]   = (ma.masked_where(a2num_all==0.0, a2num_ot ) / a2num_all).filled(0.0)
-        ##
-        da2rfreq["o.tc"]   = (ma.masked_where(a2num_all==0.0, a2num_o_tc ) / a2num_all).filled(0.0)
-        da2rfreq["o.c"]    = (ma.masked_where(a2num_all==0.0, a2num_o_c  ) / a2num_all).filled(0.0)
-        da2rfreq["o.fbc"]  = (ma.masked_where(a2num_all==0.0, a2num_o_fbc) / a2num_all).filled(0.0)
-        da2rfreq["o.nbc"]  = (ma.masked_where(a2num_all==0.0, a2num_o_nbc) / a2num_all).filled(0.0)
-        ##
-        da2rfreq["TCF"]    = (ma.masked_where(a2num_all==0.0, a2num_TCF  ) / a2num_all).filled(0.0)
-        da2rfreq["TCFC"]   = (ma.masked_where(a2num_all==0.0, a2num_TCFC ) / a2num_all).filled(0.0)
-        da2rfreq["TCB"]    = (ma.masked_where(a2num_all==0.0, a2num_TCB  ) / a2num_all).filled(0.0)
-        da2rfreq["TCBC"]   = (ma.masked_where(a2num_all==0.0, a2num_TCBC ) / a2num_all).filled(0.0)
-        ##
-      
-        #****************************************
-        # write to file
-        #----------------------------------------
-        sodir_root = "/media/disk2/out/JRA25/sa.one/6hr/tagpr"
-        sodir      = sodir_root + "/%04d-%04d/%s"%(iyear, eyear, season)
-        ctrack_func.mk_dir(sodir)
-        dsname    = {}
-        for stag in ltag:
-          dsname[stag]    =  sodir  + "/rfreq.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%04.1f.%s.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, ptile, prtype, stag)
-          da2rfreq[stag].tofile(dsname[stag])
-          print dsname[stag] 
-    
-      ##****************************************
-      ## draw figure
-      ##----------------------------------------
-      sodir_root = "/media/disk2/out/JRA25/sa.one/6hr/tagpr"
-      sodir      = sodir_root + "/%04d-%04d/%s"%(iyear, eyear, season)
-      figdir     = sodir + "/pict"
-      ctrack_func.mk_dir(figdir)
-      dsname     = {}
-      dfigname   = {}
-      da2frac    = {}
-      for stag in ltag:
-        #-- name --
-        dsname[stag]    =  sodir  + "/rfreq.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%04.1f.%s.%s.sa.one" %(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, ptile, prtype, stag)
-        dfigname[stag]   =  figdir + "/rfreq.%stc%02d.c%02d.f%02d.%04d-%04d.%s.%04.1f.%s.%s.png" %(tctype, dist_tc/100, dist_c/100, dist_f/100, iyear, eyear, season, ptile, prtype, stag)
-
-
-    
-        #-- settings --
-        bnd    = [5,10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
-        cbarname = figdir + "/rfreq.cbar.png"
-        #
-        stitle   = "rfreq %04.1f %s: season:%s %s %04d-%04d %stc%02d c%02d f%02d"%(ptile, stag, season, prtype, iyear, eyear, tctype, dist_tc/100, dist_c/100, dist_f/100)
-        mycm     = "Spectral_r"
-        datname  = dsname[stag]
-        figname  = dfigname[stag]
-    
-        #-- loaad -----
-        a2figdat = fromfile(datname, float32).reshape(ny,nx)
-        a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-    
-        #-- draw ------
-        ctrack_fig.mk_pict_saone_reg(a2figdat, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon)
-        print figname
-   
+                da2accpr_plain[nhour]  = da2accpr_plain[nhour]\
+                                       - da2prplain_kick[nhour]\
+                                       + a2pr 
 
 
 
+                 
+              
+              #*****************************
+              # check Pex
+              #-----------------------------
+              # plain
+              #-----------
+              for nhour in lnhour:
+                da2num_plain[nhour]\
+                  = da2num_plain[nhour]\
+                  + ma.masked_where(da2accpr_plain[nhour] < da2ptile[nhour] * nhour, da2one[prtype]).filled(0.0)
+              #-----------
+              # each tag
+              #-----------
+              lkeys     = ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=True)
+              for [fbctype,tag,nhour] in lkeys:
+                a2numtmp = ma.masked_where(da2accpr_plain[nhour] < da2ptile[nhour] * nhour, da2accpr[fbctype,tag,nhour])
+
+                a2numtmp =(ma.masked_where(da2accpr_plain[nhour] < 0.0, a2numtmp) / da2accpr_plain[nhour]).filled(0.0)
+
+
+                da2num[fbctype,tag,nhour] = da2num[fbctype,tag,nhour]\
+                                          + a2numtmp
+
+          #*************************************
+          # mask where da2ptile is Masked
+          #----------
+          lkeys     = ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=True)
+          for [fbctype,tag,nhour] in lkeys:
+            da2num[fbctype,tag,nhour] = ma.masked_where(da2ptile[nhour].mask, da2num[fbctype,tag,nhour]).filled(miss)
+
+          #----------
+          for nhour in lnhour:
+            da2num_plain[nhour]       = ma.masked_where(da2ptile[nhour].mask, da2num_plain[nhour]).filled(miss)
+
+          #*************************************
+          #----- write to file ---
+          #--------------------------
+          odir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagexpr/%s.c%02dh.tc%02dh"%(sresol, fbctype, thdura_c, thdura_tc)
+          odir      = odir_root + "/%s.%04d-%04d.%s.%04d.%02d"%(prtype, iyear_dat, eyear_dat, season, year,mon)
+          ctrack_func.mk_dir(odir)
+
+          #-- num -----
+          dnumname  = {}
+          lkeys     = ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=True)
+          for [fbctype,tag,nhour] in lkeys:
+            numname\
+            = odir + "/num.%s.%s.mov%02dhr.%05.2f.%stc%04d.c%04d.%sf%04d.%s.%s" %(fbctype, prtype, nhour, ptile, tctype, dist_tc, dist_c, ftype, dist_f, tag, dext[prtype])
+            #
+            da2num[fbctype,tag,nhour].tofile(numname)
+            print numname
+          
+          a = ma.masked_equal(da2num["nn","c",24],-9999.0)
+          b = ma.masked_equal(da2num["nn","tc",24],-9999.0)
+          c = ma.masked_equal(da2num["nn","fbc",24],-9999.0)
+          d = ma.masked_equal(da2num["nn","ot",24],-9999.0)
+          s = a+b+c+d 
+          #-- num_plain ----
+          dnumname_plain = {}
+          for nhour in lnhour:
+            numname_plain\
+            = odir + "/num.%s.mov%02dhr.plain.%s" %(prtype, nhour, dext[prtype])
+          #--
+          da2num_plain[nhour].tofile(numname_plain)
+          print numname_plain
+          p = ma.masked_equal(da2num_plain[24], -9999.0)
+          #-- totalcount ----
+          totalcountname\
+            = odir + "/totalcount.%s.%s"%(prtype,dext[prtype])
+          a2totalcount.tofile(totalcountname)
+          print totalcountname
+          #**************************************

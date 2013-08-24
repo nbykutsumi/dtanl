@@ -3,21 +3,20 @@ from numpy import *
 import os
 import cf
 import calendar
-#####################################################
-odir_root ="/media/disk2/data/CMIP5/sa.one"
+import cmip_para
 #####################################################
 #lvar = ["sftlf"]
-lvar = ["orog"] # orog
+lvar = ["sftlf","orog"] # orog
 tstp = "fx"
 #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
-lmodel = ["MIROC5","MRI-CGCM3","HadGEM2-ES"]
+#lmodel = ["MIROC5","MRI-CGCM3","HadGEM2-ES"]
+lmodel = ["MIROC5"]
 lexpr = ["historical"]
 #expr = "rcp85" #historical, rcp85
-ens  = "r0i0p0"
-
 ny_one  = 180
 nx_one  = 360
 
+#####################################################
 #####################################################
 dlat_one = 1.0
 dlon_one = 1.0
@@ -28,19 +27,23 @@ a1lon_one   = arange(0.5,  359.5+dlon_one*0.1, dlat_one)
 for model in lmodel:
   for expr in lexpr:
     for var in lvar:
+      #------------------
+      odir_root ="/media/disk2/data/CMIP5/sa.one.%s.%s/%s"%(model, expr, var)
+      odir_dump = odir_root
+      #------------------
+      ens = cmip_para.ret_ens(model, expr, var)
       #########################
       # set nc dir
       #########################
-      #incdir = "/media/disk2/data/CMIP5/nc/day/%s"%(model)
-      incdir = "/home/utsumi/mnt/export/nas_d/data/CMIP5/fx"
+      #incdir = "/home/utsumi/mnt/export/nas_d/data/CMIP5/fx"
+      incdir = "/home/utsumi/mnt/iis.data2/CMIP5/cmip5.working/%s.%s"%(model,expr)
       #########################
       ihead = var + "_" + tstp + "_" +model + "_" + expr +"_"\
              +ens
-      ohead = ihead
-      odir_tail = var + "/" + tstp + "/" +model + "/" + expr +"/"\
-             +ens
+      ohead = "%s.%s"%(var,model)
+
       #####################################################
-      odir_dump = odir_root + "/" +odir_tail
+      odir_dump = odir_root
       try:
         os.makedirs(odir_dump)
       except OSError:
@@ -89,7 +92,7 @@ for model in lmodel:
       #####
       dumpdata(iname, nc)
       #####
-      odir = odir_root + "/%s"%(odir_tail)
+      odir = odir_root
       print odir
       try:
         os.makedirs(odir)

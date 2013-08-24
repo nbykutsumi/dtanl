@@ -11,27 +11,25 @@ from ctrack_fsub import *
 iyear   = 2001
 eyear   = 2004
 lmon    = [1,2,3,4,5,6,7,8,9,10,11,12]
-#lmon    = [6]
+#lmon    = [7]
 iday    = 1
 lhour   = [0,6,12,18]
 #lhour   = [0]
 #----
 plev    = 850*100.0  #(Pa)
 sresol  = "anl_p"
-ftype   = "t"
+ftype   = "q"
 if ftype == "t":
-  #lthfmask1  = [0.18,0.22,0.25,0.26,0.27,0.28,0.29,0.30,0.31]
-  #lthfmask2  = [0.2,0.4,0.6,0.8,1.0,1.2]
-  lthfmask1  = [0.18,0.22]
-  lthfmask2  = [0.2,0.6]
-  #lthfmask2  = [1.0,1.4,1.8]
+  lthfmask1  = [0.18,0.22,0.26,0.30,0.34,0.38,0.42,0.46]
+  lthfmask2  = [0.2,0.6,1.0,1.4,1.8]
 elif ftype == "q":
   thfmask1_t = 0.3
   thfmask2_t = 1.0
-  lthfmask1  = array([2.0,2.2,2.4,2.6,2.8,3.0,3.2])*1.0e-4
-  lthfmask2  = array([2.2,2.4,2.6,2.8,3.0,3.2])*1.0e-3
+  lthfmask1  = array([0.5,1.0,1.5,2.0,2.5])*1.0e-4
+  lthfmask2  = array([0.5,1.0,1.5,2.0,2.5,3.0])*1.0e-3
 
 thgrids = 7
+delwgtflag = 1
 #************************
 thorog        = ctrack_para.ret_thorog()
 thgradorog    = ctrack_para.ret_thgradorog()
@@ -107,9 +105,6 @@ for year in range(iyear, eyear+1):
         chartdir  = "/media/disk2/out/chart/ASAS/front/%04d%02d"%(year,mon)
         chartname = chartdir + "/front.ASAS.%04d.%02d.%02d.%02d.sa.one"%(year,mon,day,hour)
         a2chart   = fromfile(chartname, float32).reshape(ny,nx)
-        #--- baiu region -------
-        if ((not mon in [5,6,7,8]) & (ftype=="q")):
-          continue
         #----
         a2chart   = ma.masked_where(a2chart==miss_out, a2one).filled(0.0)
 
@@ -158,18 +153,17 @@ for year in range(iyear, eyear+1):
             a2loc    = ma.masked_where(a2orog > thorog, a2loc).filled(miss_out)
             a2loc    = ma.masked_where(a2grad > thgradorog, a2loc).filled(miss_out)
             a2loc    = dtanl_fsub.fill_front_gap(a2loc.T, miss_out).T
-            a2loc    = dtanl_fsub.del_front_lesseq_ngrids(a2loc.T, miss_out, thgrids).T
+            a2loc    = dtanl_fsub.del_front_lesseq_ngrids(a2loc.T, delwgtflag, miss_out, thgrids).T
             if ftype == "q":
               a2loct  = mk_front_loc_contour(a2t, a2gradt, thfmask1_t, thfmask2_t)
               a2loct  = ma.masked_where(a2orog > thorog, a2loct).filled(miss_out)
               a2loct  = ma.masked_where(a2grad > thgradorog, a2loct).filled(miss_out)
 
               a2loct  = dtanl_fsub.fill_front_gap(a2loct.T, miss_out).T
-              a2loct  = dtanl_fsub.del_front_lesseq_ngrids(a2loct.T, miss_out, thgrids).T
+              a2loct  = dtanl_fsub.del_front_lesseq_ngrids(a2loct.T, delwgtflag, miss_out, thgrids).T
               a2terrt = ctrack_fsub.mk_territory_deg_saone(a2loct.T, 2, miss_out).T
               a2locq  = ma.masked_where(a2terrt==1.0, a2loc).filled(miss_out)
               a2loc   = ma.masked_where( (a2locq==miss_out)&(a2loct==miss_out), a2one).filled(miss_out)
-              
             #-------
             if ftype == "theta_e": 
               a2loc    = ctrack_fsub.find_highsidevalue_saone(a2gradtheta_e.T, a2loc.T, a2gradtv.T, highsidedist, miss_out).T
