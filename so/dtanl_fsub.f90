@@ -2,6 +2,324 @@ MODULE dtanl_fsub
 
 CONTAINS
 !*********************************************************
+!*********************************************************
+SUBROUTINE count_frontlen_grids(a2in, a2mask, miss, nx, ny, a1grids)
+implicit none
+!--- in ---------
+integer                     nx, ny
+real,dimension(nx,ny)    :: a2in, a2mask  ! a2mask: masked grids have miss
+!f2py intent(in)            a2in, a2mask
+real                        miss
+!f2py intent(in)            miss
+!--- out --------
+real,dimension(nx*ny)    :: a1grids
+!f2py intent(out)           a1grids
+!--- calc -------
+integer                     ix,iy,ik
+integer                     icount_surr
+integer                     iix,iiy, dx,dy
+integer                     id, id_min, ik_tmp
+integer                     stopflag
+integer                     idMAX, idMIN, MAXmin, MINmin
+integer,dimension(8)     :: a1x, a1y
+integer,dimension(nx,ny) :: a2id
+integer,dimension(nx*ny) :: a1connect
+integer,dimension(nx*ny) :: a1flag
+real,dimension(nx*ny)    :: a1num
+real,dimension(nx,ny)    :: a2in_tmp
+!--- parameter --
+integer,parameter        :: miss_int = -9999
+!------
+!-- initialize ---
+a2in_tmp  = a2in
+a1connect = miss_int
+a1num     = 0
+a1grids   = 0.0
+a2id      = miss_int
+id        = 0
+a1flag    = 0
+!----------------
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      !-- 1st search ----
+      call mk_8gridsxy(ix,iy, a1x, a1y)
+      !*****************************
+      ! if (ix,iy) has not been given an ID
+      !------------
+      if (a2id(ix,iy).eq.miss_int)then
+        id = id + 1
+        a2id(ix,iy) = id 
+      end if
+      !***************************
+      !----------------------------
+      icount_surr = 0
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in_tmp(iix,iiy).ne.miss)then
+          icount_surr   = icount_surr + 1
+          !--- when adjacent id is -9999
+          if (a2id(iix,iiy).eq.miss_int)then
+            a2id(iix,iiy) = a2id(ix,iy)
+          !--- when adjacent id is not miss
+          else if (a2id(iix,iiy).ne.miss_int)then
+            if (a2id(ix,iy).eq.a2id(iix,iiy))then
+              continue
+            else
+              idMIN = min(a2id(ix,iy), a2id(iix,iiy))
+              idMAX = max(a2id(ix,iy), a2id(iix,iiy))
+              MINmin = a1connect(idMIN)
+              MAXmin = a1connect(idMAX)
+              if ((MINmin.eq.miss_int).and.(MAXmin.eq.miss_int))then
+                a1connect(idMAX) = idMIN
+              else if ((MINmin.eq.miss_int).and.(MAXmin.ne.miss_int))then
+                if (MAXmin.lt.idMIN)then
+                  a1connect(idMIN) = MAXmin
+                else if (idMIN .le. MAXmin) then
+                  a1connect(idMAX) = idMIN
+                end if
+              else if ((MINmin.ne.miss_int).and.(MAXmin.eq.miss_int))then
+                a1connect(idMAX)=MINmin
+              else if (MAXmin.eq.MINmin)then
+                continue
+              else if (MAXmin.gt.MINmin)then
+                a1connect(idMAX) = MINmin
+              else if (MINmin.gt.MAXmin)then
+                a1connect(idMIN) = MAXmin
+              end if
+            end if
+          end if
+        end if        
+      end do
+    end if
+  end do
+end do
+!-----
+
+do ik = 1,nx*ny
+  if (a1connect(ik).ne.miss_int)then
+    stopflag   = 0
+    ik_tmp     = ik
+    id_min     = a1connect(ik_tmp)
+    do while (stopflag .ne.1)
+      if (a1connect(ik_tmp).eq.miss_int)then
+        stopflag = 1
+      else
+        if (a1connect(ik_tmp).lt.id_min)then
+          id_min = a1connect(ik_tmp)
+        else
+          continue
+        end if
+        ik_tmp = a1connect(ik_tmp)
+      end if
+    end do 
+    a1connect(ik) = id_min
+  end if
+end do
+
+!-----
+do iy = 1, ny
+  do ix = 1,nx
+    if (a2id(ix,iy).ne.miss_int)then
+      ik = a2id(ix,iy)
+      if (a1connect(ik).ne.miss_int)then
+        a2id(ix,iy) = a1connect(ik)
+      else
+        continue
+      end if
+    end if
+  end do
+end do
+
+do iy=1,ny
+  do ix=1,nx
+    id = a2id(ix,iy)
+    a1grids(id) = a1grids(id) + 1.0
+    call mk_8gridsxy(ix,iy, a1x, a1y)
+    !--- check domain edge ----
+    do ik = 1,8
+      iix = a1x(ik)
+      iiy = a1y(ik)
+      if (a2mask(iix,iiy).eq.miss)then
+        a1flag(id) = 1
+      end if
+    end do
+
+
+    !do dy = -2,2
+    !  do dx = -2,2
+    !    iix =ix + dx 
+    !    iiy =iy + dy
+    !    if (a2mask(iix,iiy).eq.miss)then
+    !      a1flag(id) = 1
+    !    end if
+    !  end do
+    !end do
+    !--------------------------
+  end do 
+end do
+
+!-- remove IDs with flag=1 ---
+do id=1,nx*ny
+  if (a1flag(id).eq.1)then
+    a1grids(id) = 0
+  end if
+end do
+!-----------------------------
+return
+END SUBROUTINE count_frontlen_grids
+!
+!*********************************************************
+
+
+!*********************************************************
+SUBROUTINE count_fronts(a2in, miss, nx, ny, nfronts)
+implicit none
+!--- in ---------
+integer                     nx, ny
+real,dimension(nx,ny)    :: a2in
+!f2py intent(in)            a2in
+real                        miss
+!f2py intent(in)            miss
+!--- out --------
+integer                     nfronts
+!f2py intent(out)           nfronts
+!--- calc -------
+integer                     ix,iy,ik
+integer                     icount_surr
+integer                     iix,iiy
+integer                     id, id_min, ik_tmp
+integer                     stopflag
+integer                     idMAX, idMIN, MAXmin, MINmin
+integer,dimension(8)     :: a1x, a1y
+integer,dimension(nx,ny) :: a2id
+integer,dimension(nx*ny) :: a1connect
+integer,dimension(nx*ny) :: a1idflag
+real,dimension(nx*ny)    :: a1num
+real,dimension(nx,ny)    :: a2in_tmp
+!--- parameter --
+integer,parameter        :: miss_int = -9999
+!------
+!-- initialize ---
+a2in_tmp  = a2in
+a1connect = miss_int
+a1num     = 0
+a2id      = miss_int
+id        = 0
+a1idflag  = 0
+!----------------
+do iy = 1,ny
+  do ix = 1,nx
+    if (a2in(ix,iy).ne.miss)then
+      !-- 1st search ----
+      call mk_8gridsxy(ix,iy, a1x, a1y)
+      !*****************************
+      ! if (ix,iy) has not been given an ID
+      !------------
+      if (a2id(ix,iy).eq.miss_int)then
+        id = id + 1
+        a2id(ix,iy) = id 
+      end if
+      !***************************
+      !----------------------------
+      icount_surr = 0
+      do ik = 1,8
+        iix = a1x(ik)
+        iiy = a1y(ik)
+        if (a2in_tmp(iix,iiy).ne.miss)then
+          icount_surr   = icount_surr + 1
+          !--- when adjacent id is -9999
+          if (a2id(iix,iiy).eq.miss_int)then
+            a2id(iix,iiy) = a2id(ix,iy)
+          !--- when adjacent id is not miss
+          else if (a2id(iix,iiy).ne.miss_int)then
+            if (a2id(ix,iy).eq.a2id(iix,iiy))then
+              continue
+            else
+              idMIN = min(a2id(ix,iy), a2id(iix,iiy))
+              idMAX = max(a2id(ix,iy), a2id(iix,iiy))
+              MINmin = a1connect(idMIN)
+              MAXmin = a1connect(idMAX)
+              if ((MINmin.eq.miss_int).and.(MAXmin.eq.miss_int))then
+                a1connect(idMAX) = idMIN
+              else if ((MINmin.eq.miss_int).and.(MAXmin.ne.miss_int))then
+                if (MAXmin.lt.idMIN)then
+                  a1connect(idMIN) = MAXmin
+                else if (idMIN .le. MAXmin) then
+                  a1connect(idMAX) = idMIN
+                end if
+              else if ((MINmin.ne.miss_int).and.(MAXmin.eq.miss_int))then
+                a1connect(idMAX)=MINmin
+              else if (MAXmin.eq.MINmin)then
+                continue
+              else if (MAXmin.gt.MINmin)then
+                a1connect(idMAX) = MINmin
+              else if (MINmin.gt.MAXmin)then
+                a1connect(idMIN) = MAXmin
+              end if
+            end if
+          end if
+        end if        
+      end do
+      !if (icount_surr.eq. 0)then
+      !  a2in_tmp(ix,iy) = miss
+      !  a2id(ix,iy)     = miss_int
+      !  id = id -1
+      !end if
+    end if
+  end do
+end do
+!-----
+
+do ik = 1,nx*ny
+  if (a1connect(ik).ne.miss_int)then
+    stopflag   = 0
+    ik_tmp     = ik
+    id_min     = a1connect(ik_tmp)
+    do while (stopflag .ne.1)
+      if (a1connect(ik_tmp).eq.miss_int)then
+        stopflag = 1
+      else
+        if (a1connect(ik_tmp).lt.id_min)then
+          id_min = a1connect(ik_tmp)
+        else
+          continue
+        end if
+        ik_tmp = a1connect(ik_tmp)
+      end if
+    end do 
+    a1connect(ik) = id_min
+  end if
+end do
+
+!-----
+do iy = 1, ny
+  do ix = 1,nx
+    if (a2id(ix,iy).ne.miss_int)then
+      ik = a2id(ix,iy)
+      if (a1connect(ik).ne.miss_int)then
+        a2id(ix,iy) = a1connect(ik)
+      else
+        continue
+      end if
+    end if
+  end do
+end do
+
+do iy=1,ny
+  do ix=1,nx
+    id = a2id(ix,iy)
+    a1idflag(id) = 1
+  end do 
+end do
+
+nfronts = sum(a1idflag)
+return
+END SUBROUTINE count_fronts 
+!
+!*********************************************************
+!*********************************************************
 SUBROUTINE fill_front_gap(a2in, miss, nx, ny, a2out)
 implicit none
 integer                  nx, ny

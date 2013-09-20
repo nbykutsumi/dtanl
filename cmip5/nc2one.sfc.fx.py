@@ -1,18 +1,26 @@
 from netCDF4 import *
 from numpy import *
-import os
+import os,sys
 import cf
 import calendar
 import cmip_para
 #####################################################
+if len(sys.argv) >1:
+  model = sys.argv[1]
+  expr  = sys.argv[2]
+  lmodel = [model]
+  lexpr  = [expr]
+else:
+  #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
+  #lmodel = ["MIROC5","MRI-CGCM3","HadGEM2-ES"]
+  lmodel = ["MIROC5"]
+  lexpr = ["historical","rcp85"]
+  #expr = "rcp85" #historical, rcp85
+
+#--------------------
 #lvar = ["sftlf"]
 lvar = ["sftlf","orog"] # orog
 tstp = "fx"
-#lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
-#lmodel = ["MIROC5","MRI-CGCM3","HadGEM2-ES"]
-lmodel = ["MIROC5"]
-lexpr = ["historical"]
-#expr = "rcp85" #historical, rcp85
 ny_one  = 180
 nx_one  = 360
 

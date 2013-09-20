@@ -20,22 +20,25 @@ lprtype  = ["GSMaP.dec"]
 
 
 sresol  = "anl_p"
-iyear   = 2003
-eyear   = 2009
-#iyear    = 2001
-#eyear    = 2009
+#iyear   = 2001
+#eyear   = 2009
+iyear    = 2002
+eyear    = 2002
+lyear    = range(iyear,eyear+1)
 #lseason = ["NDJFMA","JJASON"]
 #lseason = ["ALL","NDJFMA","JJASON"]
 #lseason = ["NDJFMA","JJASON","DJF","JJA"]
 #lseason = ["DJF"]
 lseason = ["ALL"]
-#lseason = [10,11,12]
-
+#lseason = [1]
+season_odir = "ALL"
 iday    = 1
+#iday    = 31
 ptile   = 99.9 # (%)
-lfbctype= ["nn","wn"]
+#lfbctype= ["nn","wn"]
+lfbctype= ["nn"]
+#lnhour  = [1,6,24]
 lnhour  = [1,6,24]
-#lnhour  = [1,3,6,12,24]
 #lnhour  = [24]
 #ltag    = ["nbcot","nbcot","tc","c","fbc","nbc","ot","o.tc","o.c","o.fbc","o.nbc","TCF","TCFC","TCB","TCBC"]
 ltag    = ["tc","c","fbc","nbc","ot"]
@@ -356,7 +359,7 @@ for season, prtype in [[season,prtype]\
       #-----------------
       lmon = ctrack_para.ret_lmon(season)
       #--------------------------------
-      for year in range(iyear, eyear+1):
+      for year in lyear:
         #-----------------
         for mon in lmon:
           #**** init da2accpr *********
@@ -408,12 +411,9 @@ for season, prtype in [[season,prtype]\
               #-----------------------------
               a2pr         = ret_pr(prtype, year, mon, day, hour)
 
+              #print "aaa",a2pr.mean()
               a2totalcount = a2totalcount + ma.masked_where(a2pr.mask, da2one[prtype]).filled(0.0)
               a2pr         = a2pr.filled(0.0)
-
-              #a2totalcount = a2totalcount + ma.masked_where(a2pr==miss, da2one[prtype]).filled(0.0)
-
-              #a2pr         = ma.masked_equal(a2pr, miss).filled(0.0)
 
               #*****************************
               # load corresponding tags 
@@ -486,19 +486,19 @@ for season, prtype in [[season,prtype]\
           #*************************************
           #----- write to file ---
           #--------------------------
-          odir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagexpr/%s.c%02dh.tc%02dh"%(sresol, fbctype, thdura_c, thdura_tc)
-          odir      = odir_root + "/%s.%04d-%04d.%s.%04d.%02d"%(prtype, iyear_dat, eyear_dat, season, year,mon)
-          ctrack_func.mk_dir(odir)
-
           #-- num -----
           dnumname  = {}
           lkeys     = ret_lkeys(fbctypeflag=True,tagflag=True,nhourflag=True)
+          print lkeys
           for [fbctype,tag,nhour] in lkeys:
+            odir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagexpr/%s.c%02dh.tc%02dh"%(sresol, fbctype, thdura_c, thdura_tc)
+            odir      = odir_root + "/%s.%04d-%04d.%s.%04d.%02d"%(prtype, iyear_dat, eyear_dat, season_odir, year,mon)
+            ctrack_func.mk_dir(odir)
+            print fbctype,tag,nhour
             numname\
             = odir + "/num.%s.%s.mov%02dhr.%05.2f.%stc%04d.c%04d.%sf%04d.%s.%s" %(fbctype, prtype, nhour, ptile, tctype, dist_tc, dist_c, ftype, dist_f, tag, dext[prtype])
             #
             da2num[fbctype,tag,nhour].tofile(numname)
-            print numname
           
           a = ma.masked_equal(da2num["nn","c",24],-9999.0)
           b = ma.masked_equal(da2num["nn","tc",24],-9999.0)
@@ -507,16 +507,17 @@ for season, prtype in [[season,prtype]\
           s = a+b+c+d 
           #-- num_plain ----
           dnumname_plain = {}
-          for nhour in lnhour:
+          for fbctype, nhour in [[fbctype, nhour] for fbctype in lfbctype for nhour in lnhour]:
+            odir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/tagexpr/%s.c%02dh.tc%02dh"%(sresol, fbctype, thdura_c, thdura_tc)
+            odir      = odir_root + "/%s.%04d-%04d.%s.%04d.%02d"%(prtype, iyear_dat, eyear_dat, season_odir, year,mon)
             numname_plain\
             = odir + "/num.%s.mov%02dhr.plain.%s" %(prtype, nhour, dext[prtype])
-          #--
-          da2num_plain[nhour].tofile(numname_plain)
-          print numname_plain
-          p = ma.masked_equal(da2num_plain[24], -9999.0)
-          #-- totalcount ----
-          totalcountname\
-            = odir + "/totalcount.%s.%s"%(prtype,dext[prtype])
-          a2totalcount.tofile(totalcountname)
-          print totalcountname
-          #**************************************
+            #--
+            da2num_plain[nhour].tofile(numname_plain)
+            print numname_plain
+            #-- totalcount ----
+            totalcountname\
+              = odir + "/totalcount.%s.%s"%(prtype,dext[prtype])
+            a2totalcount.tofile(totalcountname)
+            print totalcountname
+            #**************************************

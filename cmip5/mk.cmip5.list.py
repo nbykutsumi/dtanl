@@ -2,11 +2,13 @@ import sys, os
 import cmip_func
 from netCDF4 import *
 #************************************
-#lmodel    = ["MIROC5","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-CM3","HadGEM2-ES","IPSL-CM5A-MR","IPSL-CM5B-LR","MPI-ESM-MR","NorESM1-M"]
-lmodel    = ["GFDL-CM3","HadGEM2-ES","IPSL-CM5A-MR","IPSL-CM5B-LR","MPI-ESM-MR","NorESM1-M"]
-#lmodel    = ["CNRM-CM5"]
-#lexpr     = ["historical","rcp85"]
-lexpr     = ["historical"]
+#lmodel    = ["MRI-CGCM3","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel    = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel    = ["CNRM-CM5","inmcm4","MPI-ESM-MR","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+lmodel    = ["GFDL-CM3"]
+#lmodel    = ["CSIRO-Mk3-6-0"]
+lexpr     = ["historical","rcp85"]
+#lexpr     = ["historical"]
 
 idir_root = "/home/utsumi/mnt/iis.data2/CMIP5/cmip5.working"
 miss      = -9999
@@ -36,6 +38,12 @@ for model in lmodel:
       model      = ldat[2]
       expr       = ldat[3]
       ens        = ldat[4]
+
+      #--- skip "6hrLev" -----
+      # without this part, "RuntimeError" is raised for MIROC5 rcp85
+      if dattype == "6hrLev":
+        continue
+      #--------------------      
       print sfile
       #***************
       # cmiptime

@@ -4,23 +4,25 @@ import calendar
 import ctrack_func
 import os
 #---------------------------------------------------------
-iyear  = 2000
+iyear  = 2001
 eyear  = 2010
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 iday   = 1
 lhour  = [0,6,12,18]
-lplev  = [925, 850, 700, 600, 500, 300, 250]
+lplev  = [850]
+#lplev  = [925]
 nx,ny  = 360,180
+sresol = "anl_p"
 #----------------------------------------------------
-tdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/TMP"
-qdir_root     = "/media/disk2/data/JRA25/sa.one/6hr/SPFH"
+tdir_root     = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP"%(sresol)
+qdir_root     = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH"%(sresol)
 #----------------------------------------------------
 for plev in lplev:
-  itimes    = 0
   for year in range(iyear, eyear+1):
     for mon in lmon:
       #-- init --------------
-      a2sum        = zeros([ny,nx],float32)
+      a2theta   = zeros([ny,nx],float32)
+      a2theta_e = zeros([ny,nx],float32)
       #-----------------
       eday  = calendar.monthrange(year, mon)[1]
       #-----------------
@@ -31,17 +33,21 @@ for plev in lplev:
         print plev,year,mon,day
         for hour in lhour:
           #-----------------
-          itimes      = itimes + 1
-          #-----------------
-          tname     = tdir  + "/anl_p25.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev,year,mon,day,hour)
-          qname     = qdir  + "/anl_p25.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(plev,year,mon,day,hour)
+          tname     = tdir  + "/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
+          qname     = qdir  + "/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
           a2t       = fromfile(tname,     float32).reshape(ny,nx)
           a2q       = fromfile(qname,     float32).reshape(ny,nx)
-          a2sum     = a2sum + dtanl_fsub.mk_a2theta_e(plev*100., a2t.T, a2q.T).T
+          a2theta_tmp   = dtanl_fsub.mk_a2theta(plev*100.0, a2t.T).T
+          a2theta_e_tmp = dtanl_fsub.mk_a2theta_e(plev*100., a2t.T, a2q.T).T
+          a2theta   = a2theta   + a2theta_tmp 
+          a2theta_e = a2theta_e + a2theta_e_tmp
       #--- save ------------
       odir   = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d"%(year,mon)
       ctrack_func.mk_dir(odir)
-      oname  = odir + "/sum.theta_e.%04dhPa.sa.one"%(plev)
-      a2sum.tofile(oname)
-      print oname
+      theta_name    = odir + "/sum.theta.%04dhPa.sa.one"%(plev)
+      theta_e_name  = odir + "/sum.theta_e.%04dhPa.sa.one"%(plev)
+      a2theta.tofile(theta_name)
+      a2theta_e.tofile(theta_e_name)
+      print a2theta.max()
+      print theta_name
 

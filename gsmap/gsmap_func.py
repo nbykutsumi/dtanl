@@ -7,6 +7,22 @@ def gsmap2global_one(a2org_one, miss):
   a2glob = ones([180,360], float32)*miss
   a2glob[30:149+1,:] = a2org_one
   return a2glob
+
+#**********************************************
+def gsmap2global_dec(a2org_dec, miss):
+  a2glob = ones([1800,3600], float32)*miss
+  a2glob[300:1499+1,:] = a2org_dec
+  return a2glob
+
+#**********************************************
+def gsmap2global(a2org, miss):
+  if shape(a2org) == (120,360):
+    a2glob = gsmap2global_one(a2org, miss)
+  elif shape(a2org) == (1200,3600):
+    a2glob = gsmap2global_dec(a2org, miss)
+  #
+  return a2glob
+
 #**********************************************
 def timeave_gsmap_backward_org(year,mon,day,hour, hlen):
   lhlen = [1,2,3,6,12,24]
@@ -41,7 +57,6 @@ def timeave_gsmap_backward_org(year,mon,day,hour, hlen):
     a2ave     = a2ave + ma.masked_less(a2in, 0.0)
 
   #---
-  #a2ave       = (a2ave /(len(lhlen)* 60.0*60.0)).filled(-9999.0)  # original data is in [mm/hour]
   a2ave       = (a2ave /(hlen* 60.0*60.0)).filled(-9999.0)  # original data is in [mm/hour]
   a2ave       = flipud(a2ave.reshape(1200,3600))
   return a2ave

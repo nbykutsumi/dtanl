@@ -7,8 +7,13 @@ import tc_para, cmip_para, cmip_func
 #-----------------------------------------
 #singleday = True
 singleday = False
-iyear  = 1979
-eyear  = 1979
+
+lmodel = ["MIROC5"]
+lexpr  = ["historical"]
+iyear  = 1980
+eyear  = 1999
+
+
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon   = [7]
 stepday = 0.25
@@ -20,8 +25,6 @@ dpgradrange   = ctrack_para.ret_dpgradrange()
 thpgrad        = dpgradrange[1][0] 
 thdura   = 48
 
-lmodel = ["MIROC5"]
-lexpr  = ["historical"]
 
 for expr,model in [[expr, model] for expr in lexpr for model in lmodel]:
   #----

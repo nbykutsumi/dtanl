@@ -1,18 +1,21 @@
 from numpy import *
-import gsmap_func
-from ctrack_fsub import *
-#----------------------------------------------
-idir    = "/media/disk2/out/chart/ASAS/front/agg/2004/04/prof"
-numw    = idir  + "/num.maskrad.0000km.0000km.warm.sa.one"
-numinw  = idir  + "/num.maskrad.in.0300km.0000km.warm.sa.one"
+from chart_fsub import *
+nx,ny = 360,180
+miss  = -9999.0
 
-prw     = idir  + "/pr.0000km.warm.sa.one"
-prinw   = idir  + "/pr.maskrad.in.0300km.0000km.warm.sa.one"
-#
-a2numw  = fromfile(numw,float32).reshape(180,360)
-a2numinw= fromfile(numinw,float32).reshape(180,360)
-a2prw   = fromfile(prw,float32).reshape(180,360)*60*60.
-a2prinw = fromfile(prinw,float32).reshape(180,360)*60*60.
+a2loc = ones([ny,nx],float32)*miss
+a2loc[100,100] = 1
+a2loc[150,150] = 1
 
-print "prw,   numw  ",a2prw.sum(), a2numw.sum()
-print "prinw, numinw",a2prinw.sum(), a2numinw.sum()
+
+a2pr = ones([ny,nx],float32)*miss
+a2pr[100,100] = 1.0
+a2pr[101,100] = 2.0
+a2pr[100,101] = 3.0
+
+a2pr[150,150] = 30.0
+a2pr[151,151] = 20.0
+a2pr[149,149] = 10.0
+
+a1pr = chart_fsub.mk_a1pr_9gridmax(a2loc.T, a2pr.T, miss)
+print a1pr

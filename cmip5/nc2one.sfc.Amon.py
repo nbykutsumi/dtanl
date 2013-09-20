@@ -1,6 +1,6 @@
 from netCDF4 import *
 from numpy import *
-import os
+import os, sys
 import calendar, datetime
 import cf
 import cmip_func

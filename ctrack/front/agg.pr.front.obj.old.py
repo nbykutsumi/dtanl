@@ -17,10 +17,11 @@ singleday= False
 calcflag = True
 #calcflag = False
 
-iyear = 2000
-eyear = 2000
+iyear = 1997
+eyear = 2012
 #lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
-lmon  = [1]
+lmon  = [2,3,4,5,6,7,8,9,10,11,12]
+#lmon  = [1]
 iday  = 1
 #lhour = [12]
 lhour = [0,6,12,18]
@@ -34,7 +35,9 @@ miss  = -9999.0
 miss_gpcp = -99999.
 #distwarmside = 300.0*1000.0 #[m]
 distwarmside = front_para.ret_disthighside() #[m]
-thdist   = 500  # (km)
+thdist   = front_para.ret_thdistkm()  # (km)
+#
+countrad = 300  # (km) for frequency count
 #
 sresol   = "anl_p"
 dprdir_root  = {}
@@ -105,7 +108,7 @@ def locbase2locfront(a2loc_base, a2fmask1, a2fmask2, thfmask1, thfmask2):
 #***************************************
 #******************************
 #-- out dir -----------------
-odir_root  = "/media/disk2/out/JRA25/sa.one/6hr/tenkizu/front/agg"
+odir_root  = "/media/disk2/out/JRA25/sa.one.%s/6hr/tenkizu/front/agg"%(sresol)
 
 #----------------------------
 
@@ -232,21 +235,31 @@ for year in range(iyear, eyear+1):
         a2loc_front    =  ctrack_fsub.find_highsidevalue_saone(a2gradthermo.T, a2loc_front.T, a2gradtv.T, distwarmside, miss).T
 
         #-- count front loc  --
-        a2count_front_mon     = a2count_front_mon + ma.masked_where(a2loc_front == miss,a2one).filled(0.0)
+        a2countterr    = ctrack_fsub.mk_territory_saone( a2loc_front.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T
+        a2count_tmp    = ma.masked_where(a2countterr ==miss, a2one).filled(0.0)
+
+        a2count_front_mon     = a2count_front_mon + a2count_tmp
         a2terr_front = ctrack_fsub.mk_territory_saone( a2loc_front.T, thdist*1000.0, miss, -89.5, 1.0 ,1.0).T
 
         #-- count baloclinic front loc --
         a2temp         = ma.masked_where(a2loc_front ==-9999.0, a2one)
-        a2temp         = ma.masked_where(a2loc_front < thbc,   a2temp)
-        a2count_bcf_front_mon = a2count_bcf_front_mon + a2temp.filled(0.0)
+        a2temp         = ma.masked_where(a2loc_front < thbc,   a2temp).filled(miss)
+
+        a2countterr    = ctrack_fsub.mk_territory_saone( a2temp.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T
+        a2count_tmp    = ma.masked_where(a2countterr ==miss, a2one).filled(0.0)
+
+        a2count_bcf_front_mon = a2count_bcf_front_mon + a2count_tmp
 
         a2loc_temp     = ma.masked_less(a2loc_front, thbc).filled(miss)
         a2terr_bcf     = ctrack_fsub.mk_territory_saone( a2loc_temp.T, thdist*1000.0, miss, -89.5, 1.0 ,1.0).T
 
         #-- count non-baloclinic front loc --
         a2temp         = ma.masked_where(a2loc_front ==-9999.0, a2one)
-        a2temp         = ma.masked_where(a2loc_front >= thbc,   a2temp)
-        a2count_nobc_front_mon= a2count_nobc_front_mon + a2temp.filled(0.0)
+        a2temp         = ma.masked_where(a2loc_front >= thbc,   a2temp).filled(miss)
+
+        a2countterr    = ctrack_fsub.mk_territory_saone( a2temp.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T
+        a2count_tmp    = ma.masked_where(a2countterr ==miss, a2one).filled(0.0)
+        a2count_nobc_front_mon= a2count_nobc_front_mon + a2count_tmp
 
         a2loc_temp     = ma.masked_greater_equal(a2loc_front, thbc).filled(miss)
         a2terr_nobc    = ctrack_fsub.mk_territory_saone( a2loc_temp.T, thdist*1000.0, miss, -89.5, 1.0 ,1.0).T
@@ -290,20 +303,20 @@ for year in range(iyear, eyear+1):
     ctrack_func.mk_dir(dir_ptot_mon)
     #--
     #-- count : front -
-    name_count_front_mon = dir_ptot_mon + "/count.front.M1_%s_M2_%s.saone"%(thfmask1, thfmask2)
+    name_count_front_mon = dir_ptot_mon + "/count.front.rad%04dkm.M1_%s_M2_%s.sa.one"%(countrad, thfmask1, thfmask2)
     a2count_front_mon = ma.masked_where(a2orog>thorog, a2count_front_mon).filled(miss)
     a2count_front_mon = ma.masked_where(a2gradorogmask>thgradorog, a2count_front_mon).filled(miss)
     a2count_front_mon.tofile(name_count_front_mon)
 
     #-- count : baroclinic front -
-    name_temp = dir_ptot_mon + "/count.bcf.front.M1_%s_M2_%s.thbc_%04.2f.saone"%(thfmask1, thfmask2, thbc*1000*100)
+    name_temp = dir_ptot_mon + "/count.bcf.rad%04dkm.M1_%s_M2_%s.thbc_%04.2f.sa.one"%(countrad, thfmask1, thfmask2, thbc*1000*100)
     a2temp    = a2count_bcf_front_mon
     a2temp    = ma.masked_where(a2orog>thorog, a2temp).filled(miss)
     a2temp    = ma.masked_where(a2gradorogmask>thgradorog, a2temp).filled(miss)
     a2temp.tofile(name_temp)
 
     #-- count : non-baroclinic front -
-    name_temp = dir_ptot_mon + "/count.nobc.front.M1_%s_M2_%s.thbc_%04.2f.saone"%(thfmask1, thfmask2, thbc*1000*100 )
+    name_temp = dir_ptot_mon + "/count.nobc.rad%04dkm.M1_%s_M2_%s.thbc_%04.2f.sa.one"%(countrad, thfmask1, thfmask2, thbc*1000*100 )
     a2temp    = a2count_nobc_front_mon
     a2temp    = ma.masked_where(a2orog>thorog, a2temp).filled(miss)
     a2temp    = ma.masked_where(a2gradorogmask>thgradorog, a2temp).filled(miss)
@@ -313,7 +326,7 @@ for year in range(iyear, eyear+1):
     a2pr_front_mon  = a2pr_front_mon / itimes_mon  #[mm/s]
     a2pr_front_mon  = ma.masked_where(a2orog>thorog, a2pr_front_mon).filled(miss)
     a2pr_front_mon  = ma.masked_where(a2gradorogmask > thgradorog, a2pr_front_mon).filled(miss)
-    name_ptot_front_mon  = dir_ptot_mon + "/pr.front.rad%04d.M1_%s_M2_%s.saone"%(thdist,thfmask1, thfmask2)
+    name_ptot_front_mon  = dir_ptot_mon + "/pr.front.rad%04d.M1_%s_M2_%s.sa.one"%(thdist,thfmask1, thfmask2)
     a2pr_front_mon.tofile(name_ptot_front_mon) 
     print name_ptot_front_mon
 
@@ -321,7 +334,7 @@ for year in range(iyear, eyear+1):
     a2pr_bcf_mon    = a2pr_bcf_mon / itimes_mon  #[mm/s]
     a2pr_bcf_mon    = ma.masked_where(a2orog>thorog, a2pr_bcf_mon).filled(miss)
     a2pr_bcf_mon    = ma.masked_where(a2gradorogmask > thgradorog, a2pr_bcf_mon).filled(miss)
-    tempname              = dir_ptot_mon + "/pr.bcf.rad%04d.M1_%s_M2_%s.thbc_%04.2f.saone"%(thdist,thfmask1, thfmask2, thbc*1000*100)
+    tempname              = dir_ptot_mon + "/pr.bcf.rad%04d.M1_%s_M2_%s.thbc_%04.2f.sa.one"%(thdist,thfmask1, thfmask2, thbc*1000*100)
     a2pr_bcf_mon.tofile(tempname) 
     print tempname
 
@@ -329,7 +342,7 @@ for year in range(iyear, eyear+1):
     a2pr_nobc_mon   = a2pr_nobc_mon / itimes_mon  #[mm/s]
     a2pr_nobc_mon   = ma.masked_where(a2orog>thorog, a2pr_nobc_mon).filled(miss)
     a2pr_nobc_mon   = ma.masked_where(a2gradorogmask > thgradorog, a2pr_nobc_mon).filled(miss)
-    tempname              = dir_ptot_mon + "/pr.nobc.rad%04d.M1_%s_M2_%s.thbc_%04.2f.saone"%(thdist,thfmask1, thfmask2, thbc*1000*100)
+    tempname              = dir_ptot_mon + "/pr.nobc.rad%04d.M1_%s_M2_%s.thbc_%04.2f.sa.one"%(thdist,thfmask1, thfmask2, thbc*1000*100)
     a2pr_nobc_mon.tofile(tempname) 
     print tempname
 
@@ -338,6 +351,6 @@ for year in range(iyear, eyear+1):
     a2pr_olap_mon   = a2pr_olap_mon / itimes_mon  #[mm/s]
     a2pr_olap_mon   = ma.masked_where(a2orog>thorog, a2pr_olap_mon).filled(miss)
     a2pr_olap_mon   = ma.masked_where(a2gradorogmask > thgradorog, a2pr_olap_mon).filled(miss)
-    name_ptot_olap_mon  = dir_ptot_mon + "/pr.olap.rad%04d.M1_%s_M2_%s.saone"%(thdist,thfmask1, thfmask2)
+    name_ptot_olap_mon  = dir_ptot_mon + "/pr.olap.rad%04d.M1_%s_M2_%s.sa.one"%(thdist,thfmask1, thfmask2)
     a2pr_olap_mon.tofile(name_ptot_olap_mon) 
   

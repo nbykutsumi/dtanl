@@ -68,8 +68,7 @@ def mk_readme(odir):
   f.close()
 #-----------------------------
 
-#idir_root  = "/home/utsumi/mnt/nasd/data/GSMaP/standard/v5/hourly"
-idir_root  = "/home/utsumi/mnt/iid.data2/GSMaP/standard/v5/hourly"
+idir_root  = "/home/utsumi/mnt/iis.data2/GSMaP/standard/v5/hourly"
 odir_root  = "/media/disk2/data/GSMaP/sa.one/1hr/ptot"
 
 for year in range(iyear , eyear+1):
@@ -128,19 +127,37 @@ for year in range(iyear , eyear+1):
           print year, mon, day, hour0, before
           #------------
           idir   = idir_root + "/%04d/%02d/%02d"%(year_before, mon_before, day_before)
-          orgname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat.gz"%(year_before, mon_before, day_before, hour_before)
 
+          #*******************************************
+          # for compressed files
+          #----------------------
+          #orgname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat.gz"%(year_before, mon_before, day_before, hour_before)
+
+          ##-- check file --
+          #if not os.access(orgname, os.F_OK):
+          #  print "no file", orgname
+          #  continue
+          ##----------------
+          #validtimes  = validtimes + 1
+
+          #dat_org     = subprocess.Popen(["gzip", "-dc", orgname, " >", "/dev/stdout"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+          #a2dat_org   = fromstring( dat_org, float32).reshape(ny_fin, nx_fin)
+
+          #da2dat_org[hour_before] = ma.masked_less(a2dat_org, 0.0)
+
+          #*******************************************
+          # for compressed files
+          #----------------------
+          orgname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat"%(year_before, mon_before, day_before, hour_before)
           #-- check file --
           if not os.access(orgname, os.F_OK):
             print "no file", orgname
             continue
           #----------------
           validtimes  = validtimes + 1
-
-          dat_org     = subprocess.Popen(["gzip", "-dc", orgname, " >", "/dev/stdout"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-          a2dat_org   = fromstring( dat_org, float32).reshape(ny_fin, nx_fin)
-
+          a2dat_org   = fromfile(orgname, float32).reshape(ny_fin, nx_fin)
           da2dat_org[hour_before] = ma.masked_less(a2dat_org, 0.0)
+
           #--- Accumulate --------
           a2dat_fin  = a2dat_fin + ma.masked_less(a2dat_org, 0.0)
         #--- Interpolation -----

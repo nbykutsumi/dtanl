@@ -3,8 +3,8 @@ import os
 import calendar
 import shutil
 
-iyear = 2000
-eyear = 2004
+iyear = 2010
+eyear = 2011
 imon  = 1
 emon  = 12
 tstp  = "6hr"
@@ -19,9 +19,9 @@ def mk_dir(sdir):
 
 for year in range(iyear, eyear+1):
   for mon in range(imon, emon+1):
-    idir_C  = "/media/disk2/data/JRA25/sa.one/6hr/ACPCP/%04d%02d"%(year, mon)
-    idir_L  = "/media/disk2/data/JRA25/sa.one/6hr/NCPCP/%04d%02d"%(year, mon)
-    odir    = "/media/disk2/data/JRA25/sa.one/6hr/PR/%04d%02d"%(year, mon)
+    idir_C  = "/media/disk2/data/JRA25/sa.one.fcst_phy2m/6hr/ACPCP/%04d%02d"%(year, mon)
+    idir_L  = "/media/disk2/data/JRA25/sa.one.fcst_phy2m/6hr/NCPCP/%04d%02d"%(year, mon)
+    odir    = "/media/disk2/data/JRA25/sa.one.fcst_phy2m/6hr/PR/%04d%02d"%(year, mon)
     mk_dir(odir)    
     #-- lat lon files ---
     shutil.copyfile(idir_C + "/dims.txt", odir + "/dims.txt")

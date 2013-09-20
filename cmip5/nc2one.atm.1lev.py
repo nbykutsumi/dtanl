@@ -1,6 +1,6 @@
 from netCDF4 import *
 from numpy import *
-import os
+import os,sys
 import calendar, datetime
 import cf
 import cmip_func
@@ -158,8 +158,12 @@ for lfileinfo in llfileinfo:
   #iname = "%s/%s_%s.nc"%(incdir, ihead, itimerange)
   iname = incdir + "/" + ncname
   #####
-  print os.access(iname, os.F_OK)
-  print "iname=", iname
+  if not os.access(iname, os.F_OK):
+    print "No File", iname
+    sys.exit()
+  else:
+    print iname
+  #----
   nc = Dataset(iname, "r", format="NETCDF")
   #*********
   # a1tnum
