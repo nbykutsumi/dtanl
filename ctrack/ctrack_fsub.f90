@@ -637,7 +637,7 @@ do iy = 1,ny
     vw  = a2vlow(ixw, iyw)
     ve  = a2vlow(ixe, iye)
     !-
-    if ( (us.eq.miss).or.(un.eq.miss) )then
+    if ( (us.eq.miss).or.(un.eq.miss).or.(vw.eq.miss).or.(ve.eq.miss) )then
       rvort = miss
     else
       rvort  =  (ve - vw)/(dew*2.0) - (un - us)/(dns*2.0) 
@@ -739,10 +739,14 @@ do iy = 1,ny
     tmeanup   = 0.0
     icount   = 0
     itemp    = 1
+
     do while (a1x(itemp) .ne. miss_int)
       dix = a1x(itemp)
       diy = a1y(itemp)
       CALL ixy2iixy(ix+dix, iy+diy, nx, ny, ixt, iyt)
+      itemp = itemp + 1
+
+      !print *,lat,"loop",ixt,iyt,itemp
       if (a2tlow(ixt, iyt).eq. miss)then
         cycle
       else
@@ -751,8 +755,8 @@ do iy = 1,ny
         tmeanup    = tmeanup  + a2tup(ixt, iyt)
         icount = icount + 1
       end if
-      itemp  = itemp +1
     end do
+
     !-
     if (icount .eq.0)then
       cycle
@@ -767,12 +771,14 @@ do iy = 1,ny
     end if
     a2tcloc(ix,iy)   = dtlow + dtmid + dtup
     a2nowflag(ix,iy) = 1.0
+
   end do
 end do
 
 !--------------
 END SUBROUTINE find_tc_saone
 
+!*****************************************************************
 !*****************************************************************
 SUBROUTINE find_tc_saone_old(a2pgrad, a2life, a2lastpos, a2lastflag, a2tlow, a2tmid, a2tup&
                         &, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea&
@@ -2732,6 +2738,7 @@ SUBROUTINE circle_xy_real(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, 
   implicit none
   !-- input -----------------------------
   integer                               nx, ny
+!f2py intent(in)                        nx, ny
   real                                  lat, lat_first, dlon, dlat
 !f2py intent(in)                        lat, lat_first, dlon, dlat
   real                                  thdist  ![m]

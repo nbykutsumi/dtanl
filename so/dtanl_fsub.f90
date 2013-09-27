@@ -17,7 +17,7 @@ real,dimension(nx*ny)    :: a1grids
 !--- calc -------
 integer                     ix,iy,ik
 integer                     icount_surr
-integer                     iix,iiy, dx,dy
+integer                     iix,iiy
 integer                     id, id_min, ik_tmp
 integer                     stopflag
 integer                     idMAX, idMIN, MAXmin, MINmin
@@ -1262,7 +1262,7 @@ real,dimension(nx,ny) :: a2thermoadv
 !--- cal -----
 real,dimension(nx,ny) :: a2gradx, a2grady
 !-------------
-CALL mk_a2grad_saone(a2thermo, a2gradx, a2grady)
+CALL mk_a2grad_saone(a2in=a2thermo, a2gradx=a2gradx, a2grady=a2grady)
 a2thermoadv  = a2gradx* a2uwind + a2grady*a2vwind
 !-------------
 return
@@ -1292,8 +1292,8 @@ integer                    iyn, iys, iyw, iye
 !--- para --------
 real                    :: lat_first = -89.5
 !-----------------
-CALL mk_a2grad_abs_saone(a2thermo, a2gradabs)
-CALL mk_a2grad_saone(a2thermo, a2gradx, a2grady)
+CALL mk_a2grad_abs_saone(a2in=a2thermo, a2gradabs=a2gradabs)
+CALL mk_a2grad_saone(a2in=a2thermo, a2gradx=a2gradx, a2grady=a2grady)
 do iy = 1,ny
   lat = lat_first + (iy -1)*1.0
   dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
@@ -1496,14 +1496,14 @@ return
 
 END SUBROUTINE mk_a2relative_vorticity
 !*********************************************************
-SUBROUTINE mk_a2contour_regional(a2in, v, vtrue_out, vmiss_out, nx, ny, a2contour)
+SUBROUTINE mk_a2contour_regional(a2in, v, vtrue_out, miss, nx, ny, a2contour)
 implicit none
 !--- in -------
 integer                  nx, ny
 real,dimension(nx,ny) :: a2in
 !f2py intent(in)         a2in
-real                     v, vtrue_out, vmiss_out
-!f2py intent(in)         v, vtrue_out, vmiss_out
+real                     v, vtrue_out, miss
+!f2py intent(in)         v, vtrue_out, miss
 !--- out ------
 real,dimension(nx,ny) :: a2contour
 !f2py intent(out)        a2contour
@@ -1515,37 +1515,37 @@ real                     vnw, vne, vsw, vse
 real                     vo, vmid
 real,dimension(8)     :: a1v
 !--------------
-a2contour = vmiss_out
-a1v  = vmiss_out
-vn   = vmiss_out
-vs   = vmiss_out
-vw   = vmiss_out
-ve   = vmiss_out
-vnw  = vmiss_out
-vne  = vmiss_out
-vsw  = vmiss_out
-vse  = vmiss_out
+a2contour = miss
+a1v  = miss
+vn   = miss
+vs   = miss
+vw   = miss
+ve   = miss
+vnw  = miss
+vne  = miss
+vsw  = miss
+vse  = miss
 do iy = 1,ny
   do ix = 1,nx
     !---
     !---
     vo  = a2in(ix, iy)
     if (iy .eq. 1) then
-      vs  = vmiss_out
-      vsw = vmiss_out
-      vse = vmiss_out
+      vs  = miss
+      vsw = miss
+      vse = miss
     else if (iy .eq. ny) then
-      vn  = vmiss_out
-      vnw = vmiss_out
-      vne = vmiss_out
+      vn  = miss
+      vnw = miss
+      vne = miss
     else if (ix .eq. 1) then
-      vw  = vmiss_out
-      vnw = vmiss_out
-      vsw = vmiss_out
+      vw  = miss
+      vnw = miss
+      vsw = miss
     else if (ix .eq. nx) then
-      ve  = vmiss_out
-      vne = vmiss_out
-      vse = vmiss_out
+      ve  = miss
+      vne = miss
+      vse = miss
     else
       vn  = a2in(ix, iy+1)
       vs  = a2in(ix, iy-1)
@@ -1568,7 +1568,7 @@ do iy = 1,ny
     if (vo .le. v)then
       do k = 1,8
         !print *,"vo, a1v(k)",vo, a1v(k)
-        if (a1v(k) .eq. vmiss_out) then
+        if (a1v(k) .eq. miss) then
           cycle
         else if (a1v(k) .ge. v)then
           vmid = (a1v(k) + v)*0.5
@@ -1581,7 +1581,7 @@ do iy = 1,ny
     else if (vo .gt. v)then
       do k = 1,8
         !print *,"vo, a1v(k)",vo, a1v(k)
-        if (a1v(k) .eq. vmiss_out) then
+        if (a1v(k) .eq. miss) then
           cycle
         else if (a1v(k) .ge. v)then
           vmid = (a1v(k) + v)*0.5
@@ -1602,14 +1602,14 @@ END SUBROUTINE  mk_a2contour_regional
 
 
 !*********************************************************
-SUBROUTINE mk_a2contour(a2in, v, vtrue_out, vmiss_out, nx, ny, a2contour)
+SUBROUTINE mk_a2contour(a2in, v, vtrue_out, miss, nx, ny, a2contour)
 implicit none
 !--- in -------
 integer                  nx, ny
 real,dimension(nx,ny) :: a2in
 !f2py intent(in)         a2in
-real                     v, vtrue_out, vmiss_out
-!f2py intent(in)         v, vtrue_out, vmiss_out
+real                     v, vtrue_out, miss
+!f2py intent(in)         v, vtrue_out, miss
 !--- out ------
 real,dimension(nx,ny) :: a2contour
 !f2py intent(out)        a2contour
@@ -1623,8 +1623,8 @@ real                     vnw, vne, vsw, vse
 real                     vo, vmid
 real,dimension(8)     :: a1v
 !--------------
-a2contour = vmiss_out
-a1v  = vmiss_out
+a2contour = miss
+a1v  = miss
 do iy = 1,ny
   do ix = 1,nx
     !---
@@ -1742,7 +1742,7 @@ real                     lat
 !--- para --------
 real                    :: lat_first = -89.5
 !-----------------
-CALL mk_a2grad_abs_saone(a2in, a2gradinabs)
+CALL mk_a2grad_abs_saone(a2in=a2in, a2gradabs=a2gradinabs)
 !-----------------
 do iy = 1,ny
   lat = lat_first + (iy -1)*1.0
@@ -1778,7 +1778,7 @@ real                     lat
 !--- para --------
 real                    :: lat_first = -89.5
 !-----------------
-CALL mk_a2grad_abs_saone(a2in, a2gradinabs)
+CALL mk_a2grad_abs_saone(a2in=a2in, a2gradabs=a2gradinabs)
 !-----------------
 do iy = 1,ny
   lat = lat_first + (iy -1)*1.0
@@ -1796,17 +1796,19 @@ return
 !--------------
 END SUBROUTINE mk_a2adj
 !*********************************************************
-SUBROUTINE mk_a2frontmask2(a2tau, nx, ny, a2frontmask2)
+SUBROUTINE mk_a2frontmask2(a2tau, miss, nx, ny, a2frontmask2)
 implicit none
 !--- in -------
 integer                  nx, ny
 real,dimension(nx,ny) :: a2tau
 !f2py intent(in)         a2tau
+real,optional         :: miss
+!f2py intent(in)         miss
 !--- out ------
 real,dimension(nx,ny) :: a2frontmask2
 !f2py intent(out)        a2frontmask2
 !--- calc -----
-integer                  iy
+integer                  ix,iy
 real,dimension(nx,ny) :: a2gradtauabs, a2grad2tauabs
 real                     dns, dew, meangridlen
 real                     coef
@@ -1814,8 +1816,13 @@ real                     lat
 !--- para --------
 real                    :: lat_first = -89.5
 !-----------------
-CALL mk_a2grad_abs_saone(a2tau, a2gradtauabs)
-CALL mk_a2grad_abs_saone(a2gradtauabs, a2grad2tauabs)
+if (present(miss))then
+  CALL mk_a2grad_abs_saone(a2in=a2tau, miss=miss, a2gradabs=a2gradtauabs)
+  CALL mk_a2grad_abs_saone(a2in=a2gradtauabs, miss=miss, a2gradabs=a2grad2tauabs)
+else
+  CALL mk_a2grad_abs_saone(a2in=a2tau, a2gradabs=a2gradtauabs)
+  CALL mk_a2grad_abs_saone(a2in=a2gradtauabs, a2gradabs=a2grad2tauabs)
+end if
 !-----------------
 do iy = 1,ny
   lat = lat_first + (iy -1)*1.0
@@ -1825,17 +1832,67 @@ do iy = 1,ny
   coef         = meangridlen / (2**0.5)
   a2frontmask2(:,iy) = a2gradtauabs(:,iy) + coef*a2grad2tauabs(:,iy)
 end do
+!-------------
+! check miss
+!-------------
+if (present(miss))then
+  do iy=1,ny
+    do ix=1,nx
+      if ((a2gradtauabs(ix,iy).eq.miss).or.(a2grad2tauabs(ix,iy).eq.miss))then
+        a2frontmask2(ix,iy) = miss
+      end if
+    end do
+  end do
 
+end if
+!-------------
 return
 !--------------
 END SUBROUTINE mk_a2frontmask2
+!!*********************************************************
+!SUBROUTINE mk_a2frontmask2(a2tau, nx, ny, a2frontmask2)
+!implicit none
+!!--- in -------
+!integer                  nx, ny
+!real,dimension(nx,ny) :: a2tau
+!!f2py intent(in)         a2tau
+!!--- out ------
+!real,dimension(nx,ny) :: a2frontmask2
+!!f2py intent(out)        a2frontmask2
+!!--- calc -----
+!integer                  iy
+!real,dimension(nx,ny) :: a2gradtauabs, a2grad2tauabs
+!real                     dns, dew, meangridlen
+!real                     coef
+!real                     lat
+!!--- para --------
+!real                    :: lat_first = -89.5
+!!-----------------
+!CALL mk_a2grad_abs_saone(a2in=a2tau, a2gradabs=a2gradtauabs)
+!CALL mk_a2grad_abs_saone(a2in=a2gradtauabs, a2gradabs=a2grad2tauabs)
+!!-----------------
+!do iy = 1,ny
+!  lat = lat_first + (iy -1)*1.0
+!  dns = hubeny_real(lat-1.0, 0.0, lat+1.0, 0.0) *0.5
+!  dew = hubeny_real(lat, 0.0, lat, 1.0)
+!  meangridlen  = (dns + dew)*0.5
+!  coef         = meangridlen / (2**0.5)
+!  a2frontmask2(:,iy) = a2gradtauabs(:,iy) + coef*a2grad2tauabs(:,iy)
+!end do
+!
+!return
+!!--------------
+!END SUBROUTINE mk_a2frontmask2
+
 !*********************************************************
-SUBROUTINE mk_a2frontmask1(a2tau, nx, ny, a2frontmask1)
+SUBROUTINE mk_a2frontmask1(a2tau, miss, nx, ny, a2frontmask1)
 implicit none
 !--- in -------
 integer                  nx, ny
 real,dimension(nx,ny) :: a2tau
 !f2py intent(in)         a2tau
+real,optional         :: miss
+!f2py intent(in)         miss
 !--- out ------
 real,dimension(nx,ny) :: a2frontmask1
 !f2py intent(out)        a2frontmask1
@@ -1850,10 +1907,31 @@ real,dimension(nx,ny) :: a2frontmasksingle
 
 
 !--------------
-CALL mk_a2grad_saone(a2tau, a2gradtaux, a2gradtauy)
-a2gradtauabs       = (a2gradtaux**2.0 + a2gradtauy**2.0)**0.5
-CALL mk_a2grad_saone(a2gradtauabs, a2grad2taux, a2grad2tauy)
-a2frontmasksingle  = (-a2grad2taux*a2gradtaux - a2grad2tauy*a2gradtauy)/a2gradtauabs
+! For with miss
+!--------------
+if ( present(miss) )then
+  CALL mk_a2grad_saone(a2in=a2tau, miss=miss, a2gradx=a2gradtaux, a2grady=a2gradtauy)
+  a2gradtauabs       = (a2gradtaux**2.0 + a2gradtauy**2.0)**0.5
+  CALL mk_a2grad_saone(a2in=a2gradtauabs, miss=miss, a2gradx=a2grad2taux, a2grady=a2grad2tauy)
+  a2frontmasksingle  = (-a2grad2taux*a2gradtaux - a2grad2tauy*a2gradtauy)/a2gradtauabs
+  do iy=1,ny
+    do ix=1,nx
+      if ((a2gradtaux(ix,iy).eq.miss).or.(a2gradtauy(ix,iy).eq.miss)&
+         &.or.(a2grad2taux(ix,iy).eq.miss).or.(a2grad2tauy(ix,iy).eq.miss))then
+        a2frontmasksingle(ix,iy) = miss
+      end if
+    end do
+  end do
+!---------------
+! For without miss
+!---------------
+else 
+  CALL mk_a2grad_saone(a2in=a2tau, a2gradx=a2gradtaux, a2grady=a2gradtauy)
+  a2gradtauabs       = (a2gradtaux**2.0 + a2gradtauy**2.0)**0.5
+  CALL mk_a2grad_saone(a2in=a2gradtauabs, a2gradx=a2grad2taux, a2grady=a2grad2tauy)
+  a2frontmasksingle  = (-a2grad2taux*a2gradtaux - a2grad2tauy*a2gradtauy)/a2gradtauabs
+end if
+!---------------
 
 do iy = 1,ny
   do ix = 1,nx
@@ -1872,19 +1950,77 @@ do iy = 1,ny
     if ( isnan(a2frontmask1(ix,iy)) )then
       a2frontmask1(ix,iy) = 0.0
     end if
-    !---
+    !--- check miss ------
+    if ( present(miss) )then
+      if ( (vn.eq.miss).or.(vs.eq.miss).or.(vw.eq.miss).or.(ve.eq.miss))then
+        a2frontmask1(ix,iy) = miss
+      end if
+    end if
+    !---------------------
   end do
 end do
 
 return
 END SUBROUTINE mk_a2frontmask1
+!!*********************************************************
+!SUBROUTINE mk_a2frontmask1(a2tau, nx, ny, a2frontmask1)
+!implicit none
+!!--- in -------
+!integer                  nx, ny
+!real,dimension(nx,ny) :: a2tau
+!!f2py intent(in)         a2tau
+!!--- out ------
+!real,dimension(nx,ny) :: a2frontmask1
+!!f2py intent(out)        a2frontmask1
+!!--- calc -----
+!integer                  ix, iy
+!integer                  ixn, ixs, ixw, ixe
+!integer                  iyn, iys, iyw, iye
+!real                     vn, vs, vw, ve
+!real,dimension(nx,ny) :: a2gradtaux, a2gradtauy, a2gradtauabs
+!real,dimension(nx,ny) :: a2grad2taux, a2grad2tauy
+!real,dimension(nx,ny) :: a2frontmasksingle
+!
+!
+!!--------------
+!CALL mk_a2grad_saone(a2in=a2tau, a2gradx=a2gradtaux, a2grady=a2gradtauy)
+!a2gradtauabs       = (a2gradtaux**2.0 + a2gradtauy**2.0)**0.5
+!CALL mk_a2grad_saone(a2in=a2gradtauabs, a2gradx=a2grad2taux, a2grady=a2grad2tauy)
+!a2frontmasksingle  = (-a2grad2taux*a2gradtaux - a2grad2tauy*a2gradtauy)/a2gradtauabs
+!
+!do iy = 1,ny
+!  do ix = 1,nx
+!    !---
+!    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+!    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+!    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+!    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+!    !---
+!    vn = a2frontmasksingle(ixn, iyn)
+!    vs = a2frontmasksingle(ixs, iys)
+!    vw = a2frontmasksingle(ixw, iyw)
+!    ve = a2frontmasksingle(ixe, iye)
+!    !---
+!    a2frontmask1(ix,iy) = (vn+vs+vw+ve)/4.0
+!    if ( isnan(a2frontmask1(ix,iy)) )then
+!      a2frontmask1(ix,iy) = 0.0
+!    end if
+!    !---
+!  end do
+!end do
+!
+!return
+!END SUBROUTINE mk_a2frontmask1
+!
+
 !*********************************************************
-SUBROUTINE mk_a2axisgrad(a2inx, a2iny, nx, ny, a2axisgrad)
+SUBROUTINE mk_a2axisgrad(a2inx, a2iny, miss, nx, ny, a2axisgrad)
 implicit none
 !--- in -------
 integer                  nx, ny
 real,dimension(nx,ny) :: a2inx, a2iny
 !f2py intent(in)         a2inx, a2iny
+real,optional         :: miss
 !--- out ------
 real,dimension(nx,ny) :: a2axisgrad
 !f2py intent(out)        a2axisgrad
@@ -1904,7 +2040,14 @@ real                     vyn, vys, vyw, vye
 real                  :: lat_first = -89.5
 !!---------------
 !
-CALL mk_a2meanunitaxis(a2inx, a2iny, nx, ny, a2meanunitaxis_x, a2meanunitaxis_y)
+if ( present(miss) )then
+  CALL mk_a2meanunitaxis(a2inx=a2inx, a2iny=a2iny, miss=miss, nx=nx, ny=ny&
+       &, a2meanunitaxis_x=a2meanunitaxis_x, a2meanunitaxis_y=a2meanunitaxis_y)
+else
+  CALL mk_a2meanunitaxis(a2inx=a2inx, a2iny=a2iny, nx=nx, ny=ny&
+       &, a2meanunitaxis_x=a2meanunitaxis_x, a2meanunitaxis_y=a2meanunitaxis_y)
+
+end if
 !!!--------------
 do iy = 1,ny
   lat = lat_first + (iy -1)*1.0
@@ -1937,21 +2080,99 @@ do iy = 1,ny
     resolvys   = resolvabsw * a2meanunitaxis_y(ix,iy)
     !---
     a2axisgrad(ix,iy) = (resolvyn - resolvys)/dns + (resolvxe - resolvxw)/dew
-
+    !*********************
+    ! check miss
+    !---------------------
+    if ( present(miss) )then
+      if ((a2meanunitaxis_x(ix,iy).eq.miss).or.(a2meanunitaxis_y(ix,iy).eq.miss))then
+        !!!! checking a2meanunitaxis is enough !!!!
+        !!!! see their subroutine
+        a2axisgrad(ix,iy) = miss
+      end if 
+    end if
+    !*********************
   end do
 end do
 !!--------------
 !
 return
 END SUBROUTINE mk_a2axisgrad
-!*********************************************************
-SUBROUTINE mk_a2meanunitaxis(a2inx, a2iny, nx, ny, a2meanunitaxis_x, a2meanunitaxis_y)
+
+!!*********************************************************
+!SUBROUTINE mk_a2axisgrad(a2inx, a2iny, nx, ny, a2axisgrad)
+!implicit none
+!!--- in -------
+!integer                  nx, ny
+!real,dimension(nx,ny) :: a2inx, a2iny
+!!f2py intent(in)         a2inx, a2iny
+!!--- out ------
+!real,dimension(nx,ny) :: a2axisgrad
+!!f2py intent(out)        a2axisgrad
+!!!--- calc -----
+!integer                  ix,  iy
+!integer                  ixn, ixs, ixw, ixe
+!integer                  iyn, iys, iyw, iye
+!real,dimension(nx,ny) :: a2meanunitaxis_x, a2meanunitaxis_y
+!real                     lat, dns, dew
+!real                     resolvabsn, resolvabss, resolvabsw, resolvabse
+!real                     resolvxw, resolvxe
+!real                     resolvyn, resolvys
+!real                     vxn, vxs, vxw, vxe
+!real                     vyn, vys, vyw, vye
+!
+!!!--- parameter -
+!real                  :: lat_first = -89.5
+!!!---------------
+!!
+!CALL mk_a2meanunitaxis(a2inx, a2iny, nx, ny, a2meanunitaxis_x, a2meanunitaxis_y)
+!!!!--------------
+!do iy = 1,ny
+!  lat = lat_first + (iy -1)*1.0
+!  dns = hubeny_real(lat-1.0, 0.0, lat+1.0, 0.0)
+!  dew = hubeny_real(lat, 0.0, lat, 1.0)
+!  do ix = 1, nx
+!    !---
+!    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+!    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+!    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+!    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+!    !---
+!    vxn = a2inx(ixn, iyn)
+!    vxs = a2inx(ixs, iys)
+!    vxw = a2inx(ixw, iyw)
+!    vxe = a2inx(ixe, iye)
+!    vyn = a2iny(ixn, iyn)
+!    vys = a2iny(ixs, iys)
+!    vyw = a2iny(ixw, iyw)
+!    vye = a2iny(ixe, iye)
+!    !---
+!    resolvabsn = vxn * a2meanunitaxis_x(ix,iy) + vyn * a2meanunitaxis_y(ix,iy)
+!    resolvabss = vxs * a2meanunitaxis_x(ix,iy) + vys * a2meanunitaxis_y(ix,iy)
+!    resolvabsw = vxw * a2meanunitaxis_x(ix,iy) + vyw * a2meanunitaxis_y(ix,iy)
+!    resolvabse = vxe * a2meanunitaxis_x(ix,iy) + vye * a2meanunitaxis_y(ix,iy)
+!    !---
+!    resolvxw   = resolvabsw * a2meanunitaxis_x(ix,iy)
+!    resolvxe   = resolvabse * a2meanunitaxis_x(ix,iy)
+!    resolvyn   = resolvabsn * a2meanunitaxis_y(ix,iy)
+!    resolvys   = resolvabsw * a2meanunitaxis_y(ix,iy)
+!    !---
+!    a2axisgrad(ix,iy) = (resolvyn - resolvys)/dns + (resolvxe - resolvxw)/dew
+!
+!  end do
+!end do
+!!!--------------
+!!
+!return
+!END SUBROUTINE mk_a2axisgrad
+!!*********************************************************
+SUBROUTINE mk_a2meanunitaxis(a2inx, a2iny, miss, nx, ny, a2meanunitaxis_x, a2meanunitaxis_y)
 implicit none
 !--- in ---------
 integer                  nx, ny
 real,dimension(nx,ny) :: a2inx, a2iny
 !f2py intent(in)         a2inx, a2iny
-
+real,optional         :: miss
+!f2py intent(in)         miss
 !!--- out --------
 real,dimension(nx,ny) :: a2meanunitaxis_x, a2meanunitaxis_y
 !f2py intent(out)        a2meanunitaxis_x, a2meanunitaxis_y
@@ -2062,11 +2283,154 @@ do iy = 1,ny
       a2meanunitaxis_y(ix,iy) = 0.0
     endif
     !******************
+    ! check miss
+    !------------------
+    if ( present(miss) )then
+      if (& 
+        & (vxo.eq.miss).or.&
+        & (vyo.eq.miss).or.&
+        & (vxn.eq.miss).or.&
+        & (vxs.eq.miss).or.&
+        & (vxw.eq.miss).or.&
+        & (vxe.eq.miss).or.&
+        & (vyn.eq.miss).or.&
+        & (vys.eq.miss).or.&
+        & (vyw.eq.miss).or.&
+        & (vye.eq.miss)) then
+        a2meanunitaxis_x(ix,iy) = miss
+        a2meanunitaxis_y(ix,iy) = miss
+      end if 
+    end if
+    !******************
   end do
 end do
 
 return
 END SUBROUTINE mk_a2meanunitaxis
+
+!!*********************************************************
+!SUBROUTINE mk_a2meanunitaxis(a2inx, a2iny, nx, ny, a2meanunitaxis_x, a2meanunitaxis_y)
+!implicit none
+!!--- in ---------
+!integer                  nx, ny
+!real,dimension(nx,ny) :: a2inx, a2iny
+!!f2py intent(in)         a2inx, a2iny
+!
+!!!--- out --------
+!real,dimension(nx,ny) :: a2meanunitaxis_x, a2meanunitaxis_y
+!!f2py intent(out)        a2meanunitaxis_x, a2meanunitaxis_y
+!!--- calc -------
+!real                       vxo, vxn, vxs, vxw, vxe
+!real                       vyo, vyn, vys, vyw, vye
+!!
+!real                       vrxo, vrxn, vrxs, vrxw, vrxe
+!real                       vryo, vryn, vrys, vryw, vrye
+!!
+!real                       vrx, vry, radr
+!!
+!real                       coso, cosn, coss, cosw, cose
+!real                       sino, sinn, sins, sinw, sine
+!!
+!real                       cosr, sinr, cosr_hlf, sinr_hlf
+!!
+!integer                    ix,  iy
+!integer                    ixn, ixs, ixw, ixe
+!integer                    iyn, iys, iyw, iye
+!!----------------
+!do iy = 1,ny
+!  do ix = 1,nx
+!    !---
+!    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+!    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+!    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+!    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+!    !---
+!    vxo = a2inx(ix,  iy)
+!    vyo = a2iny(ix,  iy)
+!    vxn = a2inx(ixn, iyn)
+!    vxs = a2inx(ixs, iys)
+!    vxw = a2inx(ixw, iyw)
+!    vxe = a2inx(ixe, iye)
+!    vyn = a2iny(ixn, iyn)
+!    vys = a2iny(ixs, iys)
+!    vyw = a2iny(ixw, iyw)
+!    vye = a2iny(ixe, iye)
+!    !---
+!    if ((vxo .eq. 0.0) .and. (vyo .eq. 0.0))then
+!      coso = 0.0
+!      sino = 0.0
+!    else
+!      coso = vxo / (vxo**2.0 + vyo**2.0)**0.5
+!      sino = vyo / (vxo**2.0 + vyo**2.0)**0.5
+!    endif
+!    if ((vxn .eq. 0.0) .and. (vyn .eq. 0.0))then
+!      cosn = 0.0
+!      sinn = 0.0
+!    else
+!      cosn = vxn / (vxn**2.0 + vyn**2.0)**0.5
+!      sinn = vyn / (vxn**2.0 + vyn**2.0)**0.5
+!    endif
+!    if ((vxs .eq. 0.0) .and. (vys .eq. 0.0))then
+!      coss = 0.0
+!      sins = 0.0
+!    else
+!      coss = vxs / (vxs**2.0 + vys**2.0)**0.5
+!      sins = vys / (vxs**2.0 + vys**2.0)**0.5
+!    endif
+!    if ((vxw .eq. 0.0) .and. (vyw .eq. 0.0))then
+!      cosw = 0.0
+!      sinw = 0.0
+!    else
+!      cosw = vxw / (vxw**2.0 + vyw**2.0)**0.5
+!      sinw = vyw / (vxw**2.0 + vyw**2.0)**0.5
+!    endif
+!    if ((vxe .eq. 0.0) .and. (vye .eq. 0.0))then
+!      cose = 0.0
+!      sine = 0.0
+!    else
+!      cose = vxe / (vxe**2.0 + vye**2.0)**0.5
+!      sine = vye / (vxe**2.0 + vye**2.0)**0.5
+!    endif
+!
+!    !---
+!    vrxo = coso*vxo - sino*vyo
+!    vrxn = cosn*vxn - sinn*vyn
+!    vrxs = coss*vxs - sins*vys
+!    vrxw = cosw*vxw - sinw*vyw
+!    vrxe = cose*vxe - sine*vye
+!    !---
+!    vryo = sino*vxo + coso*vyo
+!    vryn = sinn*vxn + cosn*vyn
+!    vrys = sins*vxs + coss*vys
+!    vryw = sinw*vxw + cosw*vyw
+!    vrye = sine*vxe + cose*vye
+!    !---
+!    vrx  = vrxo + vrxn + vrxs + vrxw + vrxe 
+!    vry  = vryo + vryn + vrys + vryw + vrye
+!    !---
+!    radr = (vrx**2.0 + vry**2.0)**0.5
+!    !---
+!    if (radr .gt. 0.0)then
+!      cosr = vrx / radr 
+!      sinr = vry / radr
+!      !---
+!      cosr_hlf = ((1+cosr)*0.5)**0.5 * sign(1.0, sinr)
+!      sinr_hlf = ((1-cosr)*0.5)**0.5
+!      !---
+!      !a2meanunitaxis_x(ix,iy) = 0.2* radr * cosr_hlf
+!      !a2meanunitaxis_y(ix,iy) = 0.2* radr * sinr_hlf
+!      a2meanunitaxis_x(ix,iy) = cosr_hlf
+!      a2meanunitaxis_y(ix,iy) = sinr_hlf
+!    else
+!      a2meanunitaxis_x(ix,iy) = 0.0
+!      a2meanunitaxis_y(ix,iy) = 0.0
+!    endif
+!    !******************
+!  end do
+!end do
+!
+!return
+!END SUBROUTINE mk_a2meanunitaxis
 !*********************************************************
 SUBROUTINE mk_a2theta(plev, a2T, nx, ny, a2theta)
 implicit none
@@ -2205,7 +2569,7 @@ END SUBROUTINE mk_a2slope_abs_saone
 
 
 !*********************************************************
-SUBROUTINE mk_a2grad_abs_saone(a2in, a2gradabs)
+SUBROUTINE mk_a2grad_abs_saone(a2in, miss, a2gradabs)
 !---------------------------------
 ! data order should be South -> North, West -> East
 ! returns two vector map (map of da/dx, map of da/dy)
@@ -2216,6 +2580,8 @@ integer                 :: ny = 180
 integer                 :: nx = 360
 real,dimension(360,180) :: a2in
 !f2py intent(in)           a2in
+real,optional           :: miss
+!f2py intent(in)           miss
 !--- out ---------
 real,dimension(360,180) :: a2gradabs
 !f2py intent(out)          a2gradabs
@@ -2250,16 +2616,75 @@ do iy = 1, ny
     gradx = (ve - vw) / (2.0*dew)
     grady = (vn - vs) / (dn + ds)
     a2gradabs(ix, iy) = ( gradx**2.0 + grady**2.0)**0.5 
-    !---
+    !--- check miss ------
+    if ( present(miss) )then
+      if ((a2in(ix,iy).eq.miss).or.(vn.eq.miss).or.(vs.eq.miss).or.(vw.eq.miss).or.(ve.eq.miss))then
+        a2gradabs(ix,iy) = miss
+      end if
+    end if
+    !---------------------
   end do
 end do
 !-----------------
 return
 END SUBROUTINE mk_a2grad_abs_saone
 
+!!*********************************************************
+!SUBROUTINE mk_a2grad_abs_saone(a2in, a2gradabs)
+!!---------------------------------
+!! data order should be South -> North, West -> East
+!! returns two vector map (map of da/dx, map of da/dy)
+!!---------------------------------
+!implicit none
+!!--- in ----------
+!integer                 :: ny = 180
+!integer                 :: nx = 360
+!real,dimension(360,180) :: a2in
+!!f2py intent(in)           a2in
+!!--- out ---------
+!real,dimension(360,180) :: a2gradabs
+!!f2py intent(out)          a2gradabs
+!!--- para --------
+!real                    :: lat_first = -89.5
+!!--- calc --------
+!real                       dn, ds, dew
+!real                       vn, vs, vw, ve
+!real                       lat
+!real                       gradx, grady
+!integer                    ix,  iy
+!integer                    ixn, ixs, ixw, ixe
+!integer                    iyn, iys, iyw, iye
+!!-----------------
+!do iy = 1, ny
+!  lat = lat_first + (iy -1)*1.0
+!  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+!  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+!  dew = hubeny_real(lat, 0.0, lat, 1.0)
+!  do ix = 1, nx
+!    !---
+!    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+!    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+!    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+!    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+!    !---
+!    vn = a2in(ixn, iyn)
+!    vs = a2in(ixs, iys)
+!    vw = a2in(ixw, iyw)
+!    ve = a2in(ixe, iye)
+!    !---
+!    gradx = (ve - vw) / (2.0*dew)
+!    grady = (vn - vs) / (dn + ds)
+!    a2gradabs(ix, iy) = ( gradx**2.0 + grady**2.0)**0.5 
+!    !---
+!  end do
+!end do
+!!-----------------
+!return
+!END SUBROUTINE mk_a2grad_abs_saone
+
 
 !*********************************************************
-SUBROUTINE mk_a2grad_saone(a2in, a2gradx, a2grady)
+SUBROUTINE mk_a2grad_saone(a2in, miss, a2gradx, a2grady)
 !---------------------------------
 ! data order should be South -> North, West -> East
 ! returns two vector map (map of da/dx, map of da/dy)
@@ -2270,6 +2695,8 @@ integer                 :: ny = 180
 integer                 :: nx = 360
 real,dimension(360,180) :: a2in
 !f2py intent(in)           a2in
+real,optional            :: miss
+!f2py intent(in)           miss
 !--- out ---------
 real,dimension(360,180) :: a2gradx, a2grady
 !f2py intent(out)          a2gradx, a2grady
@@ -2302,12 +2729,77 @@ do iy = 1, ny
     !---
     a2gradx(ix, iy) = (ve - vw) / (2.0*dew)
     a2grady(ix, iy) = (vn - vs) / (dn + ds)
-    
+    !--------------
+    ! check miss
+    !--------------
+    if ( present(miss) )then
+      if ( (a2in(ix,iy).eq.miss).or.(ve.eq.miss).or.(vw.eq.miss) )then
+        a2gradx(ix,iy) = miss
+      end if
+      if ( (a2in(ix,iy).eq.miss).or.(vn.eq.miss).or.(vs.eq.miss) )then
+        a2grady(ix,iy) = miss
+      end if
+    end if
+    !--------------
   end do
 end do
 !-----------------
 return
 END SUBROUTINE mk_a2grad_saone
+
+!!*********************************************************
+!SUBROUTINE mk_a2grad_saone(a2in, a2gradx, a2grady)
+!!---------------------------------
+!! data order should be South -> North, West -> East
+!! returns two vector map (map of da/dx, map of da/dy)
+!!---------------------------------
+!implicit none
+!!--- in ----------
+!integer                 :: ny = 180
+!integer                 :: nx = 360
+!real,dimension(360,180) :: a2in
+!!f2py intent(in)           a2in
+!!--- out ---------
+!real,dimension(360,180) :: a2gradx, a2grady
+!!f2py intent(out)          a2gradx, a2grady
+!!--- para --------
+!real                    :: lat_first = -89.5
+!!--- calc --------
+!real                       dn, ds, dew
+!real                       vn, vs, vw, ve
+!real                       lat
+!integer                    ix,  iy
+!integer                    ixn, ixs, ixw, ixe
+!integer                    iyn, iys, iyw, iye
+!!-----------------
+!do iy = 1, ny
+!  lat = lat_first + (iy -1)*1.0
+!  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+!  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+!  dew = hubeny_real(lat, 0.0, lat, 1.0)
+!  do ix = 1, nx
+!    !---
+!    call ixy2iixy_saone(ix, iy+1, ixn, iyn)
+!    call ixy2iixy_saone(ix, iy-1, ixs, iys)
+!    call ixy2iixy_saone(ix-1, iy, ixw, iyw)
+!    call ixy2iixy_saone(ix+1, iy, ixe, iye)
+!    !---
+!    vn = a2in(ixn, iyn)
+!    vs = a2in(ixs, iys)
+!    vw = a2in(ixw, iyw)
+!    ve = a2in(ixe, iye)
+!    !---
+!    a2gradx(ix, iy) = (ve - vw) / (2.0*dew)
+!    a2grady(ix, iy) = (vn - vs) / (dn + ds)
+!    !--------------
+!  end do
+!end do
+!!-----------------
+!return
+!END SUBROUTINE mk_a2grad_saone
+!
+
+
 !*********************************************************
 SUBROUTINE ixy2iixy_saone(ix, iy, iix, iiy)
 !--------------------------

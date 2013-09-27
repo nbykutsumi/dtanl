@@ -2,6 +2,7 @@ import datetime
 import calendar, netCDF4
 from numpy import *
 #***************************************
+#***************************************
 def ret_times(iyear,eyear,lmon, sunit, scalendar, stepday):
   ldtime  = []
   ltnum   = []
@@ -122,7 +123,7 @@ def ret_filedate(var, dattype, model, expr, ens, iyear, imon, iday, ihour, imin,
   lout  = []
   for line in lines:
     line = line.split(",")
-    print "AA",line
+    #print "AA",line
     var_tmp     = line[0]
     dattype_tmp = line[1]
     model_tmp   = line[2]

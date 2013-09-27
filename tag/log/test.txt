@@ -1,0 +1,15 @@
+/usr/lib/pymodules/python2.7/mpl_toolkits/__init__.py:2: UserWarning: Module dap was already imported from None, but /usr/lib/python2.7/dist-packages is being added to sys.path
+  __import__('pkg_resources').declare_namespace(__name__)
+/home/utsumi/mnt/iis.data1/utsumi/GSMaP/ptile.dec/2001-2009/gsmap_mvk.v5.222.1.movw01hr.0.8.p99.90.ALL.sa.dec
+/home/utsumi/mnt/iis.data1/utsumi/GSMaP/ptile.dec/2001-2009/gsmap_mvk.v5.222.1.movw06hr.0.8.p99.90.ALL.sa.dec
+/home/utsumi/mnt/iis.data1/utsumi/GSMaP/ptile.dec/2001-2009/gsmap_mvk.v5.222.1.movw24hr.0.8.p99.90.ALL.sa.dec
+2004 1 1 0
+aaa
+Traceback (most recent call last):
+  File "./agg.rfreq.ptile.jra.py", line 412, in <module>
+    print "aaa",a2pr.mean()
+  File "/usr/lib/python2.7/dist-packages/numpy/ma/core.py", line 4673, in mean
+    dsum = self.sum(axis=axis, dtype=dtype)
+  File "/usr/lib/python2.7/dist-packages/numpy/ma/core.py", line 4425, in sum
+    result = self.filled(0).sum(axis, dtype=dtype)
+KeyboardInterrupt

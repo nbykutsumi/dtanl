@@ -21,10 +21,11 @@ else:
   print "BBBBBBBBBBBB"
   print "*******************"
   var   = "ua"
-  model = "MIROC5"
+  model = "HadGEM2-ES"
   expr  = "historical"
-  ens   = "r1i1p1"
-  year  = 1995
+  #ens   = "r1i1p1"
+  ens   = "r2i1p1"
+  year  = 1980
   mon   = 1
   dattype = "6hrPlev"
   tinc  = 6
@@ -122,11 +123,11 @@ odir_dump = odir_root
 #####################################################
 llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59)
 
-print llfileinfo
+print "nc2one.atm.1lev.py",llfileinfo
 for lfileinfo in llfileinfo:
   fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname\
    = lfileinfo 
-  print lfileinfo
+  print "nc2oane.atm.1lev.py", "BBB",lfileinfo
   #------
   #time0 = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
   time0 = ftime0

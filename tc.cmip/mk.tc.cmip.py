@@ -7,12 +7,16 @@ import tc_para, cmip_para, cmip_func
 #-----------------------------------------
 #singleday = True
 singleday = False
-
 lmodel = ["MIROC5"]
-lexpr  = ["historical"]
-iyear  = 1980
-eyear  = 1999
-
+##------------------
+#lexpr  = ["historical"]
+#iyear  = 1980
+#eyear  = 1999
+#------------------
+lexpr  = ["rcp85"]
+iyear  = 2080
+eyear  = 2099
+#------------------
 
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon   = [7]

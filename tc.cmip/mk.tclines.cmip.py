@@ -11,10 +11,13 @@ import tc_para, cmip_para, cmip_func
 singleday = False
 lmodel   = ["MIROC5"]
 lexpr    = ["historical"]
-iyear    = 1979
-eyear    = 1979
+iyear    = 1980
+eyear    = 1999
 #lmon     = [1,2,3,4,5,6,7,8,9,10,11,12]
-season   = 1
+season   = "ALL"
+thdura  = 48
+
+
 lmon     = ctrack_para.ret_lmon(season)
 stepday  = 0.25
 miss     = -9999.0
@@ -33,7 +36,6 @@ dpgradrange   = ctrack_para.ret_dpgradrange()
 lclass  = dpgradrange.keys()
 nclass  = len(lclass)
 thpgrad = dpgradrange[1][0] 
-thdura  = 48
 #----------------------------
 lllat   = -80.0
 urlat   = 80.0
@@ -96,10 +98,10 @@ for expr,model in [[expr, model] for expr in lexpr for model in lmodel]:
   a1dtime,a1tnum  = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday)
   for dtime, tnum in map(None, a1dtime, a1tnum):
     year,mon,day,hour = dtime.year, dtime.month, dtime.day, dtime.hour
-
+    print "tcline",year,mon,day,hour
     #-- init --
-    sodir  = sodir_root + "/%04d/%02d"%(year,mon)
-    ctrack_func.mk_dir(sodir)
+    #sodir  = sodir_root + "/%04d/%02d"%(year,mon)
+    #ctrack_func.mk_dir(sodir)
     a2num  = zeros([ny,nx],float32).reshape(ny,nx)
     ##############
     #  SST
