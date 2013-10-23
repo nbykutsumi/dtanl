@@ -10,8 +10,8 @@ import datetime
 #----------------------------------------------------
 #singleday =True
 singleday = False
-iyear = 2001
-eyear = 2009
+iyear = 2010
+eyear = 2010
 lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lseason = [1]
 lvtype = ["theta_e","theta"]
@@ -19,6 +19,7 @@ lvtype = ["theta_e","theta"]
 #lprtype  = ["GPCP1DD"]
 #lprtype  = ["GSMaP","JRA","JRA25.C","JRA25.L"]
 lprtype  = ["GSMaP"]
+#lprtype  = ["GPCP1DD"]
 #lseason = [1]
 window = "no"
 #window = "out"

@@ -1,7 +1,7 @@
 from dtanl_fsub import *
 from chart_fsub import *
 from numpy import *
-
+import datetime
 import calendar
 import ctrack_para, ctrack_func, chart_para
 #-----------------------------------------
@@ -9,6 +9,7 @@ import ctrack_para, ctrack_func, chart_para
 singletime = False
 iyear = 2000
 eyear = 2010
+#eyear = 2000
 lyear = range(iyear,eyear+1)
 lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon  = [1]
@@ -65,7 +66,7 @@ for year in lyear:
           num_tmp        = dtanl_fsub.count_fronts(a2in_seg.T, miss)
           dnum[ftype,year,mon]    = dnum[ftype,year,mon] + num_tmp
 #****************************
-# write to csv
+# write to table csv
 #----------------------------
 for ftype in lftype:
   sout = "," + ",".join( map(str, lmon)) + "\n"
@@ -79,3 +80,60 @@ for ftype in lftype:
   soname = sodir + "/count.front.chart.%04d-%04d.%s.f%d.csv"%(iyear,eyear,region,ftype)
   f=open(soname,"w"); f.write(sout); f.close()
   print soname
+
+#*****************************
+# time series
+#-----------------------------
+sout   = ",warm,cold,occ,stat\n"
+for year in lyear:
+  for mon in lmon:
+    sdate  = "%04d-%02d"%(year,mon)
+    count1 = dnum[1,year,mon]
+    count2 = dnum[2,year,mon]
+    count3 = dnum[3,year,mon]
+    count4 = dnum[4,year,mon]
+    sout = sout + "%s,%s,%s,%s,%s\n"%(sdate,count1,count2,count3,count4)
+
+soname = sodir + "/tseries.count.front.chart.%04d-%04d.%s.csv"%(iyear,eyear,region)
+f=open(soname,"w"); f.write(sout); f.close()
+
+#*****************************
+# time series 3months
+#-----------------------------
+
+lcount1 = []
+lcount2 = []
+lcount3 = []
+lcount4 = []
+for year in lyear:
+  for mon in lmon:
+    sdate  = "%04d-%02d"%(year,mon)
+    lcount1.append(dnum[1,year,mon])
+    lcount2.append(dnum[2,year,mon])
+    lcount3.append(dnum[3,year,mon])
+    lcount4.append(dnum[4,year,mon])
+
+sout = ",warm,cold,occ,stat\n"
+for i in range(int(len(lyear)*len(lmon)/3.0)):
+  #count1  = sum(lcount1[2+3*i:2+3*i+3])/3.0
+  #count2  = sum(lcount2[2+3*i:2+3*i+3])/3.0
+  #count3  = sum(lcount3[2+3*i:2+3*i+3])/3.0
+  #count4  = sum(lcount4[2+3*i:2+3*i+3])/3.0
+
+  count1  = sum(lcount1[2+3*i:2+3*i+3])
+  count2  = sum(lcount2[2+3*i:2+3*i+3])
+  count3  = sum(lcount3[2+3*i:2+3*i+3])
+  count4  = sum(lcount4[2+3*i:2+3*i+3])
+
+  if i%4 ==0: season="MAM"
+  if i%4 ==1: season="JJA"
+  if i%4 ==2: season="SON"
+  if i%4 ==3: season="DJF"
+  print season,count1,count2,count3,count4
+  sout  = sout + "%s,%s,%s,%s,%s\n"%(season,count1,count2,count3,count4)
+
+soname = sodir + "/tseries.count.front.chart.3season.%04d-%04d.%s.csv"%(iyear,eyear,region)
+f=open(soname,"w"); f.write(sout); f.close()
+
+
+

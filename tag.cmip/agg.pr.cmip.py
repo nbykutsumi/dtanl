@@ -13,9 +13,10 @@ calcflag   = True
 lbstflag    = [True]
 #lbstflag   = [False]
 
-lmodel  = ["MIROC5"]
-#lexpr   = ["historical", "rcp85"]
-lexpr   = ["rcp85"]
+#lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+lexpr   = ["historical", "rcp85"]
+#lexpr   = ["rcp85"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
 
 lmon    = range(1,12+1)
@@ -56,7 +57,7 @@ for model, expr in llkey:
   iyear,eyear  = dyrange[expr]
   ens   = cmip_para.ret_ens(model, expr, "psl")
   sunit, scalendar = cmip_para.ret_unit_calendar(model,expr)
-  a1dtime,a1tnum   = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday)
+  a1dtime,a1tnum   = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday, model=model)
   #--------------------------------
   a2one    = ones([ny,nx],float32)
   a2zero   = zeros([ny,nx],float32)
@@ -99,7 +100,7 @@ for model, expr in llkey:
         #*****************************
         # load corresponding tags 
         #-----------------------------
-        now   = datetime.datetime(yearloop, monloop, dayloop)
+        now   = netCDF4.netcdftime.datetime(yearloop, monloop, dayloop)
         #------------------
         a2tagtmp_tc    = a2zero
         a2tagtmp_c     = a2zero
@@ -141,15 +142,17 @@ for model, expr in llkey:
         a2tagtmp_tc    = ma.masked_greater(a2tagtmp_tc,  0.0).filled(1.0)
         a2tagtmp_c     = ma.masked_greater(a2tagtmp_c ,  0.0).filled(1.0)   
         a2tagtmp_fbc   = ma.masked_greater(a2tagtmp_fbc, 0.0).filled(1.0)
-        a2tagtmp_ot    = ma.masked_where(a2tagtmp_tc + a2tagtmp_c + a2tagtmp_ot ==0.0, a2zero).filled(1.0)
+        a2tagtmp_ot    = ma.masked_where( (a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc) ==0.0, a2zero).filled(1.0)
         ##
-        a2tag_all   = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_ot
+        a2tagtmp_all   = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_ot
         ##
-        a2tag_tc    = a2tagtmp_tc  / a2tag_all
-        a2tag_c     = a2tagtmp_c   / a2tag_all
-        a2tag_fbc   = a2tagtmp_fbc / a2tag_all
+        a2tag_tc    = a2tagtmp_tc  / a2tagtmp_all
+        a2tag_c     = a2tagtmp_c   / a2tagtmp_all
+        a2tag_fbc   = a2tagtmp_fbc / a2tagtmp_all
         a2tag_ot    = a2tagtmp_ot
 
+
+        #a2tag_all   = a2tag_tc + a2tag_c + a2tag_fbc + a2tag_ot
         #******************************
         # count
         #------------------------------
@@ -166,7 +169,9 @@ for model, expr in llkey:
         a2prtmp_c    = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_c
         a2prtmp_fbc  = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_fbc
         a2prtmp_ot   = ma.masked_less(a2pr,0.0).filled(0.0) * a2tag_ot
-  
+
+        #a2prtmp_acc  = a2prtmp_tc + a2prtmp_c + a2prtmp_fbc + a2prtmp_ot
+        #print a2prtmp_acc.sum(), a2pr.sum()  
         #*****************************
         # sum precipitation
         #-----------------------------
@@ -181,7 +186,8 @@ for model, expr in llkey:
       #*****************************
       # convert unit --> mm/s
       #-----------------------
-      totaltimes   = ctrack_para.ret_totaldays(year,year,mon)
+      #totaltimes   = ctrack_para.ret_totaldays(year,year,mon)
+      totaltimes = cmip_para.ret_totaldays_cmip(year,year,mon,sunit,scalendar)
       #
       a2pr_all    = a2pr_all   / totaltimes 
       a2pr_tc     = a2pr_tc    / totaltimes 
@@ -197,7 +203,7 @@ for model, expr in llkey:
       sodir      = sodir_root   + "/%04d%02d"%(year, mon)
       ctrack_func.mk_dir(sodir)
       #
-      sname_all  =  sodir  + "/pr.plain.%s.%s.%s.tc%04d.c%04d.f%04d.%04d.%02d.sa.one" %(model, expr, ens, dist_tc, dist_c, dist_f, year, mon)
+      sname_all  =  sodir  + "/pr.plain.%s.%s.%s.%04d.%02d.sa.one" %(model, expr, ens, year, mon)
       sname_tc   =  sodir  + "/pr.tc.%s.%s.%s.tc%04d.c%04d.f%04d.%04d.%02d.sa.one" %(model, expr, ens, dist_tc, dist_c, dist_f, year, mon)
       sname_c    =  sodir  + "/pr.c.%s.%s.%s.tc%04d.c%04d.f%04d.%04d.%02d.sa.one"  %(model, expr, ens, dist_tc, dist_c, dist_f, year, mon)
       sname_fbc  =  sodir  + "/pr.fbc.%s.%s.%s.tc%04d.c%04d.f%04d.%04d.%02d.sa.one"%(model, expr, ens, dist_tc, dist_c, dist_f, year, mon)
@@ -209,7 +215,7 @@ for model, expr in llkey:
       numname_ot   =  sodir  + "/num.ot.%s.%s.%s.tc%04d.c%04d.f%04d.%04d.%02d.sa.one" %(model, expr, ens, dist_tc, dist_c, dist_f, year, mon)
   
       #-----------------------------
-      a2pr_all.tofile(sname_all)
+      #a2pr_all.tofile(sname_all)
       a2pr_tc.tofile(sname_tc)
       a2pr_c.tofile(sname_c)
       a2pr_fbc.tofile(sname_fbc)

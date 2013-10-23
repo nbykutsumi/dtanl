@@ -1,15 +1,22 @@
 import datetime
 import calendar, netCDF4
+import cmip_para
 from numpy import *
 #***************************************
 #***************************************
-def ret_times(iyear,eyear,lmon, sunit, scalendar, stepday):
+def ret_times(iyear,eyear,lmon, sunit, scalendar, stepday,model=False):
   ldtime  = []
   ltnum   = []
+  if model ==False:
+    ihour = 0
+  else:
+    ihour  = cmip_para.ret_lhour_6hr_cmip(model)[0]
+    if ihour == 6:
+      ihour = 0
   #-------
   for year in range(iyear, eyear+1):
     for mon in lmon:
-      idtime = netCDF4.netcdftime.datetime(year, mon,1,0,0)
+      idtime = netCDF4.netcdftime.datetime(year, mon,1,ihour,0)
       itnum  = netCDF4.date2num(idtime, sunit, scalendar)
       tnum   = itnum - stepday
       while 1==1:

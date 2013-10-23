@@ -9,11 +9,10 @@ from ctrack_fsub import *
 #----------------------------------------------------
 #singleday =True
 singleday = False
-filecheck = True
-iyear = 2001
+iyear = 2007
 eyear = 2010
-lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
-#lseason = [6,7,8,9,10,11,12]
+#lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
+lseason = [8,9,10,11,12]
 #lvtype = ["theta","theta_e"]
 lvtype = ["theta_e"]
 #lseason = [1]
@@ -27,9 +26,9 @@ ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700] #(
 #dist_mask = 1800.  # (km)
 #dist_mask = 2500.  # (km)
 dist_mask = 0.  # (km)
-#lplev    = [925,850.,700., 600., 500.,300.,250.,]
+lplev    = [925,850.,700., 600., 500.,300.,250.,]
 #lplev    = [700., 600., 500.,300.,250.,]
-lplev    = [850]
+#lplev    = [850]
 plev_sfc = 850
 lftype = [1,2,3,4]
 #lftype = [2]

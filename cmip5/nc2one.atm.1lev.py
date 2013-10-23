@@ -20,11 +20,11 @@ else:
   print "*******************"
   print "BBBBBBBBBBBB"
   print "*******************"
-  var   = "ua"
-  model = "HadGEM2-ES"
+  var   = "va"
+  model = "IPSL-CM5B-LR"
   expr  = "historical"
   #ens   = "r1i1p1"
-  ens   = "r2i1p1"
+  ens   = "r1i1p1"
   year  = 1980
   mon   = 1
   dattype = "6hrPlev"

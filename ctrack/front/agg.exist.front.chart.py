@@ -2,10 +2,10 @@ from numpy import *
 import calendar
 import ctrack_func
 #-----------------------------------
-iyear  = 2008
-eyear  = 2008
+iyear  = 2007
+eyear  = 2010
 imon   = 1
-emon   = 1
+emon   = 12
 iday   = 1
 lhour  = [0,6,12,18]
 region = "ASAS"
@@ -44,7 +44,7 @@ for year in range(iyear, eyear+1):
     for day in range(iday, eday+1):
       for hour in lhour:
         idir  = idir_root + "/%04d%02d"%(year, mon)
-        iname = idir + "/front.ASAS.%04d.%02d.%02d.%02d.saone"%(year,mon,day,hour)
+        iname = idir + "/front.ASAS.%04d.%02d.%02d.%02d.sa.one"%(year,mon,day,hour)
         a2in  = fromfile(iname, float32).reshape(ny,nx)
         #------
         a2count_warm = a2count_warm + ma.masked_where(a2in !=1.0, a2one).filled(0.0)

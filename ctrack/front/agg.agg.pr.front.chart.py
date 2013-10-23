@@ -9,10 +9,10 @@ import ctrack_fig
 import chart_para
 import subprocess
 #---------------------------------
-iyear = 2000
+iyear = 2007
 eyear = 2010
-#lseason=["JJA"]
-lseason=["ALL","DJF","MAM","JJA","SON"]
+lseason=["ALL"]
+#lseason=["ALL","DJF","MAM","JJA","SON"]
 #lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
 iday  = 1
 lhour = [0,6,12,18]
@@ -24,6 +24,8 @@ prtype = "GPCP1DD"
 miss   = -9999.0
 miss  = -9999.0
 miss_gpcp = -99999.
+lonlatfontsize = 30
+lonrotation    = 0.0
 lthdist   = [500]
 locdir_root  = "/media/disk2/out/chart/%s/front"%(region)
 dprdir_root  = {}
@@ -32,11 +34,12 @@ dprdir_root["JRA25"]  = "/media/disk2/data/JRA25/sa.one/6hr/PR"
 thorog       = 1500.0  # (m)
 #calcflag = True
 calcflag = False
-meanflag = True
+#meanflag = True
+meanflag = False
 #----------------------------
 a2one    = ones([ny,nx], float32)
 #-- orog --------------------
-orogname = "/media/disk2/data/JRA25/sa.one/const/topo/topo.sa.one"
+orogname = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
 a2orog   = fromfile(orogname, float32).reshape(ny,nx)
 #-- domain ------------------
 domname  = "/media/disk2/out/chart/%s/const/domainmask_saone.%s.2000-2006.bn"%(region,region)
@@ -80,11 +83,11 @@ for thdist in lthdist:
 
         itimes_mon     = ctrack_para.ret_totaldays(year,year, mon) * 4.0
         #-- ptot name --
-        ptotname_warm  = idir + "/rad%04d.warm.saone"%(thdist)
-        ptotname_cold  = idir + "/rad%04d.cold.saone"%(thdist)
-        ptotname_occ   = idir + "/rad%04d.occ.saone"%(thdist)
-        ptotname_stat  = idir + "/rad%04d.stat.saone"%(thdist)
-        ptotname_all   = idir + "/rad%04d.all.saone"%(thdist)
+        ptotname_warm  = idir + "/rad%04d.warm.sa.one"%(thdist)
+        ptotname_cold  = idir + "/rad%04d.cold.sa.one"%(thdist)
+        ptotname_occ   = idir + "/rad%04d.occ.sa.one"%(thdist)
+        ptotname_stat  = idir + "/rad%04d.stat.sa.one"%(thdist)
+        ptotname_all   = idir + "/rad%04d.all.sa.one"%(thdist)
 
         #-- fig: load ptot ---
         a2ptot_warm_temp     = fromfile(ptotname_warm, float32).reshape(ny,nx)
@@ -118,13 +121,13 @@ for thdist in lthdist:
     figdir          = odir + "/pict"
     ctrack_func.mk_dir(figdir)
     #-- fig: frac name ---
-    fracname_warm   = figdir + "/frac.rad%04d.warm.png"%(thdist)
-    fracname_cold   = figdir + "/frac.rad%04d.cold.png"%(thdist)
-    fracname_occ    = figdir + "/frac.rad%04d.occ.png"%(thdist)
-    fracname_stat   = figdir + "/frac.rad%04d.stat.png"%(thdist)
-    fracname_all    = figdir + "/frac.rad%04d.all.png"%(thdist)
+    fracname_warm   = figdir + "/frac.rad%04d.warm.%s.png"%(thdist,season)
+    fracname_cold   = figdir + "/frac.rad%04d.cold.%s.png"%(thdist,season)
+    fracname_occ    = figdir + "/frac.rad%04d.occ.%s.png"%(thdist,season)
+    fracname_stat   = figdir + "/frac.rad%04d.stat.%s.png"%(thdist,season)
+    fracname_all    = figdir + "/frac.rad%04d.all.%s.png"%(thdist,season)
 
-    fracname_cwo    = figdir + "/frac.rad%04d.cwo.png"%(thdist)
+    fracname_cwo    = figdir + "/frac.rad%04d.cwo.%s.png"%(thdist,season)
 
     #-- fig: mask 2nd -
     a2ptot_warm     = ma.masked_where(a2ptotplain==0.0, a2ptot_warm) 
@@ -145,13 +148,13 @@ for thdist in lthdist:
     a2frac_cwo      = (a2ptot_cwo / a2ptotplain).filled(0.0)
     
     #-- name: fractin data
-    fracdatname_warm   = odir + "/frac.rad%04d.warm.saone"%(thdist)
-    fracdatname_cold   = odir + "/frac.rad%04d.cold.saone"%(thdist)
-    fracdatname_occ    = odir + "/frac.rad%04d.occ.saone"%(thdist)
-    fracdatname_stat   = odir + "/frac.rad%04d.stat.saone"%(thdist)
-    fracdatname_all    = odir + "/frac.rad%04d.all.saone"%(thdist)
+    fracdatname_warm   = odir + "/frac.rad%04d.warm.%s.sa.one"%(thdist,season)
+    fracdatname_cold   = odir + "/frac.rad%04d.cold.%s.sa.one"%(thdist,season)
+    fracdatname_occ    = odir + "/frac.rad%04d.occ.%s.sa.one"%(thdist,season)
+    fracdatname_stat   = odir + "/frac.rad%04d.stat.%s.sa.one"%(thdist,season)
+    fracdatname_all    = odir + "/frac.rad%04d.all.%s.sa.one"%(thdist,season)
 
-    fracdatname_cwo    = odir + "/frac.rad%04d.cwo.saone"%(thdist)
+    fracdatname_cwo    = odir + "/frac.rad%04d.cwo.%s.sa.one"%(thdist,season)
     
     #-- write data ----
     a2frac_warm.tofile(fracdatname_warm)
@@ -176,18 +179,18 @@ for thdist in lthdist:
     lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region_draw)
     
     #-- fig: frac draw -
-    ctrack_fig.mk_pict_saone_reg(a2frac_warm, bnd, mycm, fracname_warm, stitle+"warm", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
+    ctrack_fig.mk_pict_saone_reg(a2frac_warm, bnd, mycm, fracname_warm, stitle+"warm", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
     
-    ctrack_fig.mk_pict_saone_reg(a2frac_cold, bnd, mycm, fracname_cold, stitle+"cold", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
+    ctrack_fig.mk_pict_saone_reg(a2frac_cold, bnd, mycm, fracname_cold, stitle+"cold", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
     
-    ctrack_fig.mk_pict_saone_reg(a2frac_occ, bnd, mycm, fracname_occ, stitle+"occ", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
+    ctrack_fig.mk_pict_saone_reg(a2frac_occ, bnd, mycm, fracname_occ, stitle+"occ", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
     
-    ctrack_fig.mk_pict_saone_reg(a2frac_stat, bnd, mycm, fracname_stat, stitle+"stat", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
+    ctrack_fig.mk_pict_saone_reg(a2frac_stat, bnd, mycm, fracname_stat, stitle+"stat", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
     
-    ctrack_fig.mk_pict_saone_reg(a2frac_all, bnd_all, mycm, fracname_all, stitle+"all", cbarname_all, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
+    ctrack_fig.mk_pict_saone_reg(a2frac_all, bnd_all, mycm, fracname_all, stitle+"all", cbarname_all, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
 
 
-    ctrack_fig.mk_pict_saone_reg(a2frac_cwo, bnd, mycm, fracname_cwo, stitle+"cwo", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef)
+    ctrack_fig.mk_pict_saone_reg(a2frac_cwo, bnd, mycm, fracname_cwo, stitle+"cwo", cbarname, miss, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, a2shade=a2shade, coef=coef, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
       
     print fracname_all
 

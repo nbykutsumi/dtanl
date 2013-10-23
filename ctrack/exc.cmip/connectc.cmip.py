@@ -5,16 +5,14 @@ import netCDF4
 import ctrack_para, cmip_para, cmip_func
 import calendar, datetime, os, sys
 ##***************************
-#lexpr  = ["historical"]
-#iyear       = 1979
-#eyear       = 1999
-##-------------------------
-lexpr  = ["rcp85"]
-iyear       = 2080
-eyear       = 2099
-#-------------------------
 
-lmodel = ["MIROC5"]
+lexpr  = ["historical","rcp85"]
+#lexpr  = ["rcp85"]
+dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
+
+#lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel = ["inmcm4","MPI-ESM-MR","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+lmodel = ["IPSL-CM5B-LR","GFDL-CM3"]
 lmon        = range(1,12+1)
 #lmon        = [1]
 nx          = 360
@@ -84,8 +82,10 @@ def read_txtlist(iname):
   aout  = array(lines, float32)
   return aout
 #****************************************************
-for expr, model in [[expr, model] for expr in lexpr for model in lmodel]:
+#for expr, model in [[expr, model] for expr in lexpr for model in lmodel]:
+for model, expr in [[model, expr] for model in lmodel for expr in lexpr]:
   #---------------
+  iyear, eyear     = dyrange[expr]
   ens              = cmip_para.ret_ens(model,expr,"psl")
   sunit, scalendar = cmip_para.ret_unit_calendar(model, expr)
   #****************************************************
@@ -114,12 +114,14 @@ for expr, model in [[expr, model] for expr in lexpr for model in lmodel]:
   #**************************************************
   # Time loop
   #**************************************************
-  a1dtime,a1tnum  = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday)
+  a1dtime,a1tnum  = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday,model=model)
 
   counter = 0
   for dtime, tnum in map(None, a1dtime, a1tnum):
     year,mon,day,hour = dtime.year, dtime.month, dtime.day, dtime.hour
     if (day==1)&(hour==0):print "connectc.py", model, "up",year,mon
+
+    print "connectc.py",model,year,mon,day,hour
     #---------
     # dirs
     #---------

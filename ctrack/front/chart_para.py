@@ -69,11 +69,6 @@ def ret_domain_corner_rect(region):
     urlon = 208.5
     urlat = 70.5
 
-    #lllon = 122.0
-    #lllat = 20.0
-    #urlon = 158.0
-    #urlat = 45.0
-
 
 
   return (lllon, lllat, urlon, urlat)

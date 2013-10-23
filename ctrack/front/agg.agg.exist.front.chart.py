@@ -7,7 +7,7 @@ import ctrack_fig
 import chart_para
 import cf.util
 #------------------------------------------------------
-iyear  = 2000
+iyear  = 2007
 eyear  = 2010
 lseason = ["ALL","DJF","MAM","JJA","SON"]
 ny     = 180
@@ -17,6 +17,8 @@ region = "ASAS"
 
 region_draw = "JPN"
 rad    = 200.0  # (km)
+lonlatfontsize = 27.0
+lonrotation    = 0.0
 #---------------------
 #lllat  = 0.0
 #lllon  = 60.0
@@ -51,7 +53,6 @@ for season in lseason:
   ctrack_func.mk_dir(figdir)
   #
   if rad != "":
-    print "XXXXXXXXXXXXXXXXXXX"
     soname_warm  = odir      + "/freq.rad%04dkm.warm.sa.one"%(rad)
     soname_cold  = odir      + "/freq.rad%04dkm.cold.sa.one"%(rad)
     soname_occ   = odir      + "/freq.rad%04dkm.occ.sa.one"%(rad)
@@ -95,7 +96,6 @@ for season in lseason:
         siname_cold  = idir      + "/count.rad%04dkm.cold.sa.one"%(rad)
         siname_occ   = idir      + "/count.rad%04dkm.occ.sa.one"%(rad)
         siname_stat  = idir      + "/count.rad%04dkm.stat.sa.one"%(rad)
-        print "radradradrad"
       else:
         siname_warm  = idir      + "/count.warm.sa.one"
         siname_cold  = idir      + "/count.cold.sa.one"
@@ -145,7 +145,8 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
+  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
+  print "fontsize",lonlatfontsize
   print figname
   #***************************
   #  figure cold 
@@ -167,7 +168,7 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
+  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
   #***************************
   #  figure occ 
@@ -189,7 +190,7 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
+  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
   #***************************
   #  figure stat 
@@ -216,7 +217,7 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
+  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
   #***************************
   #  figure all 
@@ -240,6 +241,6 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
+  ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
 

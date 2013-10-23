@@ -5,12 +5,16 @@ import matplotlib.pyplot as plt
 import subprocess
 from numpy import *
 #-----------------------------
+#revflag  = True
+revflag  = False
 #lseason = ["ALL","JJA","DJF"]
 lseason = ["ALL"]
 #lseason = [1]
-lvtype  = ["theta","theta_e"]
+#lvtype  = ["theta_e","theta"]
+#lvtype  = ["theta_e"]
+lvtype  = ["theta"]
 lftype  = ["warm","cold","occ","stat"]
-#lftype  = ["warm","cold","stat"]
+#lftype  = ["warm"]
 lplev     = [925., 850.,700., 600., 500., 300., 250.]
 #lplev     = [850.,700., 600., 500., 300., 250.]
 ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700]
@@ -24,8 +28,8 @@ dist_mask= 0. # (km)
 #dist_mask= 500. # (km)
 #dist_mask= 1000. # (km)
 
-iyear   = 2002
-eyear   = 2002
+iyear   = 2007
+eyear   = 2010
 #eyear   = 2001
 nx,ny   = (360,180)
 plev_sfc  = 850.0
@@ -176,38 +180,7 @@ for vtype in lvtype:
         dgrad2thermo[ftype].append(grad2thermo)
   
   
-    ##***********************************************
-    ##** figure precip *******
-    #figplot   = plt.figure()
-    #axplot    = figplot.add_axes([0.2, 0.2, 0.7, 0.7])
-    ##-- linestyle -------
-    #dstyle    = {"warm":"-", "cold": "--", "stat": "-."}  
-  
-    ##--------------------
-    #for ftype in lftype:
-    #  ly      = dpint[ftype]
-    #  lx      = ldist_km
-    #  axplot.plot(lx,ly, color="k", linewidth=2, linestyle=dstyle[ftype])
-    ##-- set axis limit ---
-    #axplot.set_ylim( (0.0, 0.6) )
-    ##-- legend -----------
-    #axplot.legend(lftype)
-    ##-- axis label -------
-    #axplot.set_ylabel("Precipitation intensity (mm/hour)", fontsize=18)
-    #axplot.set_xlabel("Distance from front (km)",fontsize=18)
-  
-    ##-- title ------------
-    #axplot.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(ftype, season, dist_mask, iyear, eyear))
-    ##-- save -------------
-    #pictdir   = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s/pict"%(iyear,eyear,season)
-    #ctrack_func.mk_dir(pictdir)
-    #if window == "no":
-    #  figname   = pictdir + "/plt.dist.pint.maskrad.%04d-%04d.%s.%s.png"%(iyear,eyear,season,region)
-    #elif window in ["in","out"]:
-    #  figname   = pictdir + "/plt.dist.pint.maskrad.%s.%04dkm.%04d-%04d.%s.%s.png"%(window,dist_mask, iyear,eyear,season,region)
-    #figplot.savefig(figname)
-    #print figname
-  
+ 
     #***********************************************
     #** contour theta *******
     for ftype in lftype:
@@ -225,6 +198,10 @@ for vtype in lvtype:
       for i in arange(len(ly)):
         plev    = ly[i]
         a2v[i]  = dthermo[ftype, plev]
+      #--- WARM front reverse --
+      if (ftype == "warm")&(revflag==True):
+        a2v = a2v[:,::-1]
+
       #--- draw contour ----
       #levels    = arange(250,380,2.0)
       levels    = arange(-60,60,2.0)
@@ -244,8 +221,8 @@ for vtype in lvtype:
       plt.xticks(fontsize=18)
       plt.yticks(fontsize=18)
   
-      ##-- title ------------
-      #axcont.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(ftype, season, dist_mask, iyear, eyear))
+      #-- title ------------
+      axcont.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(ftype, season, dist_mask, iyear, eyear))
       #-- save -------------
       pictdir   = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s/pict"%(iyear,eyear,season)
       ctrack_func.mk_dir(pictdir)
@@ -253,6 +230,10 @@ for vtype in lvtype:
         figname   = pictdir + "/cont.dist.%s.maskrad.%04d-%04d.%s.%s.%s.png"%(vtype, iyear,eyear,season,region,ftype)
       elif window in ["in","out"]:
         figname   = pictdir + "/cont.dist.%s.maskrad.%s.%04dkm.%04d-%04d.%s.%s.%s.png"%(vtype, window, dist_mask, iyear,eyear,season,region,ftype)
+
+      if (ftype == "warm")&(revflag==True):
+        figname = figname.split(".png")[0] + ".REV.png"
+
       figcont.savefig(figname)
       print figname
   
@@ -273,11 +254,20 @@ for vtype in lvtype:
     #-- set axis limit ---
     #axplot.set_ylim( (0.0, 0.6) )
     #-- legend -----------
-    axplot.legend(lftype)
+    legend  = axplot.legend(lftype)
+    for label in legend.get_texts():
+      label.set_fontsize(20)
+    for line in legend.get_lines():
+      line.set_linewidth(3.0)
+
     #-- axis label -------
-    axplot.set_ylabel("(K/100km)", fontsize=18)
-    axplot.set_xlabel("Distance from front (km)",fontsize=18)
-  
+    axplot.set_ylabel("(K/100km)", fontsize=20)
+    axplot.set_xlabel("Distance from front (km)",fontsize=20)
+
+    #-- ticks ------------
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+ 
     #-- title ------------
     axplot.set_title( "%s %s season:%s maskrad:%04dkm %04d-%04d"%(vtype, ftype, season, dist_mask, iyear, eyear))
     #-- save -------------
@@ -306,10 +296,20 @@ for vtype in lvtype:
     #-- set axis limit ---
     #axplot.set_ylim( (0.0, 0.6) )
     #-- legend -----------
-    axplot.legend(lftype)
+    legend  =  axplot.legend(lftype)
+    for label in legend.get_texts():
+      label.set_fontsize(20)
+
+    for line in legend.get_lines():
+      line.set_linewidth(3.0)
+
     #-- axis label -------
-    axplot.set_ylabel("(K / 100km /100km)", fontsize=18)
-    axplot.set_xlabel("Distance from front (km)",fontsize=18)
+    axplot.set_ylabel("(K / 100km /100km)", fontsize=20)
+    axplot.set_xlabel("Distance from front (km)",fontsize=20)
+
+    #-- ticks ------------
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
   
     #-- title ------------
     axplot.set_title( "%s %s season:%s maskrad:%04dkm %04d-%04d"%(vtype, ftype, season, dist_mask, iyear, eyear))

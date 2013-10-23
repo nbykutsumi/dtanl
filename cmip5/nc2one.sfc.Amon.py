@@ -18,10 +18,10 @@ else:
   print "BBBBBBBBBBBB"
   print "*******************"
   var   = "ts"
-  model = "MIROC5"
+  model = "NorESM1-M"
   expr  = "historical"
   ens   = "r1i1p1"
-  iyear  = 1979
+  iyear  = 1980
   eyear  = 1999
 
 #--------------
@@ -55,7 +55,7 @@ def a1z_to_a3zyx(a1, ny, nx):
   return a3
 #-----------------------
 def dumpdata(iname, nc):
-  print namedump
+  print "namedump",namedump
   #if not os.access( namedump, os.F_OK):
   ##########
   def a2s(a):
@@ -86,7 +86,7 @@ def dumpdata(iname, nc):
   totext(namelat, slat)
   totext(namelon, slon)
   totext(namedims, sdims)
-  print namedump
+  print "namedump",namedump
 #####################################################
 odir_root ="/media/disk2/data/CMIP5/sa.one.%s.%s/%s"%(model, expr, var)
 odir_dump = odir_root
@@ -97,12 +97,12 @@ odir_dump = odir_root
 llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,iyear,1,1,0,0,eyear,12,31,23,59)
 
 
-print llfileinfo
+print "fileinfo",llfileinfo
 for lfileinfo in llfileinfo:
   #fyear0,fmon0,fday0,fhour0,fmin0,fcmiptime0,fyear1,fmon1,fday1,fhour1,fmin1,fcmiptime1,ncname\
   fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname\
    = lfileinfo 
-  print lfileinfo
+  print "fileinfo",lfileinfo
   #------
   #time0 = datetime.datetime(fyear0,fmon0,fday0,fhour0,fmin0)
   time0 = ftime0
@@ -134,8 +134,11 @@ for lfileinfo in llfileinfo:
   #iname = "%s/%s_%s.nc"%(incdir, ihead, itimerange)
   iname = incdir + "/" + ncname
   #####
-  print os.access(iname, os.F_OK)
-  print "iname=", iname
+  if os.access(iname, os.F_OK):
+    print "fileinfo=", iname
+  else:
+    print "nofile",iname
+    sys.exit()
   nc = Dataset(iname, "r", format="NETCDF")
   #*********
   # ntime

@@ -5,7 +5,7 @@ import ctrack_para, ctrack_func
 lseason = ["ALL"]
 lregion = ["ASAS"]
 lftype  = [1,2,3,4]
-iyear   = 2000
+iyear   = 2007
 eyear   = 2010
 lyear   = range(iyear,eyear+1)
 lmon    = range(1,12+1)
@@ -38,4 +38,29 @@ for region in lregion:
     #
     f = open(oname,"w"); f.write(sout); f.close()
     print oname
+
+#**********************************
+for region in lregion:
+  dmgrids  = {}
+  for ftype in lftype:
+    a1grids   = array([],float32)
+    for year in lyear:
+      for mon in lmon:
+        idir  = idir_root + "/%04d.%02d"%(year,mon)
+        iname = idir + "/frontlen.grids.%04d.%02d.%s.f%s.bn"%(year,mon,region,ftype)
+        a1grids = r_[a1grids, fromfile(iname,float32)]
+    #---------------
+    dmgrids[ftype] = mean(a1grids) 
+  #---------------
+  sout = "ftype,mgrids\n"
+  for ftype in lftype:
+    sout = sout + "%d,%f\n"%(ftype, dmgrids[ftype])
+
+  odir     = odir_root + "/csv"
+  ctrack_func.mk_dir(odir)
+  oname    = odir + "/mean.frontlen.grids.%04d-%04d.%s.csv"%(iyear,eyear,region)
+  #
+  f = open(oname,"w"); f.write(sout); f.close()
+  print oname
+ 
      

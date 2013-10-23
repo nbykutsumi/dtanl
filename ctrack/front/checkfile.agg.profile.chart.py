@@ -7,7 +7,7 @@ filecheck = True
 iyear = 2000
 eyear = 2010
 lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
-#lseason = [6,7,8,9,10,11,12]
+#lseason = [6]
 #lvtype = ["theta","theta_e"]
 lvtype = ["theta_e"]
 #lseason = [1]
@@ -85,7 +85,8 @@ for vtype in lvtype:
             for plev in lplev:
               tname     = tdir          + "/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
               qname     = qdir          + "/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
-            if os.path.exists(tname) == False:
-              print "no file", tname
-            if os.path.exists(qname) == False:
-              print "no file", qname
+
+              if os.path.exists(tname) == False:
+                print "no file", tname
+              if os.path.exists(qname) == False:
+                print "no file", qname

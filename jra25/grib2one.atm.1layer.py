@@ -7,7 +7,7 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2000
+iyear    = 2005
 eyear    = 2010
 #lmon     = [1]
 #lmon     = arange(1,12+1)
@@ -21,8 +21,8 @@ miss_out    = -9999.0
 #lplev       = [850,700,500,300,250]
 #lplev       = [250,300,500,600,700,850,925]
 #lplev       = [300,600,700,925]
-lplev       = [250]
 #lplev       = [250]
+lplev       = [500]
 
 #lvar   = ["HGT"]
 #lvar   = ["TMP"]

@@ -4,7 +4,7 @@ from dtanl_fsub import *
 from ctrack_fsub import *
 from numpy import *
 
-iyear = 2000
+iyear = 2007
 eyear = 2010
 lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
 iday  = 1
@@ -12,7 +12,7 @@ lhour = [0,6,12,18]
 ny,nx = 180,360
 sresol = "anl_p"
 plev   = 850*100.0
-distkm = 100.0
+distkm = 200.0
 lftype = [1,2,3,4]
 #-- region ----------------
 lat_first = -89.5

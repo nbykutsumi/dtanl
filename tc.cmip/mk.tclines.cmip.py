@@ -9,10 +9,11 @@ import tc_para, cmip_para, cmip_func
 #-----------------------------------------
 #singleday = True
 singleday = False
-lmodel   = ["MIROC5"]
+lmodel   = ["CSIRO-Mk3-6-0","HadGEM2-ES","IPSL-CM5A-MR"]
 lexpr    = ["historical"]
 iyear    = 1980
-eyear    = 1999
+#eyear    = 1999
+eyear    = 1980
 #lmon     = [1,2,3,4,5,6,7,8,9,10,11,12]
 season   = "ALL"
 thdura  = 48
@@ -95,10 +96,10 @@ for expr,model in [[expr, model] for expr in lexpr for model in lmodel]:
   #*****************************************
   # Time Loop
   #*****************************************
-  a1dtime,a1tnum  = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday)
+  a1dtime,a1tnum  = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday, model=model)
   for dtime, tnum in map(None, a1dtime, a1tnum):
     year,mon,day,hour = dtime.year, dtime.month, dtime.day, dtime.hour
-    print "tcline",year,mon,day,hour
+    print "tcline",model,year,mon,day,hour
     #-- init --
     #sodir  = sodir_root + "/%04d/%02d"%(year,mon)
     #ctrack_func.mk_dir(sodir)
@@ -193,87 +194,87 @@ for expr,model in [[expr, model] for expr in lexpr for model in lmodel]:
           #
           dtrack[0].append([[year, mon, day, hour],[lat, lon, lat_next, lon_next]])    
 
-#************************
-# for mapping
-nnx        = int( (urlon - lllon)/dlon)
-nny        = int( (urlat - lllat)/dlat)
-a1lon_loc  = linspace(lllon, urlon, nnx)
-a1lat_loc  = linspace(lllat, urlat, nny)
-LONS, LATS = meshgrid( a1lon_loc, a1lat_loc)
-#------------------------
-# Basemap
-#------------------------
-print "Basemap"
-figmap   = plt.figure()
-axmap    = figmap.add_axes([0.1, 0.1, 0.9, 0.7])
-M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
-
-#-- coastline ---------------
-print "coastlines"
-M.drawcoastlines(color="k")
-
-#-- meridians and parallels
-meridians = 10.0
-parallels = 10.0
-M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1], rotation=90)
-M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0])
-#-- title -------------------
-stitle = "CMIP TCobj res=%s %04d-%04d %s %02dh wc:%3.1f\n"%(model, iyear, eyear, season, thdura, thwcore)
-stitle = stitle + "sst:%.0f wind:%d vort:%.1e tplow:%d wpup:%d"%(thsst-273.15, thwind, thrvort, tplev_low*0.01, plev_up*0.01)
-axmap.set_title(stitle) 
-
-#-- draw cyclone tracks ------
-itemp = 1
-for iclass in [0]:
-  if (len(dtrack[iclass]) ==  0.0):
-    continue
-  #-----------
-  for track in dtrack[iclass]:
-    itemp = itemp + 1
-    year = track[0][0]
-    mon  = track[0][1]
-    day  = track[0][2]
-    hour = track[0][3]
-
-    lat1 = track[1][0]
-    lon1 = track[1][1]
-    lat2 = track[1][2]
-    lon2 = track[1][3]
-
-    if iclass == 0:
-      scol = "r"
-
-    #------------------------------------
-    if abs(lon1 - lon2) >= 180.0:
-      #--------------
-      if (lon1 > lon2):
-        lon05_1  = 360.0
-        lon05_2  = 0.0
-        lat05    = lat1 + (lat2 - lat1)/(lon05_1 - lon1 + lon2 - lon05_2)*(lon05_1 - lon1)
-      elif (lon1 < lon2):
-        lon05_1  = 0.0
-        lon05_2  = 360.0
-        lat05    = lat1 + (lat2 - lat1)/(lon05_1 - lon1 + lon2 - lon05_2)*(lon05_1 - lon1)
-      #--------------
-      M.plot( (lon1, lon05_1), (lat1, lat05), linewidth=1, color=scol)
-      M.plot( (lon05_2, lon2), (lat05, lat2), linewidth=1, color=scol)
-      #--------------
-    else:
-      M.plot( (lon1, lon2), (lat1, lat2), linewidth=1, color=scol)
-
-
-#-- save --------------------
-print "save"
-#soname  = sodir + "/tclines.%04d-%04d.%s.%02dh.%3.2f.png"%(iyear, eyear,season, thdura, thwcore)
-soname  = sodir + "/cmip.tclines.%s.%04d-%04d.%s.%02dh.wc%3.2f.sst%d.wind%d.vor%.1e.tplow%d.pup%d.png"%(model, iyear, eyear,season, thdura, thwcore, thsst -273.15, thwind, thrvort, tplev_low*0.01, plev_up*0.01)
-plt.savefig(soname)
-plt.clf()
-print soname
-plt.clf()
-
-#----------------------------
-
-
-
-
-
+  #************************
+  # for mapping
+  nnx        = int( (urlon - lllon)/dlon)
+  nny        = int( (urlat - lllat)/dlat)
+  a1lon_loc  = linspace(lllon, urlon, nnx)
+  a1lat_loc  = linspace(lllat, urlat, nny)
+  LONS, LATS = meshgrid( a1lon_loc, a1lat_loc)
+  #------------------------
+  # Basemap
+  #------------------------
+  print "Basemap"
+  figmap   = plt.figure()
+  axmap    = figmap.add_axes([0.1, 0.1, 0.9, 0.7])
+  M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
+  
+  #-- coastline ---------------
+  print "coastlines"
+  M.drawcoastlines(color="k")
+  
+  #-- meridians and parallels
+  meridians = 10.0
+  parallels = 10.0
+  M.drawmeridians(arange(0.0,360.0, meridians), labels=[0, 0, 0, 1], rotation=90)
+  M.drawparallels(arange(-90.0,90.0, parallels), labels=[1, 0, 0, 0])
+  #-- title -------------------
+  stitle = "CMIP TCobj res=%s %04d-%04d %s %02dh wc:%3.1f\n"%(model, iyear, eyear, season, thdura, thwcore)
+  stitle = stitle + "sst:%.0f wind:%d vort:%.1e tplow:%d wpup:%d"%(thsst-273.15, thwind, thrvort, tplev_low*0.01, plev_up*0.01)
+  axmap.set_title(stitle) 
+  
+  #-- draw cyclone tracks ------
+  itemp = 1
+  for iclass in [0]:
+    if (len(dtrack[iclass]) ==  0.0):
+      continue
+    #-----------
+    for track in dtrack[iclass]:
+      itemp = itemp + 1
+      year = track[0][0]
+      mon  = track[0][1]
+      day  = track[0][2]
+      hour = track[0][3]
+  
+      lat1 = track[1][0]
+      lon1 = track[1][1]
+      lat2 = track[1][2]
+      lon2 = track[1][3]
+  
+      if iclass == 0:
+        scol = "r"
+  
+      #------------------------------------
+      if abs(lon1 - lon2) >= 180.0:
+        #--------------
+        if (lon1 > lon2):
+          lon05_1  = 360.0
+          lon05_2  = 0.0
+          lat05    = lat1 + (lat2 - lat1)/(lon05_1 - lon1 + lon2 - lon05_2)*(lon05_1 - lon1)
+        elif (lon1 < lon2):
+          lon05_1  = 0.0
+          lon05_2  = 360.0
+          lat05    = lat1 + (lat2 - lat1)/(lon05_1 - lon1 + lon2 - lon05_2)*(lon05_1 - lon1)
+        #--------------
+        M.plot( (lon1, lon05_1), (lat1, lat05), linewidth=1, color=scol)
+        M.plot( (lon05_2, lon2), (lat05, lat2), linewidth=1, color=scol)
+        #--------------
+      else:
+        M.plot( (lon1, lon2), (lat1, lat2), linewidth=1, color=scol)
+  
+  
+  #-- save --------------------
+  print "save"
+  #soname  = sodir + "/tclines.%04d-%04d.%s.%02dh.%3.2f.png"%(iyear, eyear,season, thdura, thwcore)
+  soname  = sodir + "/cmip.tclines.%s.%04d-%04d.%s.%02dh.wc%3.2f.sst%d.wind%d.vor%.1e.tplow%d.pup%d.png"%(model, iyear, eyear,season, thdura, thwcore, thsst -273.15, thwind, thrvort, tplev_low*0.01, plev_up*0.01)
+  plt.savefig(soname)
+  plt.clf()
+  print soname
+  plt.clf()
+  
+  #----------------------------
+  
+  
+  
+  
+  

@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from cf.plot import *
 #####################################################
-def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0):
+def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0, lonlatfontsize=10.0, lonrotation=90):
   #-- prep ----------------
   plt.clf()
   dlat    = 1.0
@@ -29,7 +29,12 @@ def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=F
   #------------------------
   print "Basemap"
   figmap   = plt.figure()
-  axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
+  #-------
+  if lonlatfontsize >=20.0:
+    axmap    = figmap.add_axes([0.15, 0.0, 0.8, 1.0])
+  else:
+    axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
+  #-------
   M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
 
   #-- transform -----------
@@ -74,10 +79,10 @@ def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=F
 
   #-- meridians and parallels
   parallels = arange(-90.,90,10.)
-  M.drawparallels(parallels,labels=[1,0,0,0],fontsize=10)
+  M.drawparallels(parallels,labels=[1,0,0,0],fontsize=lonlatfontsize)
 
   meridians = arange(0.,360.,10.)
-  M.drawmeridians(meridians,labels=[0,0,0,1],fontsize=10,rotation=90)
+  M.drawmeridians(meridians,labels=[0,0,0,1],fontsize=lonlatfontsize,rotation=lonrotation)
 
   #-- title -------------------
   if stitle != False:
@@ -106,7 +111,7 @@ def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=F
     figcbar.savefig(cbarname)
 
 #********************************************************
-def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0):
+def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0, lonlatfontsize=10.0, lonrotation=90):
   #-- prep ----------------
   plt.clf()
   dlat    = 1.0
@@ -130,7 +135,12 @@ def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", sti
   #------------------------
   print "Basemap"
   figmap   = plt.figure()
-  axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
+  #----------
+  if lonlatfontsize >=20.0:
+    axmap    = figmap.add_axes([0.15, 0.0, 0.8, 1.0])
+  else:
+    axmap    = figmap.add_axes([0.1, 0.0, 0.8, 1.0])
+  #----------
   M        = Basemap( resolution="l", llcrnrlat=lllat, llcrnrlon=lllon, urcrnrlat=urlat, urcrnrlon=urlon, ax=axmap)
 
   #-- transform -----------
@@ -176,10 +186,10 @@ def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", sti
 
   #-- meridians and parallels
   parallels = arange(-90.,90,10.)
-  M.drawparallels(parallels,labels=[1,0,0,0],fontsize=10)
+  M.drawparallels(parallels,labels=[1,0,0,0],fontsize=lonlatfontsize)
 
   meridians = arange(0.,360.,10.)
-  M.drawmeridians(meridians,labels=[0,0,0,1],fontsize=10,rotation=90)
+  M.drawmeridians(meridians,labels=[0,0,0,1],fontsize=lonlatfontsize,rotation=lonrotation)
 
   #-- title -------------------
   if stitle != False:

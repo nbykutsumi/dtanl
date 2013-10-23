@@ -5,15 +5,17 @@ import matplotlib.pyplot as plt
 import subprocess
 from numpy import *
 #-----------------------------
-iyear   = 2001
-eyear   = 2009
+iyear   = 2007
+#eyear   = 2010
+eyear   = 2010
 #lseason = ["ALL","JJA","DJF"]
-#lseason = ["ALL"]
-lseason = [1]
+lseason = ["ALL"]
+#lseason = [1]
 lprtype = ["GSMaP"] 
 #lprtype = ["GPCP1DD"] 
 #lprtype = ["GSMaP","JRA25.C","JRA25.L","JRA25"] 
 lvtype  = ["theta_e"]
+#lvtype  = ["theta"]
 lftype  = ["warm","cold","occ","stat"]
 #lftype  = ["warm","cold","stat"]
 ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700]
@@ -107,13 +109,23 @@ for prtype in lprtype:
       #axplot.set_ylim( (0.0, 0.6) )
       axplot.set_ylim( (0.0, 3.0) )
       #-- legend -----------
-      axplot.legend(lftype)
+      legend = axplot.legend(lftype)
+      for label in legend.get_texts():
+        label.set_fontsize(20)
+
+      for line in legend.get_lines():
+        line.set_linewidth(3.0)
+
       #-- axis label -------
-      axplot.set_ylabel("Precipitation intensity (mm/hour)", fontsize=18)
-      axplot.set_xlabel("Distance from front (km)",fontsize=18)
+      axplot.set_ylabel("Precipitation intensity (mm/hour)", fontsize=20)
+      axplot.set_xlabel("Distance from front (km)",fontsize=20)
+
+      #-- ticks ------------
+      plt.xticks(fontsize=18)
+      plt.yticks(fontsize=18)
     
       #-- title ------------
-      axplot.set_title( "%s %s season:%s maskrad:%04dkm %04d-%04d"%(prtype, ftype, season, dist_mask, iyear, eyear))
+      axplot.set_title( "%s season:%s maskrad:%04dkm %04d-%04d"%(prtype, season, dist_mask, iyear, eyear))
       #-- save -------------
       pictdir   = "/media/disk2/out/chart/ASAS/front/agg/%04d-%04d/%s/pict"%(iyear,eyear,season)
       ctrack_func.mk_dir(pictdir)

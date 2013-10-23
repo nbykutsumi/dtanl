@@ -1,0 +1,4 @@
+  File "./nc2one.wrap.py", line 6
+    -------
+          ^
+SyntaxError: invalid syntax

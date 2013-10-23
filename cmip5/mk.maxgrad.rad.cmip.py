@@ -11,7 +11,7 @@ if len(sys.argv) >1:
   lexpr  = [expr]
 #------------------
 else:
-  lmodel = ["MIROC5"]
+  lmodel=["inmcm4","MPI-ESM-MR","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
   lexpr  = ["historical","rcp85"] 
 #------------------
 
@@ -26,7 +26,7 @@ thgrad2= 0.05  # (m/km/km)
 
 lloop = [[model,expr] for model in lmodel for expr in lexpr]
 for model, expr in lloop:
-  
+  print model,expr  
   idir  = "/media/disk2/data/CMIP5/sa.one.%s.%s/orog"%(model,expr)
   odir  = idir
   iname = idir + "/orog.%s.sa.one"%(model)
@@ -59,6 +59,7 @@ for model, expr in lloop:
   figname    = datname[:-7] + ".png"
   cbarname   = datname[:-7] + ".cbar.png"
   ctrack_fig.mk_pict_saone_reg(a2maxgrad2, soname=figname, cbarname=cbarname)
+  print figname  
    
   
   #--- figure: max orog ----
@@ -67,6 +68,7 @@ for model, expr in lloop:
   figname    = datname[:-7] + ".png"
   cbarname   = datname[:-7] + ".cbar.png"
   ctrack_fig.mk_pict_saone_reg(a2maxorog, soname=figname, cbarname=cbarname)
+  print figname  
     
   #--- figure: max grad  ----
   datname    = maxgradname

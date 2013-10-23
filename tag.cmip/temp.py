@@ -1,13 +1,28 @@
 from numpy import *
+
+year   = 1980
+mon    = 1
+
 ny,nx  = 180,360
 
-idir= "/media/disk2/out/CMIP5/sa.one.MIROC5.rcp85/6hr/tagpr/c48h.tc48h/2080-2081.ALL.decomp"
+tagdir   = "/media/disk2/out/CMIP5/sa.one.MIROC5.historical/6hr/tagpr/c48h.tc48h/%04d%02d"%(year,mon)
+plaindir = "/media/disk2/data/CMIP5/sa.one.MIROC5.historical/pr/%04d%02d"%(year,mon)
 
-dprname1 = idir + "/dpr.c.MIROC5.rcp85.r1i1p1.tc1000.c1000.f0500.2080-2081.ALL.sa.one"
-dprname2 = idir + "/dpr2.c.MIROC5.rcp85.r1i1p1.tc1000.c1000.f0500.2080-2081.ALL.sa.one"
+plainname = plaindir + "/pr.r1i1p1.%04d%02d.sa.one"%(year,mon)
+cname     = tagdir   + "/pr.c.MIROC5.historical.r1i1p1.tc1000.c1000.f0500.%04d.%02d.sa.one"%(year,mon)
+tcname     = tagdir   + "/pr.tc.MIROC5.historical.r1i1p1.tc1000.c1000.f0500.%04d.%02d.sa.one"%(year,mon)
+fname     = tagdir   + "/pr.fbc.MIROC5.historical.r1i1p1.tc1000.c1000.f0500.%04d.%02d.sa.one"%(year,mon)
+otname     = tagdir   + "/pr.ot.MIROC5.historical.r1i1p1.tc1000.c1000.f0500.%04d.%02d.sa.one"%(year,mon)
 
-a2dpr1  = fromfile(dprname1,float32).reshape(ny,nx)
-a2dpr2  = fromfile(dprname2,float32).reshape(ny,nx)
 
-print a2dpr1
-print a2dpr2
+a2plain  = fromfile(plainname,float32).reshape(ny,nx)
+a2c  = fromfile(cname,float32).reshape(ny,nx)
+a2tc  = fromfile(tcname,float32).reshape(ny,nx)
+a2f  = fromfile(fname,float32).reshape(ny,nx)
+a2ot  = fromfile(otname,float32).reshape(ny,nx)
+
+a2sum = a2c + a2tc + a2f + a2ot
+print a2plain.sum()
+print (a2c + a2tc + a2f + a2ot).sum()
+
+
