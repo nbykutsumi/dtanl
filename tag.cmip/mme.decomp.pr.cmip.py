@@ -5,7 +5,8 @@ import ctrack_fig
 import math
 
 #lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel = ["MIROC5","MIROC5","MIROC5","MIROC5"]
+#lmodel = ["MIROC5","MIROC5","MIROC5","MIROC5"]
+lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","GFDL-CM3"]
 nmodel = len(lmodel)
 lexprfut= ["rcp85"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
@@ -21,19 +22,41 @@ nx,ny   =[360,180]
 thdura_c    = 48
 thdura_tc   = thdura_c
 miss        = -9999.0
-thres       = 4
+thprob      = 0.05
 
 #lstype   = ["cf","c","tc","fbc","ot"]
 #ldectype = ["dNI","NdI","dtot"]
 
-lstype   = ["cf"]
-ldectype = ["dNI"]
+lstype   = ["cf","tc","ot"]
+ldectype = ["dNI", "NdI", "dtot"]
 
 #---------------------
 #region    = "GLOB"
-region    = "JPN"
+region    = "GLOB"
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
+print "lllon,lllat,urlon,urlat",lllon, lllat, urlon, urlat
 #**********************************************
+# FUNCTIONS
+#****************
+def combi(n,r):
+  return math.factorial(n) / ( math.factorial(r)* math.factorial(n-r) )
+
+#****************
+def pcombi(n,r):
+  p = 0.0
+  for i in range(r,n+1):
+    p = p + combi(n,i)
+  #----
+  p = p / (2.0**n)
+  return p
+#*****************
+def mk_a2prob(a2n, a2r):
+  a1n  = a2n.flatten()
+  a1r  = a2r.flatten()
+  a2prob = array( map( pcombi, a1n, a1r), float32).reshape(ny,nx)
+  return a2prob
+
+#*****************
 #**********************************************
 llkey = [[exprfut,season] for exprfut in lexprfut for season in lseason]
 for exprfut, season in llkey:
@@ -67,14 +90,19 @@ for exprfut, season in llkey:
       a2dpr   = fromfile(iname, float32).reshape(ny,nx)
       a2mdpr  = a2mdpr + a2dpr
 
-      a2nposi = a2nposi + ma.masked_where( a2dpr >0.0, a2one).filled(0.0)
-      a2nnega = a2nnega + ma.masked_where( a2dpr <=0.0, a2one).filled(0.0)
+      a2nposi = a2nposi + ma.masked_where( a2dpr <=0.0, a2one).filled(0.0)
+      a2nnega = a2nnega + ma.masked_where( a2dpr >=0.0, a2one).filled(0.0)
     #--------------
     totaltimes= totaltimes / len(lmodel)
     a2mdpr    = a2mdpr / len(lmodel)
 
-    a2nsame   = ma.maximum(a2nposi, a2nnega)     
-    a2shade   = ma.masked_where(a2nsame< thres, ones([ny,nx],float32)).filled(miss)    
+    #--- probability --
+    a2nsame   = array( ma.maximum(a2nposi, a2nnega), int32)
+    a2nmodel  = array(ones([ny,nx], float32) * len(lmodel), int32)
+    a2prob    = mk_a2prob( a2nmodel, a2nsame)
+    #------------------
+
+    a2shade   = ma.masked_where(a2prob > thprob, ones([ny,nx],float32)).filled(miss)    
     #--------------
     odir      = "/media/disk2/out/CMIP5/sa.one.MME.%s/6hr/tagpr/c%02dh.tc%02dh/%04d-%04d.%s.decomp"\
                 %(exprfut,thdura_c,thdura_tc,iyear,eyear,season)
@@ -94,7 +122,7 @@ for exprfut, season in llkey:
     # Figure
     #--------------
     stitle   = "dif mm/month MME %s %s season:%s %04d-%04d %s %s"%(exprfut,ens,season,iyear, eyear,stype,dectype)
-    stitle   = stitle + "\n" + "%d out of %d models"%(nmodel, thres)
+    #stitle   = stitle + "\n" + "%d out of %d models"%(nmodel, thres)
     mycm     = "RdBu"
 
     datdir     = odir
@@ -103,9 +131,11 @@ for exprfut, season in llkey:
     if region == "GLOB":
       bnd        = [-40,-20,-10,-5,-2,2,5,10,20,40]
       figdir     = datdir
+      dotstep    = 5
     if region == "JPN":
       bnd        = [-40,-20,-10,-5,-2,2,5,10,20,40]
       figdir     = datdir + ".JPN"
+      dotstep    = 1
       ctrack_func.mk_dir(figdir)
     #----
 
@@ -119,8 +149,9 @@ for exprfut, season in llkey:
     ##--- test ---
     #a2shade = ones([ny,nx],float32)
     ##------------
-    
-    ctrack_fig.mk_pict_saone_reg_symm(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
+    ctrack_fig.mk_pict_saone_reg_symm_dotshade(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, dotcolor="k",dotstep=dotstep )
+    #ctrack_fig.mk_pict_saone_reg_symm(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
+
     print figname
 
 
