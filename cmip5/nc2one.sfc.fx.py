@@ -1,5 +1,6 @@
 from netCDF4 import *
 from numpy import *
+from myfunc_fsub import *
 import os,sys
 import cf
 import calendar
@@ -13,17 +14,16 @@ if len(sys.argv) >1:
 else:
   #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
   #lmodel = ["MIROC5","MRI-CGCM3","HadGEM2-ES"]
-  lmodel = ["MIROC5"]
+  lmodel = ["MRI-CGCM3"]
   lexpr = ["historical","rcp85"]
   #expr = "rcp85" #historical, rcp85
-
 #--------------------
 #lvar = ["sftlf"]
 lvar = ["sftlf","orog"] # orog
 tstp = "fx"
 ny_one  = 180
 nx_one  = 360
-
+miss    = -9999.0
 #####################################################
 #####################################################
 dlat_one = 1.0
@@ -110,7 +110,24 @@ for model in lmodel:
       a1lat_org = nc.variables["lat"][:]
       a1lon_org = nc.variables["lon"][:]
       data = nc.variables["%s"%(var)][:]
-      data_one  = cf.biIntp(a1lat_org, a1lon_org, data, a1lat_one, a1lon_one)[0]
+      #*** Regrid ********
+      upflag  = cmip_para.ret_upflag(model)
+      if upflag == True:
+        pergrid = 0 # per area (e.g. mm/m2), others (e.g, K, kg/kg, mm/s)
+        #pergrid = 1 # per grid (e.g. km2/grid, population/grid)
+        missflag  = 1
+        ny_org    = len(a1lat_org)
+        nx_org    = len(a1lon_org)
+        data_one  = myfunc_fsub.upscale( data.T\
+                        , a1lon_org, a1lat_org\
+                        , a1lon_one, a1lat_one\
+                        , pergrid, missflag, miss\
+                        , nx_org, ny_org\
+                        , nx_one, ny_one).T
+      #-- downscale: Interpolation ----  
+      elif upflag == False:
+        data_one  = cf.biIntp(a1lat_org, a1lon_org, data, a1lat_one, a1lon_one)[0]
+      #-------
       data_one  = array(data_one, float32)
 
       ########

@@ -200,8 +200,64 @@ for prtype in lprtype:
                 a2tagtmpwn_ot  = a2zero
                 #------------------ 
 
+                #****************************
+                # weighting considering occurence frequency
+                #------------------
+                #for htag_inc in lhtag_inc:
+                #  dhour       = datetime.timedelta(hours = htag_inc)
+                #  target      = now + dhour
+                #  year_target = target.year
+                #  mon_target  = target.month
+                #  day_target  = target.day
+                #  hour_target = target.hour
+                #  #-- tag name ---
+                #  tagdir   = tagdir_root + "/%04d%02d"%(year_target, mon_target)
+                #  tagname  = tagdir + "/tag.%stc%04d.c%04d.f%04d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc, dist_c, dist_f, year_target,mon_target,day_target,hour_target)
+        
+                #  if not os.access(tagname, os.F_OK):
+                #    print "AAAA"
+                #    print "nofile", tagname
+                #    if (year==iyear)&(mon==1)&(day==1):
+                #      continue
+                #    elif (year==eyear)&(mon==12)&(day==eday):
+                #      continue
+                #  #-- load -------
+                #  a2tag         = fromfile(tagname, int32).reshape(180,360)
+                #  lout          = tag_fsub.solve_tag_4type(a2tag.T)
+                #  a2tagtmp_tc   = a2tagtmp_tc   + array(lout[0].T, float32)
+                #  a2tagtmp_c    = a2tagtmp_c    + array(lout[1].T, float32)
+                #  a2tagtmp_fbc  = a2tagtmp_fbc  + array(lout[2].T, float32)
+                #  a2tagtmp_nbc  = a2tagtmp_nbc  + array(lout[3].T, float32)
+                #  a2tagtmp_ot   = a2tagtmp_ot   + ma.masked_where((a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc) !=0, a2one).filled(0.0)
+                #  # wn: with no n-baroclinic
+                #  a2tagtmpwn_ot = a2tagtmpwn_ot + ma.masked_where(a2tag !=0, a2one).filled(0.0)
 
-                #------------------ 
+                ###
+                #a2tagtmp_tc    = a2tagtmp_tc   / len(lhtag_inc)
+                #a2tagtmp_c     = a2tagtmp_c    / len(lhtag_inc)
+                #a2tagtmp_fbc   = a2tagtmp_fbc  / len(lhtag_inc)
+                #a2tagtmp_nbc   = a2tagtmp_nbc  / len(lhtag_inc)
+                #a2tagtmp_ot    = a2tagtmp_ot   / len(lhtag_inc)
+                #a2tagtmpwn_ot  = a2tagtmpwn_ot / len(lhtag_inc)
+                ###
+                #a2tag_all   = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_ot
+                #a2tagwn_all = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_nbc + a2tagtmpwn_ot
+                ###
+                #a2tag_tc    = a2tagtmp_tc  / a2tag_all
+                #a2tag_c     = a2tagtmp_c   / a2tag_all
+                #a2tag_fbc   = a2tagtmp_fbc / a2tag_all
+                #a2tag_ot    = a2tagtmp_ot  / a2tag_all
+                ## wn: with non-baroclinic
+                #a2tagwn_tc  = a2tagtmp_tc    / a2tagwn_all
+                #a2tagwn_c   = a2tagtmp_c     / a2tagwn_all
+                #a2tagwn_fbc = a2tagtmp_fbc   / a2tagwn_all
+                #a2tagwn_nbc = a2tagtmp_nbc   / a2tagwn_all
+                #a2tagwn_ot  = a2tagtmpwn_ot  / a2tagwn_all
+
+
+                #****************************
+                # simple share
+                #------------------
                 for htag_inc in lhtag_inc:
                   dhour       = datetime.timedelta(hours = htag_inc)
                   target      = now + dhour
@@ -212,7 +268,7 @@ for prtype in lprtype:
                   #-- tag name ---
                   tagdir   = tagdir_root + "/%04d%02d"%(year_target, mon_target)
                   tagname  = tagdir + "/tag.%stc%04d.c%04d.f%04d.%04d.%02d.%02d.%02d.sa.one"%(tctype, dist_tc, dist_c, dist_f, year_target,mon_target,day_target,hour_target)
-        
+
                   if not os.access(tagname, os.F_OK):
                     print "AAAA"
                     print "nofile", tagname
@@ -227,17 +283,15 @@ for prtype in lprtype:
                   a2tagtmp_c    = a2tagtmp_c    + array(lout[1].T, float32)
                   a2tagtmp_fbc  = a2tagtmp_fbc  + array(lout[2].T, float32)
                   a2tagtmp_nbc  = a2tagtmp_nbc  + array(lout[3].T, float32)
-                  a2tagtmp_ot   = a2tagtmp_ot   + ma.masked_where((a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc) !=0, a2one).filled(0.0)
-                  # wn: with no n-baroclinic
-                  a2tagtmpwn_ot = a2tagtmpwn_ot + ma.masked_where(a2tag !=0, a2one).filled(0.0)
+                  # wn: with non-baroclinic
 
                 ##
-                a2tagtmp_tc    = a2tagtmp_tc   / len(lhtag_inc)
-                a2tagtmp_c     = a2tagtmp_c    / len(lhtag_inc)
-                a2tagtmp_fbc   = a2tagtmp_fbc  / len(lhtag_inc)
-                a2tagtmp_nbc   = a2tagtmp_nbc  / len(lhtag_inc)
-                a2tagtmp_ot    = a2tagtmp_ot   / len(lhtag_inc)
-                a2tagtmpwn_ot  = a2tagtmpwn_ot / len(lhtag_inc)
+                a2tagtmp_tc    = ma.masked_greater(a2tagtmp_tc,  0.0).filled(1.0)
+                a2tagtmp_c     = ma.masked_greater(a2tagtmp_c,   0.0).filled(1.0)
+                a2tagtmp_fbc   = ma.masked_greater(a2tagtmp_fbc, 0.0).filled(1.0)
+                a2tagtmp_nbc   = ma.masked_greater(a2tagtmp_nbc, 0.0).filled(1.0)
+                a2tagtmp_ot    = ma.masked_greater( (a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc)==0.0, a2zero).filled(1.0)
+                a2tagtmpwn_ot  = ma.masked_greater( (a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_nbc)==0.0, a2zero).filled(1.0)
                 ##
                 a2tag_all   = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_ot
                 a2tagwn_all = a2tagtmp_tc + a2tagtmp_c + a2tagtmp_fbc + a2tagtmp_nbc + a2tagtmpwn_ot
@@ -245,13 +299,14 @@ for prtype in lprtype:
                 a2tag_tc    = a2tagtmp_tc  / a2tag_all
                 a2tag_c     = a2tagtmp_c   / a2tag_all
                 a2tag_fbc   = a2tagtmp_fbc / a2tag_all
-                a2tag_ot    = a2tagtmp_ot  / a2tag_all
+                a2tag_ot    = a2tagtmp_ot
                 # wn: with non-baroclinic
                 a2tagwn_tc  = a2tagtmp_tc    / a2tagwn_all
                 a2tagwn_c   = a2tagtmp_c     / a2tagwn_all
                 a2tagwn_fbc = a2tagtmp_fbc   / a2tagwn_all
                 a2tagwn_nbc = a2tagtmp_nbc   / a2tagwn_all
-                a2tagwn_ot  = a2tagtmpwn_ot  / a2tagwn_all
+                a2tagwn_ot  = a2tagtmpwn_ot
+
 
                 ##*****************************
                 # weight precipitation

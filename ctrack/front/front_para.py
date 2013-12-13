@@ -1,7 +1,7 @@
 from numpy import *
 #------------------------------------------------
 def ret_thfmasktq(sresol="anl_p"):
-  if sresol =="anl_p":
+  if sresol in ["anl_p","MRI-CGCM3"]:
     thfmask1t = 0.3
     thfmask2t = 1.0
     thfmask1q = 2.0*1.0e-4

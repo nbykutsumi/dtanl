@@ -295,7 +295,7 @@ def mk_pict_saone_reg_symm_dotshade(a2in, bnd=False, mycm="jet", soname="./temp.
       if a2shade_trans[iiy,iix] != miss:
         lon_plot = 0.5   + 1.0 * (xdom_saone_first + iix)
         lat_plot = -89.5 + 1.0 * (ydom_saone_first + iiy)
-        im       = M.plot(lon_plot, lat_plot, ".", markersize=5, color=dotcolor)
+        im       = M.plot(lon_plot, lat_plot, ".", markersize=4, color=dotcolor)
 
   #-- coastline ---------------
     

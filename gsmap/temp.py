@@ -1,8 +1,8 @@
 from numpy import *
 import gsmap_func
-year = 2004
-mon  = 4
-day  = 3
-hour = 0
-a  =  gsmap_func.timeave_gsmap_backward_org(year,mon,day,hour, 1)
-print a
+
+a1,b1 = gsmap_func.timeave_gsmap_backward_nmiss_saone(2001,1,20,0,6,relaxflag=False)
+a2,b2 = gsmap_func.timeave_gsmap_backward_nmiss_saone(2001,1,20,0,6,relaxflag=True)
+
+print a1
+print a2

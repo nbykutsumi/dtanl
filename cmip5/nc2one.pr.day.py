@@ -1,9 +1,10 @@
 from netCDF4 import *
 from numpy import *
+from myfunc_fsub import *
 import os,sys
 import calendar, datetime
 import cf
-import cmip_func
+import cmip_func, cmip_para
 #####################################################
 #####################################################
 if len(sys.argv) > 1:
@@ -19,7 +20,7 @@ else:
   print "BBBBBBBBBBBB"
   print "*******************"
   var   = "pr"
-  model = "MIROC5"
+  model = "MRI-CGCM3"
   expr  = "historical"
   ens   = "r1i1p1"
   year  = 1995
@@ -216,7 +217,25 @@ for lfileinfo in llfileinfo:
     #- Interpolation --
     a1lat_org = nc.variables["lat"][:]
     a1lon_org = nc.variables["lon"][:]
-    data_one  = cf.biIntp(a1lat_org, a1lon_org, data, a1lat_one, a1lon_one, miss=miss)[0]
+    upflag  = cmip_para.ret_upflag(model)
+    #-- upscale ------
+    if upflag == True:
+      pergrid = 0 # per area (e.g. mm/m2), others (e.g, K, kg/kg, mm/s)
+      #pergrid = 1 # per grid (e.g. km2/grid, population/grid)
+      missflag  = 1
+      ny_org    = len(a1lat_org)
+      nx_org    = len(a1lon_org)
+      data_one  = myfunc_fsub.upscale( data.T\
+                      , a1lon_org, a1lat_org\
+                      , a1lon_one, a1lat_one\
+                      , pergrid, missflag, miss\
+                      , nx_org, ny_org\
+                      , nx_one, ny_one).T
+
+    #-- downscale: Interpolation --
+    elif upflag == False:
+      data_one  = cf.biIntp(a1lat_org, a1lon_org, data, a1lat_one, a1lon_one, miss=miss)[0]
+    #-------
     data_one  = array(data_one, float32)
    
     ########

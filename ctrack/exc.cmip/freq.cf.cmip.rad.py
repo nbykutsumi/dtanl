@@ -2,15 +2,16 @@ from ctrack_fsub import *
 from numpy import *
 import matplotlib.pyplot as plt
 import calendar
-import ctrack_para, tc_para, cmip_para
-import ctrack_func, tc_func, cmip_func
+import ctrack_para, tc_para, cmip_para, front_para
+import ctrack_func, tc_func, cmip_func, front_func
 import ctrack_fig
 import sys, os
 #--------------------------------------
-#sresol = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3","MRI-CGCM3"]
-#lmodel  = ["MIROC5"]
+#lmodel = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
 #lmodel = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","GFDL-CM3"]
-lmodel  = ["MRI-CGCM3","IPSL-CM5B-LR"]
+lmodel = ["IPSL-CM5A-MR","CNRM-CM5"]
+#lmodel = ["MIROC5","inmcm4","MPI-ESM-MR"]
+#lmodel = ["CSIRO-Mk3-6-0","NorESM1-M","GFDL-CM3"]
 #lexpr   = ["historical","rcp85"]
 lexpr   = ["historical"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
@@ -20,8 +21,7 @@ calcflag   = True
 ny      = 180
 nx      = 360
 
-#countrad  = 300.0 # [km]
-countrad  = 1.0 # [km]
+countrad  = 300.0 # [km]
 stepday   = 0.25
 miss_int= -9999
 miss    = -9999.0
@@ -60,7 +60,9 @@ for expr, model in llkey:
   #----------------------------
   #-- orog ------------------------
   orogname   = "/media/disk2/data/CMIP5/sa.one.%s.%s/orog/orog.%s.sa.one"%(model,expr,model)
-
+  gradname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxgrad.0200km.sa.one"
+  a2orog     = fromfile(orogname, float32).reshape(ny,nx)
+  a2gradorog = fromfile(gradname, float32).reshape(ny,nx)
   #--- ExC -------
   dpgradrange  = ctrack_para.ret_dpgradrange(model)
   thpgrad      = dpgradrange[0][0]
@@ -71,6 +73,15 @@ for expr, model in llkey:
   thwind   = tc_para.ret_thwind()
   thrvort  = tc_para.ret_thrvort(model)
   thwcore  = tc_para.ret_thwcore(model)
+
+  #--- Front -----
+  thfmask1t, thfmask2t, thfmask1q, thfmask2q   = front_para.ret_thfmasktq(model)
+  print 1
+  plev     = 850*100.0 # (Pa)
+  print 2
+  thorog     = ctrack_para.ret_thorog()
+  thgradorog = ctrack_para.ret_thgradorog()
+  thgrids    = front_para.ret_thgrids()
 
   #-----------------------------------------
   a1dtime,a1tnum  = cmip_func.ret_times(iyear,eyear,lmon,sunit,scalendar,stepday,model=model) 
@@ -87,6 +98,7 @@ for expr, model in llkey:
           continue
         #----------------------------
         stime  = "%04d%02d%02d%02d00"%(yeart,mont,dayt,hourt)
+        print "freq.cf",model,"rad",countrad,yeart,mont,dayt,hourt
 
         psldir_root  = "/media/disk2/data/CMIP5/sa.one.%s.%s/psl"%(model,expr)
         pgraddir_root= "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/pgrad"%(model,expr)
@@ -100,7 +112,6 @@ for expr, model in llkey:
         pgradname    = pgraddir   + "/pgrad.%s.%s.sa.one"%(ens,stime)
         lifename     = lifedir    + "/life.%s.%s.sa.one"%(ens,stime)
         
-        a2psl        = fromfile(pslname,   float32).reshape(ny, nx)
         a2pgrad      = fromfile(pgradname, float32).reshape(ny, nx)
         a2life       = fromfile(lifename,  int32).reshape(ny, nx)
 
@@ -119,18 +130,42 @@ for expr, model in llkey:
         a2c         = ma.masked_where(a2dura<thdura_c, a2pgrad)
         a2c         = ma.masked_less(a2c, pgradmin).filled(miss)
         #a2c         = ctrack_fsub.mk_8gridsmask_saone(a2c.T, miss).T
-        a2c         = ctrack_fsub.mk_territory_saone(a2c.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T  
+        a2c_terr    = ctrack_fsub.mk_territory_saone(a2c.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T  
+        a2c_terr    = ma.masked_where(a2c_terr==miss, a2one).filled(0.0)
         #------------------------
-        a2count_tmp = ma.masked_where(a2c==miss, a2one).filled(0.0)
+        #************************
+        # for objective front locator
+        #-----------------------------
+        # Name
+        frontdir_t_root = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/front.t"%(model,expr)
+        frontdir_t  = frontdir_t_root + "/%04d%02d"%(year, mon)
+        #
+        fronttname1 = frontdir_t + "/front.t.M1.%04d.%02d.%02d.%02d.sa.one"%(yeart, mont, dayt, hourt)
+        fronttname2 = frontdir_t + "/front.t.M2.%04d.%02d.%02d.%02d.sa.one"%(yeart, mont, dayt, hourt)
+
+        #-- front.t ---
+        a2fbc1      = fromfile(fronttname1, float32).reshape(ny,nx)
+        a2fbc2      = fromfile(fronttname2, float32).reshape(ny,nx)
+        a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss )
+
+        #-- count baloclinic front loc --
+        a2loc = a2fbc
+        a2fbc_terr  = ctrack_fsub.mk_territory_saone( a2loc.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T
+        a2fbc_terr  = ma.masked_where(a2fbc_terr ==miss, a2one).filled(0.0)
+
+        #*************************
+        # count ExC + Front
+        #-------------------------
+        a2count_tmp = ma.masked_greater(a2c_terr + a2fbc_terr, 0.0).filled(1.0)
         a2count     = a2count + a2count_tmp
 
       #****************************
       # write
       #-----------------
-      odir_root= "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/exc/freq.%02dh"%(model,expr,thdura_c)
+      odir_root= "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/cf/freq.%02dh.M1_%s.M2_%s"%(model,expr,thdura_c,thfmask1t,thfmask2t)
       odir     = odir_root + "/%04d"%(year)
 
-      oname    = odir + "/num.exc.%s.%s.rad%04dkm.%04d.%02d.sa.one"%(model, ens, countrad, year,mon)
+      oname    = odir + "/num.cf.%s.%s.rad%04dkm.%04d.%02d.sa.one"%(model, ens, countrad, year,mon)
       #--- write -----
       ctrack_func.mk_dir(odir)
       a2count.tofile(oname)

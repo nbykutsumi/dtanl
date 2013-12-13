@@ -3,8 +3,11 @@ from ctrack_fsub import *
 import ctrack_func
 import ctrack_para
 
-iyear = 1997
-eyear = 2012
+#iyear = 1997
+#eyear = 2012
+iyear = 1980
+eyear = 1996
+
 lhour = [0,6,12,18]
 
 ny    = 180

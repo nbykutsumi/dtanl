@@ -6,10 +6,10 @@ import ctrack_func
 import tc_para
 #-----------------------------------------
 singleday = True
-iyear  = 2004
-eyear  = 2004
-lmon   = [8]
-iday   = 17
+iyear  = 1980
+eyear  = 1999
+lmon   = range(1,12+1)
+iday   = 1
 lhour  = [0,6,12,18]
 miss   = -9999.0
 

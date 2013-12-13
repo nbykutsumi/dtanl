@@ -11,8 +11,10 @@ singleday= False
 calcflag = True
 #calcflag = False
 
-iyear = 1997
-eyear = 2012
+#iyear = 1996
+#eyear = 1999
+iyear = 1980
+eyear = 1999
 lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon  = [1]
 iday  = 1
@@ -24,10 +26,12 @@ nx    = 360
 miss  = -9999.0
 thdist   = front_para.ret_thdistkm()  # (km)
 #
-countrad = 300  # (km) for frequency count
+#countrad = 300  # (km) for frequency count
+countrad = 1.0  # (km) for frequency count
 #
 sresol   = "anl_p"
-lftype = ["t","q"]
+#lftype = ["t","q"]
+lftype = ["t"]
 #-- para for objective locator -------------
 plev     = 850*100.0 # (Pa)
 thorog     = ctrack_para.ret_thorog()

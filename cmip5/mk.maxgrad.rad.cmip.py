@@ -11,7 +11,8 @@ if len(sys.argv) >1:
   lexpr  = [expr]
 #------------------
 else:
-  lmodel=["inmcm4","MPI-ESM-MR","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+  #lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3","MRI-CGCM3"]
+  lmodel=["MRI-CGCM3"]
   lexpr  = ["historical","rcp85"] 
 #------------------
 

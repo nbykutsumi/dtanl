@@ -1,14 +1,19 @@
 from numpy import *
+from myfunc_fsub import *
 import calendar
 import ctrack_fig, ctrack_para, ctrack_func
 
-iyear  = 1997
-eyear  = 2012
-lseason = ["ALL","MJJASO","NDJFMA"]
-lseason = ["ALL","MJJASO","NDJFMA"]
+#iyear  = 1997
+#eyear  = 2012
+iyear  = 1980
+eyear  = 1999
+lyear  = range(iyear,eyear+1)
 
-countrad  = 300.0 # [km]
-#countrad  = 1.0 # [km]
+#lseason = ["ALL","MJJASO","NDJFMA"]
+lseason = ["ALL"]
+#lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
+#countrad  = 300.0 # [km]
+countrad  = 1.0 # [km]
 ny,nx   = 180,360
 miss    = -9999.0
 #-------------------------
@@ -29,7 +34,7 @@ for season in lseason:
   #--- init ---
   a2num = zeros([ny,nx],float32)
   #------------
-  for year in range(iyear,eyear+1):
+  for year in lyear:
     for mon in lmon:
       idir   = "/media/disk2/out/ibtracs/sa.one/%04d/%02d"%(year,mon)
       iname  = idir + "/num.ibtracs_all.v03r04.rad%04dkm.sa.one"%(countrad)
@@ -46,21 +51,32 @@ for season in lseason:
   
   #-- figure ---
   #---------------------------
-  bnd        = [0.01,0.25,0.5,1.0,2.0,4.0,8.0]
-  #bnd        = [0.25,0.5,1.0,2.0,4.0,8.0]
-  #bnd         = [5,10,15,20,25,30,35,40,45]
-  #bnd        = [10,20,30,40,50,60,70,80]
+  if len(lmon) ==12:
+    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+    #bnd        = [0.25,0.5,1.0,2.0,4.0]
+  elif len(lmon) ==3:
+    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+  elif len(lmon) ==1:
+    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+  #---------------------------
   figdir     = odir
   figname    = oname[:-7] + ".png"
   cbarname   = oname[:-7] + ".cbar.png"
   #----------
-  stitle   = "freq. rad%04dkm bst.TC season:%s %04d-%04d"%(countrad, season,iyear, eyear)
+  stitle   = "freq (days/season) bst.TC season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
   datname  = oname
   a2figdat = fromfile(datname, float32).reshape(ny,nx)
-
   #-------------------------------
-  a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+  totaldays = ctrack_para.ret_totaldays(iyear,eyear,season)
+  #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+  a2figdat = ma.masked_equal(a2freq, miss).filled(0.0) * totaldays / len(lyear)  # [days per season]
+  #---- filter -----
+  a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
+  #-----------------
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
   print figname 
 

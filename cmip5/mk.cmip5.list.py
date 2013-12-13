@@ -5,7 +5,7 @@ from netCDF4 import *
 #lmodel    = ["MRI-CGCM3","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
 #lmodel    = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
 #lmodel    = ["CNRM-CM5","inmcm4","MPI-ESM-MR","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel    = ["MRI-CGCM3"]
+lmodel    = ["IPSL-CM5B-LR"]
 lexpr     = ["historical","rcp85"]
 #lexpr     = ["rcp85"]
 

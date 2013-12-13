@@ -1,15 +1,19 @@
 from numpy import *
+from myfunc_fsub import *
 import ctrack_fig
 import ctrack_para, tc_para
 import ctrack_func
-
 #--------------------------
 lmodel  = ["org"]
-iyear   = 1997
-eyear   = 2012
+#iyear   = 1997
+#eyear   = 2011
+iyear   = 1980
+eyear   = 1999
 lyear   = range(iyear,eyear+1)
 lseason = ["ALL"]
-countrad = 300.0 # (km)
+#lseason = range(1,12+1)
+#countrad = 300.0 # (km)
+countrad = 1.0 # (km)
 ny,nx   = 180,360
 miss    = -9999.0
 
@@ -59,21 +63,31 @@ for model,season in llkey:
   #*******************************
   # Figure
   #-----------
-  bnd        = [0.01,0.25,0.5,1.0,2.0,4.0,8.0]
-  #bnd        = [0.25,0.5,1.0,2.0,4.0,8.0]
-  #bnd         = [5,10,15,20,25,30,35,40,45]
-  #bnd        = [10,20,30,40,50,60,70,80]
+  if len(lmon) ==12:
+    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+    #bnd        = [0.25,0.5,1.0,2.0,4.0]
+  elif len(lmon) ==3:
+    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+  elif len(lmon) ==1:
+    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+  #-----------
   figdir     = sodir
   figname    = soname[:-7] + ".png"
   cbarname   = soname[:-7] + ".cbar.png"
   #----------
-  stitle   = "freq. JRA25.%s.TC season:%s %04d-%04d"%(model,season,iyear, eyear)
+  stitle   = "freq.(days/season) JRA25.%s.TC season:%s %04d-%04d"%(model,season,iyear, eyear)
   mycm     = "Spectral"
   datname  = soname
   a2figdat = fromfile(datname, float32).reshape(ny,nx)
-
   #-------------------------------
-  a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+  totaldays = ctrack_para.ret_totaldays(iyear,eyear,season)
+  #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+  a2figdat = ma.masked_equal(a2freq, miss).filled(0.0) * totaldays / len(lyear)  # [days per season]
+  a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
+
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
   print figname
   

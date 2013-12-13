@@ -9,7 +9,8 @@ import front_para
 from dtanl_fsub import *
 from ctrack_fsub import *
 #-----------------------
-lyear  = range(1996,2012+1)
+#lyear  = range(1996,2012+1)
+lyear  = range(1980,1995+1)
 #lyear  = [1997] 
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon   = [4]
@@ -104,23 +105,23 @@ for year in lyear:
     sodir_t_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/front.t"%(sresol)
     sodir_t         = sodir_t_root + "/%04d%02d"%(year, mon)
 
-    sodir_q_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/front.q"%(sresol)
-    sodir_q         = sodir_q_root + "/%04d%02d"%(year, mon)
+    #sodir_q_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/front.q"%(sresol)
+    #sodir_q         = sodir_q_root + "/%04d%02d"%(year, mon)
 
     ctrack_func.mk_dir(sodir_t)
-    ctrack_func.mk_dir(sodir_q)
+    #ctrack_func.mk_dir(sodir_q)
     #-----------
     eday  = calendar.monthrange(year,mon)[1]
     #-----------
     for day in range(iday, eday+1):
       for hour in lhour:
         stime   = "%04d%02d%02d%02d"%(year, mon, day, hour)
-        #******************************************************
-        #-- q: mixing ratio --------------------------
-        qname    = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/anl_p.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
-        a2q      = fromfile(qname, float32).reshape(ny,nx)
-        a2gradq  = dtanl_fsub.mk_a2grad_abs_saone(a2q.T).T
-        a2gradq  = a2gradq *1000.0*100.0   # [kg/kg (100km)-1]
+        ##******************************************************
+        ##-- q: mixing ratio --------------------------
+        #qname    = "/media/disk2/data/JRA25/sa.one.%s/6hr/SPFH/%04d%02d/anl_p.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
+        #a2q      = fromfile(qname, float32).reshape(ny,nx)
+        #a2gradq  = dtanl_fsub.mk_a2grad_abs_saone(a2q.T).T
+        #a2gradq  = a2gradq *1000.0*100.0   # [kg/kg (100km)-1]
         
         #-- t: ---------------------------------------
         tname    = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP/%04d%02d/anl_p.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,year, mon, plev*0.01, year, mon, day, hour)
@@ -145,22 +146,22 @@ for year in lyear:
         a2loct1 = a2loc1
         a2loct2 = a2loc2
         #------
-        ##**********************************************
-        # front locator: q
-        a2thermo             = a2q # K
-        a2gradthermo         = a2gradq  # K/100km
-        sonameq1    = sodir_q + "/front.q.M1.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
-        sonameq2    = sodir_q + "/front.q.M2.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+        ###**********************************************
+        ## front locator: q
+        #a2thermo             = a2q # K
+        #a2gradthermo         = a2gradq  # K/100km
+        #sonameq1    = sodir_q + "/front.q.M1.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+        #sonameq2    = sodir_q + "/front.q.M2.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
        
-        a2loc1,a2loc2   = mk_front_loc_contour(a2thermo, a2gradthermo)
-        #------
-        a2loc1.tofile(sonameq1)
-        a2loc2.tofile(sonameq2)
-        print sonameq1
-        print sonameq2
-        a2locq1 = a2loc1
-        a2locq2 = a2loc2
-        #------
+        #a2loc1,a2loc2   = mk_front_loc_contour(a2thermo, a2gradthermo)
+        ##------
+        #a2loc1.tofile(sonameq1)
+        #a2loc2.tofile(sonameq2)
+        #print sonameq1
+        #print sonameq2
+        #a2locq1 = a2loc1
+        #a2locq2 = a2loc2
+        ##------
 
 
 

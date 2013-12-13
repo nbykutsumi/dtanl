@@ -3,7 +3,7 @@ import subprocess, cmip_para
 #iyear = 1980
 #eyear = 1999
 #lexpr     = ["historical"]
-#-------
+##-------
 iyear = 2080
 eyear = 2099
 lexpr     = ["rcp85"]
@@ -11,7 +11,6 @@ lexpr     = ["rcp85"]
 
 #lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3","MRI-CGCM3"]
 lmodel=["MRI-CGCM3"]
-
 #*********************************
 # fx
 #---------------------------------
@@ -104,18 +103,18 @@ for expr, model in lloop:
   subprocess.call(scmd, shell=True)
 
 
-##*********************************
-## pr: 3hr
-##---------------------------------
-#lyear = range(iyear,eyear+1)
-#lmon  = range(1,12+1)
-#
-#lloop = [[expr, model, year, mon] for expr in lexpr for model in lmodel for year in lyear for mon in lmon]
-#for expr, model, year, mon in lloop:
-#  ens = cmip_para.ret_ens(model,expr,"pr")
-#  #
-#  progname = "./nc2one.pr.3hr.py"
-#  scmd     = "python %s %s %s %s %s %s"%(progname,model,expr,ens,year,mon)
-#  subprocess.call(scmd, shell=True)
+####*********************************
+#### pr: 3hr
+####---------------------------------
+###lyear = range(iyear,eyear+1)
+###lmon  = range(1,12+1)
+###
+###lloop = [[expr, model, year, mon] for expr in lexpr for model in lmodel for year in lyear for mon in lmon]
+###for expr, model, year, mon in lloop:
+###  ens = cmip_para.ret_ens(model,expr,"pr")
+###  #
+###  progname = "./nc2one.pr.3hr.py"
+###  scmd     = "python %s %s %s %s %s %s"%(progname,model,expr,ens,year,mon)
+###  subprocess.call(scmd, shell=True)
 
 

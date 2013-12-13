@@ -7,12 +7,10 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2005
-eyear    = 2010
+iyear    = 1980
+eyear    = 1995
 #lmon     = [1]
-#lmon     = arange(1,12+1)
-#lmon     = [6,7,8,9,10,11,12]
-lmon     = [7,6]
+lmon     = arange(1,12+1)
 tstp     = "6hr"
 singleday   = False  # True or False
 miss_out    = -9999.0
@@ -22,11 +20,11 @@ miss_out    = -9999.0
 #lplev       = [250,300,500,600,700,850,925]
 #lplev       = [300,600,700,925]
 #lplev       = [250]
-lplev       = [500]
+lplev       = [850,500,250]
 
 #lvar   = ["HGT"]
-#lvar   = ["TMP"]
-lvar   = ["SPFH"]
+lvar   = ["TMP","UGRD","VGRD"]
+#lvar   = ["SPFH"]
 #lvar   = ["UGRD", "VGRD"]
 #lvar    = ["VGRD"]
 dtype  = {}

@@ -7,8 +7,8 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2000
-eyear    = 2007
+iyear    = 1987
+eyear    = 1995
 #lmon     = [1]
 lmon     = arange(1,12+1)
 tstp     = "6hr"

@@ -157,6 +157,10 @@ def ret_filedate(var, dattype, model, expr, ens, iyear, imon, iday, ihour, imin,
 
     #----
     lout_tmp    = [fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname]
+
+    print listname
+    print line
+
     #-- check -----
     if ((var_tmp == var)&(dattype_tmp==dattype)&(model_tmp==model)&(expr_tmp==expr)&(ens_tmp==ens)):
       #

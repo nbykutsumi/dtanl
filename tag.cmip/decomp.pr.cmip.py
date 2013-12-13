@@ -6,13 +6,13 @@ import ctrack_fig
 calcflag= True
 #calcflag= False
 #lmodel  = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel  = ["GFDL-CM3"]
+lmodel  = ["MIROC5"]
 exprhis = "historical"
 exprfut = "rcp85"
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
 #dyrange = {"historical":[1980,1981], "rcp85":[2080,2081]}
 lseason = ["ALL"]
-
+lmethodtype= ["I-I","I"]
 dist_tc = 1000 #[km]
 dist_c  = 1000 #[km]
 dist_f  = 500 #[km]
@@ -30,14 +30,14 @@ region    = "GLOB"
 #region    = "JPN"
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 #**********************************************
-llkey = [[season,model] for season in lseason for model in lmodel]
+llkey = [[season,model,methodtype] for season in lseason for model in lmodel for methodtype in lmethodtype]
 
 if calcflag == False:
   print "********************"
   print "Calcflag = False"
   print "********************"
 if calcflag == True:
-  for season, model in llkey:
+  for season, model, methodtype in llkey:
   
     da2num  = {}
     da2pint = {}
@@ -152,11 +152,20 @@ if calcflag == True:
   
       a2dnum   = da2num [exprfut, stype] - da2num [exprhis, stype]  # day/season
       a2dpint  = (da2pint[exprfut, stype] - da2pint[exprhis, stype])*60*60*24.0 # mm/day
-  
+
       #- day/season * mm/day = mm/season
-      a2NdI    = a2num  * a2dpint
-      a2dNI    = a2dnum * a2pint
-      a2dNdI   = a2dnum * a2dpint
+      if methodtype =="I":
+        a2NdI    = a2num  * a2dpint
+        a2dNI    = a2dnum * a2pint
+        a2dNdI   = a2dnum * a2dpint
+
+      if methodtype =="I-I":
+        a2pint_ot= da2pint[exprhis,"ot"]*60*60*24.0 #mm/day
+        a2NdI    = a2num  * a2dpint
+        a2dNI    = a2dnum * (a2pint - a2pint_ot)
+        a2dNdI   = a2dnum * a2dpint
+
+
   
       #- mm/season --> mm/sec
       a2NdI    = a2NdI  / totaltimes / (60*60*24.)
@@ -167,7 +176,12 @@ if calcflag == True:
   
       #*** names *************
       odir_root  = idir_root
-      odir       = odir_root + "/%04d-%04d.%s.decomp"%(iyear,eyear,season)
+      #------ 
+      if methodtype == "I":
+        odir       = odir_root + "/%04d-%04d.%s.decomp.I"%(iyear,eyear,season)
+      elif methodtype =="I-I":
+        odir       = odir_root + "/%04d-%04d.%s.decomp.I-I"%(iyear,eyear,season)
+      #------ 
       ctrack_func.mk_dir(odir)
     
       NdIname    = odir + "/dpr.%s.NdI.%s.%s.%s.tc%04d.c%04d.f%04d.%04d-%04d.%s.sa.one"%(stype,model,expr,ens,dist_tc, dist_c, dist_f, iyear, eyear, season)
@@ -189,7 +203,7 @@ if calcflag == True:
 #***********************
 # Figure
 #-------------------
-for season, model in llkey:
+for season, model, methodtype in llkey:
   ens   = cmip_para.ret_ens(model, exprfut, "psl")
   sunit, scalendar = cmip_para.ret_unit_calendar(model,exprfut)
   iyear,eyear  = dyrange[exprfut]
@@ -214,7 +228,10 @@ for season, model in llkey:
       #----------
       mycm     = "RdBu"
       datdir_root= "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/tagpr/c%02dh.tc%02dh"%(model,exprfut,thdura_c,thdura_tc)
-      datdir     = datdir_root + "/%04d-%04d.%s.decomp"%(iyear,eyear,season)
+      if methodtype =="I":
+        datdir     = datdir_root + "/%04d-%04d.%s.decomp.I"%(iyear,eyear,season)
+      elif methodtype =="I-I":
+        datdir     = datdir_root + "/%04d-%04d.%s.decomp.I-I"%(iyear,eyear,season)
 
       #----
       if region == "GLOB":
@@ -226,6 +243,7 @@ for season, model in llkey:
       #----
 
       stitle   = "mm/month %s %s %s season:%s %s %s %04d-%04d"%(model,exprfut,ens,season,stype, dectype, iyear, eyear)
+      stitle   = "%s\n"%(methodtype) + stitle
       datname    = datdir + "/dpr.%s.%s.%s.%s.%s.tc%04d.c%04d.f%04d.%04d-%04d.%s.sa.one"%(stype, dectype, model,exprfut,ens,dist_tc, dist_c, dist_f, iyear, eyear, season)
 
 

@@ -11,10 +11,10 @@ singleday = False
 #lmodel=["IPSL-CM5A-MR"]
 #lmodel=["CSIRO-Mk3-6-0","CNRM-CM5"]
 #lmodel=["NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel=["GFDL-CM3"]
+lmodel=["MRI-CGCM3","IPSL-CM5B-LR"]
 ##------------------
-lexpr  = ["historical","rcp85"]
-#lexpr  = ["rcp85"]
+#lexpr  = ["historical","rcp85"]
+lexpr  = ["historical"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
 #------------------
 

@@ -1,6 +1,6 @@
 #-----------------------------------
 # IMPORTANT !!
-# This script makes "Backward 3-hour mean" precipitation
+# This script makes "Backward mean" precipitation
 #-----------------------------------
 from numpy import *
 import calendar
@@ -11,11 +11,13 @@ import subprocess
 import cf
 import cf.util
 
-iyear      = 2009
+iyear      = 2001
 eyear      = 2010
 imon       = 1
 emon       = 12
 
+#relaxflag  = False
+relaxflag  = True
 miss_out   = -9999.0
 sunit      = "kg m-2 s-1"
 #--- latlon fin -------
@@ -62,14 +64,17 @@ def mk_unittxt(odir):
 #-- readme -------------------
 def mk_readme(odir):
   sout   = "mean precipitation rate (%s)\n"%(sunit)
-  sout   = sout + "backward 3 hours mean"
+  sout   = sout + "backward mean"
   f      = open( odir + "/readme.txt","w")
   f.write(sout)
   f.close()
 #-----------------------------
 
 idir_root  = "/home/utsumi/mnt/iis.data2/GSMaP/standard/v5/hourly"
-odir_root  = "/media/disk2/data/GSMaP/sa.one/1hr/ptot"
+if   relaxflag == False:
+  odir_root  = "/media/disk2/data/GSMaP/sa.one/1hr/ptot"
+elif relaxflag == True:
+  odir_root  = "/media/disk2/data/GSMaP/sa.one.R/1hr/ptot"
 
 for year in range(iyear , eyear+1):
   for mon in range(imon, emon+1):
@@ -92,7 +97,6 @@ for year in range(iyear , eyear+1):
         a2dat_fin    =  zeros([ny_fin, nx_fin], float32)
         #a2dat_one    =  zeros([ny_one, nx_one], float32)
 
-        da2dat_org   = {}
         validtimes   = 0
         #-- check first step -----
         if ((year==iyear)&(mon==imon)&(day==1)&(hour0==0)):
@@ -146,20 +150,22 @@ for year in range(iyear , eyear+1):
           #da2dat_org[hour_before] = ma.masked_less(a2dat_org, 0.0)
 
           #*******************************************
-          # for compressed files
+          # for uncompressed files
           #----------------------
           orgname     = idir + "/gsmap_mvk.%04d%02d%02d.%02d00.v5.222.1.dat"%(year_before, mon_before, day_before, hour_before)
           #-- check file --
           if not os.access(orgname, os.F_OK):
             print "no file", orgname
+            sys.exit()
             continue
           #----------------
           validtimes  = validtimes + 1
           a2dat_org   = fromfile(orgname, float32).reshape(ny_fin, nx_fin)
-          da2dat_org[hour_before] = ma.masked_less(a2dat_org, 0.0)
-
           #--- Accumulate --------
-          a2dat_fin  = a2dat_fin + ma.masked_less(a2dat_org, 0.0)
+          if relaxflag   == False:
+            a2dat_fin  = a2dat_fin + ma.masked_less(a2dat_org, 0.0)
+          elif relaxflag == True:
+            a2dat_fin  = a2dat_fin + ma.masked_less(a2dat_org, 0.0).filled(0.0)
         #--- Interpolation -----
         if type(a2dat_fin) ==  ma.core.MaskedArray:
           a2dat_fin    = a2dat_fin.filled(miss_out)

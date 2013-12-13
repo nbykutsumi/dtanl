@@ -11,7 +11,7 @@ import os, sys
 lmodel = ["org"]
 tstp        = "6hr"
 hinc        = 6
-iyear       = 1996
+iyear       = 1980
 eyear       = 2012
 imon        = 1
 emon        = 12

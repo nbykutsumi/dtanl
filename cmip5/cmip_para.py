@@ -1,8 +1,17 @@
 import sys, netCDF4
+#***************************************
+def ret_upflag(model):
+  #---
+  if model in ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]:
+    upflag = False
+  elif model in ["MRI-CGCM3"]:
+    upflag = True
+  #---
+  return upflag
 
 #***************************************
 def ret_lhour_6hr_cmip(model):
-  if model in ["HadGEM2-ES","MIROC5","inmcm4","MPI-ESM-MR","NorESM1-M"]:
+  if model in ["HadGEM2-ES","MIROC5","inmcm4","MPI-ESM-MR","NorESM1-M","MRI-CGCM3"]:
     lhour = [0,6,12,18]
   elif model in ["CNRM-CM5","CSIRO-Mk3-6-0","GFDL-CM3"]:
     lhour = [6,12,18,0]
@@ -79,6 +88,7 @@ def ret_unit_calendar(model, expr):
     elif model == "NorESM1-M":sunit,scalendar = "days since 1850-01-01 00:00:00", "noleap"
     elif model == "IPSL-CM5B-LR":sunit,scalendar = "days since 1850-01-01 00:00:00", "noleap"
     elif model == "GFDL-CM3":sunit,scalendar = "days since 1860-01-01 00:00:00", "noleap"
+    elif model == "MRI-CGCM3":sunit,scalendar = "days since 1850-01-01", "standard"
   #*************************
   elif expr in ["rcp85","rcp45"]:    
     if model == "HadGEM2-ES":sunit,scalendar = "days since 1859-12-01", "360_day"
@@ -91,6 +101,7 @@ def ret_unit_calendar(model, expr):
     elif model == "NorESM1-M":sunit,scalendar = "days since 2006-01-01 00:00:00", "noleap"
     elif model == "IPSL-CM5B-LR":sunit,scalendar = "days since 2006-01-01 00:00:00", "noleap"
     elif model == "GFDL-CM3":sunit,scalendar = "days since 2006-01-01 00:00:00", "noleap"
+    elif model == "MRI-CGCM3":sunit,scalendar = "days since 1850-01-01", "standard"
   #*************************
   #
   return sunit, scalendar

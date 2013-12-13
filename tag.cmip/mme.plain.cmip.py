@@ -18,7 +18,8 @@ miss      = -9999.0
 ny,nx   = 180,360
 thprob  = 0.05
 #---------------------
-region    = "GLOB"
+#region    = "GLOB"
+region    = "JPN"
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 #---------------------
 #**********************************************
@@ -43,6 +44,8 @@ def mk_a2prob(a2n, a2r):
   return a2prob
 
 #*****************
+print pcombi(9,8)
+print pcombi(9,7)
 #***************************************
 #**********************************************
 llkey = [[exprfut,season] for exprfut in lexprfut for season in lseason]

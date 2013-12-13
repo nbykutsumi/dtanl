@@ -1,35 +1,29 @@
 from ctrack_fsub import *
-from myfunc_fsub import *
 from numpy import *
 import matplotlib.pyplot as plt
 import calendar
 import ctrack_para, ctrack_func, ctrack_fig
+import front_para, front_func
 import tc_para, tc_func
 import sys, os
 #--------------------------------------
-#sum3x3flag = False
-sum3x3flag = True
-#filterflag = False
-filterflag = True
 #sresol = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lsresol = ["org"]
+lsresol = ["anl_p"]
 calcflag   = False
 #calcflag   = True
 bstflag_tc = "bst"
-#iyear   = 1996
-#eyear   = 1999
-iyear   = 1980
-eyear   = 1999
-lyear   = range(iyear,eyear+1)
+#iyear   = 1997
+#eyear   = 1997
+iyear   = 1997
+eyear   = 2011
 #lseason = ["ALL","DJF","JJA"]
 lseason = ["ALL"]
-#lseason = range(1,12+1)
+#lseason = [1]
 iday    = 1
 ny      = 180
 nx      = 360
 
-#countrad  = 300.0 # [km]
-countrad  = 1.0 # [km]
+countrad  = 300.0 # [km]
 miss_int= -9999
 miss    = -9999.0
 # local region ------
@@ -50,11 +44,11 @@ thdura_c  = 48
 thdura_tc = thdura_c
 thorog  = ctrack_para.ret_thorog()
 
-#--------------
-a2filter = array(\
-           [[1,2,1]\
-           ,[2,4,2]\
-           ,[1,2,1]], float32)
+#-- para for objective locator -------------
+plev     = 850*100.0 # (Pa)
+thorog     = ctrack_para.ret_thorog()
+thgradorog = ctrack_para.ret_thgradorog()
+thgrids    = front_para.ret_thgrids()
 
 #--------------
 a2one   = ones([ny,nx],float32)
@@ -78,11 +72,18 @@ for season in lseason:
 
   a2shade  = ma.masked_where(a2orog >thorog, a2orog).filled(miss)
 
+  thgradorog = ctrack_para.ret_thgradorog()
+  thgrids    = front_para.ret_thgrids()
+  orogname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
+  gradname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxgrad.0200km.sa.one"
+  a2orog     = fromfile(orogname, float32).reshape(ny,nx)
+  a2gradorog = fromfile(gradname, float32).reshape(ny,nx)
 
-  #----------------------------
+  #------------------------------------
   for sresol in lsresol:
+    thfmask1t, thfmask2t, thfmask1q, thfmask2q   = front_para.ret_thfmasktq(sresol)
     if bstflag_tc == "bst":
-      odir     = "/media/disk2/out/JRA25/sa.one.%s/6hr/exc/c%02dh.bsttc/%04d-%04d.%s"%(sresol,thdura_c,iyear,eyear,season)
+      odir     = "/media/disk2/out/JRA25/sa.one.%s/6hr/cf/c%02dh.bsttc.M1_%04.2f.M2_%03.1f/%04d-%04d.%s"%(sresol,thdura_c,thfmask1t,thfmask2t,iyear,eyear,season)
 
     oname    = odir + "/freq.exc.rad%04dkm.%stc.%04d-%04d.%s.sa.one"%(countrad, bstflag_tc,iyear,eyear,season)
     #*******************
@@ -106,13 +107,10 @@ for season in lseason:
       for year in range(iyear, eyear+1):
         # TC ----
         dbstxy   = tc_func.ret_ibtracs_dpyxy_saone(year)
-
+        #--------
         for mon in lmon:
           ##############
           eday = calendar.monthrange(year,mon)[1]
-          #- init monthly --
-          a2count_mon  = zeros([ny,nx],float32)
-          #--------
           for day in range(iday, eday+1):
             print "freq",sresol,year, mon, day
             for hour in [0, 6, 12, 18]:
@@ -144,62 +142,64 @@ for season in lseason:
               a2c         = ma.masked_where(a2dura<thdura_c, a2pgrad)
               a2c         = ma.masked_less(a2c, pgradmin).filled(miss)
               #a2c         = ctrack_fsub.mk_8gridsmask_saone(a2c.T, miss).T
-              a2c         = ctrack_fsub.mk_territory_saone(a2c.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T  
+              a2c_terr    = ctrack_fsub.mk_territory_saone(a2c.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T  
+              a2c_terr    = ma.masked_where(a2c_terr==miss, a2one).filled(0.0)
+
+              #************************
+              # Front 
               #------------------------
-              a2count_tmp = ma.masked_where(a2c==miss, a2one).filled(0.0)
+              frontdir_t_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/front.t"%(sresol)
+              frontdir_q_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/front.q"%(sresol)
+              frontdir_t  = frontdir_t_root   + "/%04d%02d"%(year, mon)
+              frontdir_q  = frontdir_q_root   + "/%04d%02d"%(year, mon)
+              #
+    
+              fronttname1 = frontdir_t + "/front.t.M1.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+              fronttname2 = frontdir_t + "/front.t.M2.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+              frontqname1 = frontdir_q + "/front.q.M1.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+              frontqname2 = frontdir_q + "/front.q.M2.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
+    
+              #-- front.t ---
+              a2fbc1      = fromfile(fronttname1, float32).reshape(ny,nx)
+              a2fbc2      = fromfile(fronttname2, float32).reshape(ny,nx)
+              a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss )
+              a2fbc       = ma.masked_where(a2fbc ==miss, a2one).filled(miss)
+              a2fbc_terr  = ctrack_fsub.mk_territory_saone( a2fbc.T, countrad*1000.0, miss, -89.5, 1.0, 1.0).T
+              a2fbc_terr  = ma.masked_equal(a2fbc_terr, miss).filled(0.0)
+              #------------------------
+              a2count_tmp = ma.masked_greater(a2c_terr + a2fbc_terr, 0.0).filled(1.0)
               a2count     = a2count + a2count_tmp
-              a2count_mon = a2count_mon + a2count_tmp
               #------------------------
-          #-- write monthly data ------
-          odir_mon = "/media/disk2/out/JRA25/sa.one.%s/6hr/exc/c%02dh.bsttc/%04d"%(sresol, thdura_c, year)
-          ctrack_func.mk_dir(odir_mon)
-          oname_mon= odir_mon + "/num.exc.rad%04dkm.%stc.%04d.%02d.sa.one"%(countrad, bstflag_tc,year,mon)
-          a2count_mon.tofile(oname_mon)
+
       #-----------
       numtot = ctrack_para.ret_totaldays(iyear,eyear,season)*4
       a2freq = a2count / numtot
       #--- write -----
       ctrack_func.mk_dir(odir)
       a2freq.tofile(oname)
-      print "write",oname
+      print oname
 
     #***************
     # figure
     #---------------
     #  figure all
     #---------------------------
-    if len(lmon) ==12:
-      if sum3x3flag == True:
-        bnd        = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
-      else:
-        bnd        = [0.1, 0.3, 0.5, 0.7, 0.9, 1.1]
-    elif len(lmon) == 3:
-      bnd        = [0.2, 0.25, 0.5, 1.0, 2.0, 4.0]
-    elif len(lmon) == 1:
-      bnd        = [0.2, 0.4, 0.6, 0.8, 1.0]
+    #bnd        = [0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
+    bnd        = [1.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0]
+    #bnd        = [5,10,15,20,25,30,35,40,45]
+    #bnd        = [10,20,30,40,50,60,70,80]
     #----------
     figdir   = odir + "/pict"
     ctrack_func.mk_dir(figdir)
     figname  = figdir + "/freq.exc.%stc.%04d-%04d.%s.png"%(bstflag_tc,iyear,eyear,season)
     cbarname = figdir + "/freq.exc.%stc.cbar.%s.png"%(bstflag_tc,season)
     #----------
-    stitle   = "freq. exc: w/%s tc season:%s %04d-%04d"%(bstflag_tc, season,iyear, eyear)
+    stitle   = "freq(percent) cf: w/%s tc season:%s %04d-%04d"%(bstflag_tc, season,iyear, eyear)
     mycm     = "Spectral"
     datname  = oname
     a2figdat = fromfile(datname, float32).reshape(ny,nx)
-    #---- unit ----
-    totaldays = ctrack_para.ret_totaldays(iyear,eyear,season)
-    #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * totaldays / len(lyear)
-    #-- filter --------------
-    if filterflag == True:
-      a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
-      a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
-    #-- per 3.0 degree box --
-    if sum3x3flag == True:
-      a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
     #-------------------------------
-
+    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
     ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
     print figname  
    

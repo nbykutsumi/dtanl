@@ -5,7 +5,7 @@ def ret_thwcore(model="org"):
   #-------------------
   # thwcore : (K)
   #-------------------
-  if model in ["org","anl_p"]:
+  if model in ["org","anl_p","MRI-CGCM3"]:
       thwcore = 0.23
   if model=="HadGEM2-ES":
       thwcore = 0.22
@@ -35,7 +35,7 @@ def ret_thrvort(model="org"):
   #--------------------
   # thrvort : (s-1)
   #--------------------
-  if model in ["org","anl_p"]:
+  if model in ["org","anl_p","MRI-CGCM3"]:
       thrvort = 4.7e-05
   elif model=="HadGEM2-ES":
       thrvort = 4.4e-05

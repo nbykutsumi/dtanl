@@ -7,7 +7,7 @@ import tc_para
 #-----------------------------------------
 #singleday = True
 singleday = False
-iyear  = 1997
+iyear  = 1980
 eyear  = 2012
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon   = [7]
@@ -19,7 +19,8 @@ ny     = 180
 nx     = 360
 dpgradrange   = ctrack_para.ret_dpgradrange()
 thpgrad        = dpgradrange[1][0] 
-thdura   = 72
+#thdura   = 72
+thdura   = 48
 
 #lmodel = ["org","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
 lmodel = ["org"]

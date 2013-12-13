@@ -19,8 +19,8 @@ nx,ny   =[360,180]
 miss      = -9999.0
 
 #---------------------
-region    = "GLOB"
-#region    = "JPN"
+#region    = "GLOB"
+region    = "JPN"
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region)
 #**********************************************
 llkey = [[season,model] for season in lseason for model in lmodel]

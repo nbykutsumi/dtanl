@@ -11,9 +11,13 @@ singleday= False
 calcflag = True
 #calcflag = False
 
-iyear = 1997
-eyear = 2012
-lseason = ["ALL","DFJ","JJA"]
+#iyear = 1997
+#eyear = 2012
+iyear  = 1980
+eyear  = 1999
+lseason = ["ALL"]
+#lseason = ["ALL","DJF","JJA"]
+#lseason = range(1,12+1)
 iday  = 1
 #lhour = [12]
 lhour = [0,6,12,18]
@@ -22,10 +26,12 @@ nx    = 360
 miss  = -9999.0
 thdist   = front_para.ret_thdistkm()  # (km)
 #
-countrad = 100  # (km) for frequency count
+#countrad = 100  # (km) for frequency count
+countrad = 1.0  # (km) for frequency count
 #
 sresol   = "anl_p"
-lftype = ["t","q"]
+#lftype = ["t","q"]
+lftype = ["t"]
 #-- para for objective locator -------------
 plev     = 850*100.0 # (Pa)
 thorog     = ctrack_para.ret_thorog()
@@ -73,6 +79,7 @@ for season  in lseason:
         #----------
         iname       = idir_mon + "/count.front.%s.rad%04dkm.M1_%s_M2_%s.sa.one"%(ftype, countrad, thfmask1, thfmask2)
         a2count_mon = fromfile(iname, float32).reshape(ny,nx)
+        a2count_mon = ma.masked_equal(a2count_mon, miss).filled(0.0)
         a2count     = a2count + a2count_mon
     #---------
     ntimes   = ctrack_para.ret_totaldays(iyear,eyear,season)*4
@@ -100,9 +107,15 @@ for season  in lseason:
     datname  = oname
     figname  = figname
     a2figdat = fromfile(datname, float32).reshape(ny,nx)
-  
-    #-------------------------------
-    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+
+    #---- unit ----
+    totaldays = ctrack_para.ret_totaldays(iyear,eyear,season)
+    #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * totaldays / len(lyear)
+    #-- per 3.0 degree box --
+    a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T  
+    #------------------------
+
     ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
     print figname
 

@@ -1,7 +1,79 @@
 import calendar
 from numpy import *
 #----------------------------------------------------------
+def ret_thdura():
+  return 48
+#----------------------------------------------------------
+def ret_tagregionlatlon(region):
+  if region=="MA":
+    lllat = -15.0
+    lllon = 60.0
+    urlat = 55.0
+    urlon = 150.0
+  if region=="S.ASIA":
+    lllat = 0.0
+    lllon = 60.0
+    urlat = 25.0
+    urlon = 110.0
+  if region=="E.ASIA":
+    lllat = 30.0
+    lllon = 115.0
+    urlat = 50.0
+    urlon = 150.0
+  #------------
+  return lllat, lllon, urlat, urlon
+
+#----------------------------------------------------------
+def ret_excregionlatlon(region):
+  if region=="GLB":
+    lllat = -90.0
+    lllon = 0.0
+    urlat = 90.0
+    urlon = 360.0
+  if region=="NH":
+    lllat = 25.0
+    lllon = 0.0
+    urlat = 80.0
+    urlon = 360.0
+  if region=="SH":
+    lllat = -80.0
+    lllon = 0.0
+    urlat = -25.0
+    urlon = 360.0
+  if region=="NPA":
+    lllat = 25.0
+    lllon = 100.0
+    urlat = 80.0
+    urlon = 230.0
+  if region=="NAT":
+    lllat = 25.0
+    lllon = 230.0
+    urlat = 80.0
+    urlon = 360.0
+  if region=="EUR":
+    lllat = 25.0
+    lllon = 0.0
+    urlat = 80.0
+    urlon = 100.0
+  if region=="SIP":
+    lllat = -80.0
+    lllon = 30.0
+    urlat = -25.0
+    urlon = 280.0
+  if region=="SAT":
+    lllat = -80.0
+    lllon = 290.0
+    urlat = -25.0
+    urlon = 360.0
+  #------------
+  return lllat, lllon, urlat, urlon
+#----------------------------------------------------------
 def ret_tcregionlatlon(region):
+  if region=="GLB":
+    lllat = -90.0
+    lllon = 0.0
+    urlat = 90.0
+    urlon = 360.0
   if region=="PNW":
     lllat = 0.0
     lllon = 100.0
@@ -105,7 +177,7 @@ def ret_dpgradrange(model="org"):
   #------------------
   #pgradmin : hPa/100km
   #------------------
-  if model in ["org","anl_p"]:
+  if model in ["org","anl_p","MRI-CGCM3"]:
       pgradmin = 0.342
   if model=="HadGEM2-ES":
       pgradmin = 0.343

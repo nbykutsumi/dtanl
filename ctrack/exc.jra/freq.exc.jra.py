@@ -13,10 +13,10 @@ calcflag   = False
 bstflag_tc = "bst"
 #iyear   = 1997
 #eyear   = 1997
-iyear   = 1997
-eyear   = 2012
-lseason = ["ALL","DJF","JJA"]
-#lseason = [1]
+iyear   = 1980
+eyear   = 1999
+#lseason = ["ALL","DJF","JJA"]
+lseason = range(1,12+1)
 iday    = 1
 ny      = 180
 nx      = 360
@@ -37,7 +37,7 @@ urlat   = 89.5
 lllon   = 0.5
 urlon   = 359.5
 
-thdura_c  = 42
+thdura_c  = 48
 thdura_tc = thdura_c
 thorog  = ctrack_para.ret_thorog()
 #--------------

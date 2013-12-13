@@ -4,12 +4,13 @@ import os, subprocess, cf.util
 import ctrack_func
 #--------------------------------------
 iyear    = 2001
-eyear    = 2004
+eyear    = 2007
 imon     = 1
 emon     = 12
 miss_in  = -99.9
 miss_out = -9999.0
-sunit    = "(mm day-1)"
+#sunit    = "(mm day-1)"
+sunit    = "(mm s-1)"
 dattype  = "MA"
 #---------------------
 if dattype == "MA":
@@ -63,10 +64,14 @@ for year in range(iyear, eyear+1):
   #------------
   icount = -1
   #------------
-  idir   = "/media/disk2/data/aphro/%s/org"%(dattype)
-  iname  = idir + "/APHRO_%s_025deg_V1101.%04d.gz"%(dattype,year)
-  #
-  odir   = "/media/disk2/data/aphro/%s/sa.one/%04d"%(dattype, year)
+  if dattype in ["MA"]:
+    idir   = "/home/utsumi/mnt/mizu.tank/utsumi/data/APHRO/%s.org.V1101R2"%(dattype)
+    iname  = idir + "/APHRO_%s_025deg_V1101R2.%04d.gz"%(dattype,year)
+  
+    #idir   = "/media/disk2/data/aphro/%s/org"%(dattype)
+    #iname  = idir + "/APHRO_%s_025deg_V1101.%04d.gz"%(dattype,year)
+    #
+    odir   = "/media/disk2/data/aphro/%s.V1101R2.sa.one/%04d"%(dattype, year)
   ctrack_func.mk_dir(odir) 
 
   #-- latlon files ---
@@ -87,12 +92,17 @@ for year in range(iyear, eyear+1):
     for day in range(1, eday+1):
       icount = icount + 1
       #--------
-      a2dat_org    = a3dat_org[icount*2]
+      #a2dat_org    = a3dat_org[icount*2]
+      a2dat_org    = a3dat_org[icount*3]  # for V1101R2
       #-- upscale ------
       a2dat_one  = cf.util.upscale(a2dat_org, newShape, mode="m", missing=miss_in)
       #-----------------
-      soname     = odir + "/APHRO_%s_025deg_V1101.%04d.%02d.%02d.sa.one"%(dattype, year,mon,day)
-      a2dat_one  = ma.masked_equal(a2dat_one, miss_in).filled(miss_out)
+      if dattype == "MA":
+        #soname     = odir + "/APHRO_%s_025deg_V1101.%04d.%02d.%02d.sa.one"%(dattype, year,mon,day)
+        soname     = odir + "/APHRO_%s_025deg_V1101R2.%04d.%02d.%02d.sa.one"%(dattype, year,mon,day)
+
+      a2dat_one  = ma.masked_equal(a2dat_one, miss_in) / (60.*60.*24.)
+      a2dat_one  = a2dat_one.filled(miss_out)
       a2dat_one  = array(a2dat_one, float32)
       a2dat_one.tofile(soname)
       print soname
