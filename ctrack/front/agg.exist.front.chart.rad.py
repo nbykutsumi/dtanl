@@ -13,7 +13,8 @@ region = "ASAS"
 ny     = 180
 nx     = 360
 miss   = -9999.0
-rad    = 200  # (km)
+#rad    = 200  # (km)
+rad    = 1 # (km)
 #
 lat_first = -89.5
 dlat      = 1.0
@@ -49,7 +50,7 @@ for year in range(iyear, eyear+1):
     for day in range(iday, eday+1):
       for hour in lhour:
         idir  = idir_root + "/%04d%02d"%(year, mon)
-        iname = idir + "/front.ASAS.%04d.%02d.%02d.%02d.saone"%(year,mon,day,hour)
+        iname = idir + "/front.ASAS.%04d.%02d.%02d.%02d.sa.one"%(year,mon,day,hour)
         a2in  = fromfile(iname, float32).reshape(ny,nx)
         #----
         a2count_warm_tmp = ma.masked_where(a2in !=1.0, a2one).filled(0.0)

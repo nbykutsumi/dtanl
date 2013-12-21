@@ -5,8 +5,12 @@ import ctrack_para
 import ctrack_func
 import tc_para
 #-----------------------------------------
+#bnflag    = True
+bnflag    = False
+
 #singleday = True
 singleday = False
+
 iyear  = 1980
 eyear  = 2012
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
@@ -22,8 +26,8 @@ thpgrad        = dpgradrange[1][0]
 #thdura   = 72
 thdura   = 48
 
-#lmodel = ["org","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel = ["org"]
+#lmodel = ["anl_p","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+lmodel = ["anl_p"]
 
 for model in lmodel:
   #thsst    = 273.15 + 25.0
@@ -39,12 +43,20 @@ for model in lmodel:
   plev_mid = 500*100.0 # (Pa)
   plev_up  = 250*100.0 # (Pa)
   
-  psldir_root     = "/media/disk2/data/JRA25/sa.one.%s/6hr/PRMSL"%(model)
-  pgraddir_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/pgrad"%(model)
-  lifedir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/life"%(model)
-  lastposdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/lastpos"%(model)
-  iposdir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/ipos"%(model)
-  nextposdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/nextpos"%(model)
+  if bnflag == True:
+    pgraddir_root   = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/pgrad"%(model)
+    lifedir_root    = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/life"%(model)
+    lastposdir_root = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/lastpos"%(model)
+    iposdir_root    = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/ipos"%(model)
+    nextposdir_root = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/nextpos"%(model)
+  elif bnflag == False:
+    pgraddir_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/pgrad"%(model)
+    lifedir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/life"%(model)
+    lastposdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/lastpos"%(model)
+    iposdir_root    = "/media/disk2/out/JRA25/sa.one.%s/6hr/ipos"%(model)
+    nextposdir_root = "/media/disk2/out/JRA25/sa.one.%s/6hr/nextpos"%(model)
+
+
   #
   tdir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/TMP"%(model)
   udir_root       = "/media/disk2/data/JRA25/sa.one.%s/6hr/UGRD"%(model)
@@ -52,8 +64,10 @@ for model in lmodel:
   #
   sstdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p25/mon/WTMPsfc"
   #
-  sodir_root      = "/media/disk2/out/JRA25/sa.one.%s/6hr/tc/%02dh"%(model,thdura)
-  #sodir_root      = "/media/disk2/out/JRA25/sa.one/6hr/tc"
+  if bnflag == True:
+    sodir_root      = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/tc/%02dh"%(model,thdura)
+  elif bnflag == False: 
+    sodir_root      = "/media/disk2/out/JRA25/sa.one.%s/6hr/tc/%02dh"%(model,thdura)
   
   #** land sea mask -------------------
   landseadir      = "/media/disk2/data/JRA25/sa.one.anl_land/const/landsea"

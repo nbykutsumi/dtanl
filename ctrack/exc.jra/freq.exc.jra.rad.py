@@ -7,14 +7,16 @@ import ctrack_para, ctrack_func, ctrack_fig
 import tc_para, tc_func
 import sys, os
 #--------------------------------------
-#sum3x3flag = False
-sum3x3flag = True
-#filterflag = False
-filterflag = True
+sum3x3flag = False
+#sum3x3flag = True
+
+filterflag = False
+#filterflag = True
+
 #sresol = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
 lsresol = ["org"]
-calcflag   = False
-#calcflag   = True
+#calcflag   = False
+calcflag   = True
 bstflag_tc = "bst"
 #iyear   = 1996
 #eyear   = 1999
@@ -55,6 +57,30 @@ a2filter = array(\
            [[1,2,1]\
            ,[2,4,2]\
            ,[1,2,1]], float32)
+
+a2filter = array(\
+           [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]], float32)
+
 
 #--------------
 a2one   = ones([ny,nx],float32)
@@ -172,7 +198,8 @@ for season in lseason:
       if sum3x3flag == True:
         bnd        = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
       else:
-        bnd        = [0.1, 0.3, 0.5, 0.7, 0.9, 1.1]
+        #bnd        = [0.1, 0.3, 0.5, 0.7, 0.9, 1.1]
+        bnd        = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
     elif len(lmon) == 3:
       bnd        = [0.2, 0.25, 0.5, 1.0, 2.0, 4.0]
     elif len(lmon) == 1:
@@ -180,8 +207,19 @@ for season in lseason:
     #----------
     figdir   = odir + "/pict"
     ctrack_func.mk_dir(figdir)
-    figname  = figdir + "/freq.exc.%stc.%04d-%04d.%s.png"%(bstflag_tc,iyear,eyear,season)
-    cbarname = figdir + "/freq.exc.%stc.cbar.%s.png"%(bstflag_tc,season)
+    if (filterflag==True)&(sum3x3flag==True):
+      figname  = figdir + "/filter.3x3.freq.exc.%stc.%04d-%04d.%s.png"%(bstflag_tc,iyear,eyear,season)
+    elif (filterflag==True)&(sum3x3flag==False):
+      figname  = figdir + "/filter.freq.exc.%stc.%04d-%04d.%s.png"%(bstflag_tc,iyear,eyear,season)
+    elif (filterflag==False)&(sum3x3flag==True):
+      figname  = figdir + "/3x3.freq.exc.%stc.%04d-%04d.%s.png"%(bstflag_tc,iyear,eyear,season)
+    elif (filterflag==False)&(sum3x3flag==False):
+      figname  = figdir + "/freq.exc.%stc.%04d-%04d.%s.png"%(bstflag_tc,iyear,eyear,season)
+    #----------
+    if sum3x3flag == True:
+      cbarname = figdir + "/3x3.freq.exc.%stc.cbar.%s.png"%(bstflag_tc,season)
+    elif sum3x3flag == False:
+      cbarname = figdir + "/freq.exc.%stc.cbar.%s.png"%(bstflag_tc,season)
     #----------
     stitle   = "freq. exc: w/%s tc season:%s %04d-%04d"%(bstflag_tc, season,iyear, eyear)
     mycm     = "Spectral"
@@ -193,8 +231,8 @@ for season in lseason:
     a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * totaldays / len(lyear)
     #-- filter --------------
     if filterflag == True:
-      a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
-      a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
+      a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+      #a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
     #-- per 3.0 degree box --
     if sum3x3flag == True:
       a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T

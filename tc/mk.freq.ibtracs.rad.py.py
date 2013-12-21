@@ -3,6 +3,12 @@ from myfunc_fsub import *
 import calendar
 import ctrack_fig, ctrack_para, ctrack_func
 
+filterflag = True
+#filterflag = False
+
+#sum3x3flag = True
+sum3x3flag = False
+
 #iyear  = 1997
 #eyear  = 2012
 iyear  = 1980
@@ -16,6 +22,36 @@ lseason = ["ALL"]
 countrad  = 1.0 # [km]
 ny,nx   = 180,360
 miss    = -9999.0
+
+#-------------------------
+#a2filter = array(\
+#           [[1,2,1]\
+#           ,[2,4,2]\
+#           ,[1,2,1]], float32)
+
+a2filter = array(\
+           [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]], float32)
+
 #-------------------------
 lllat  = -89.5
 lllon  = 0.5
@@ -52,9 +88,11 @@ for season in lseason:
   #-- figure ---
   #---------------------------
   if len(lmon) ==12:
-    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
-    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
-    #bnd        = [0.25,0.5,1.0,2.0,4.0]
+    if sum3x3flag == True:
+      #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+      bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+    if sum3x3flag == False:
+      bnd        = [0.01, 0.025, 0.5, 0.1, 0.2, 0.4]
   elif len(lmon) ==3:
     #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
     bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
@@ -63,8 +101,20 @@ for season in lseason:
     bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
   #---------------------------
   figdir     = odir
-  figname    = oname[:-7] + ".png"
-  cbarname   = oname[:-7] + ".cbar.png"
+  #-----------
+  if (filterflag == True)&(sum3x3flag==True):
+    figname    = oname[:-7] + ".filt.3x3.png"
+  if (filterflag == True)&(sum3x3flag==False):
+    figname    = oname[:-7] + ".filt.png"
+  if (filterflag == False)&(sum3x3flag==True):
+    figname    = oname[:-7] + ".3x3.png"
+  if (filterflag == False)&(sum3x3flag==False):
+    figname    = oname[:-7] + ".png"
+  #-----------
+  if sum3x3flag == True:
+    cbarname   = oname[:-7] + ".3x3.cbar.png"
+  elif sum3x3flag== False:
+    cbarname   = oname[:-7] + ".cbar.png"
   #----------
   stitle   = "freq (days/season) bst.TC season:%s %04d-%04d"%(season,iyear, eyear)
   mycm     = "Spectral"
@@ -74,8 +124,16 @@ for season in lseason:
   totaldays = ctrack_para.ret_totaldays(iyear,eyear,season)
   #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
   a2figdat = ma.masked_equal(a2freq, miss).filled(0.0) * totaldays / len(lyear)  # [days per season]
-  #---- filter -----
-  a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
+
+  #--- filtering ----
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    #a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+
+  #---- 3x3 -----
+  if sum3x3flag == True:
+    a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
+
   #-----------------
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
   print figname 

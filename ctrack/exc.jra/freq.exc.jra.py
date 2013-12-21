@@ -8,13 +8,13 @@ import sys, os
 #--------------------------------------
 #sresol = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
 lsresol = ["org"]
-calcflag   = False
-#calcflag   = True
+#calcflag   = False
+calcflag   = True
 bstflag_tc = "bst"
-#iyear   = 1997
-#eyear   = 1997
+#iyear   = 1980
+#eyear   = 1999
 iyear   = 1980
-eyear   = 1999
+eyear   = 2012
 #lseason = ["ALL","DJF","JJA"]
 lseason = range(1,12+1)
 iday    = 1

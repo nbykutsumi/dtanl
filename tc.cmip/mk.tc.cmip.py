@@ -5,19 +5,19 @@ import ctrack_para
 import ctrack_func
 import tc_para, cmip_para, cmip_func
 #-----------------------------------------
+#bnflag    = True
+bnflag    = False
 #singleday = True
 singleday = False
-#lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-#lmodel=["IPSL-CM5A-MR"]
-#lmodel=["CSIRO-Mk3-6-0","CNRM-CM5"]
-#lmodel=["NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel=["MRI-CGCM3","IPSL-CM5B-LR"]
+lmodel=["MRI-CGCM3","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel=["MRI-CGCM3","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4"]
+#lmodel=["MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel=["inmcm4"]
 ##------------------
 #lexpr  = ["historical","rcp85"]
 lexpr  = ["historical"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
 #------------------
-
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon   = [9]
 stepday = 0.25
@@ -51,11 +51,21 @@ for model,expr in [[model,expr] for model in lmodel for expr in lexpr]:
   plev_up  = 250*100.0 # (Pa)
  
   psldir_root     = "/media/disk2/data/CMIP5/sa.one.%s.%s/psl"%(model,expr)
-  pgraddir_root   = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/pgrad"%(model,expr)
-  lifedir_root    = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/life"%(model,expr)
-  lastposdir_root = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/lastpos"%(model,expr)
-  iposdir_root    = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/ipos"%(model,expr)
-  nextposdir_root = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/nextpos"%(model,expr)
+  #
+  #***** cyclone directories *******
+  if bnflag == True:
+    pgraddir_root   = "/media/disk2/out/CMIP5/bn.sa.one.%s.%s/6hr/pgrad"%(model,expr)
+    lifedir_root    = "/media/disk2/out/CMIP5/bn.sa.one.%s.%s/6hr/life"%(model,expr)
+    lastposdir_root = "/media/disk2/out/CMIP5/bn.sa.one.%s.%s/6hr/lastpos"%(model,expr)
+    iposdir_root    = "/media/disk2/out/CMIP5/bn.sa.one.%s.%s/6hr/ipos"%(model,expr)
+    nextposdir_root = "/media/disk2/out/CMIP5/bn.sa.one.%s.%s/6hr/nextpos"%(model,expr)
+  elif bnflag == False:
+    pgraddir_root   = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/pgrad"%(model,expr)
+    lifedir_root    = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/life"%(model,expr)
+    lastposdir_root = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/lastpos"%(model,expr)
+    iposdir_root    = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/ipos"%(model,expr)
+    nextposdir_root = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/nextpos"%(model,expr)
+  #*********************************
   #
   tdir_root       = "/media/disk2/data/CMIP5/sa.one.%s.%s/ta"%(model,expr)
   udir_root       = "/media/disk2/data/CMIP5/sa.one.%s.%s/ua"%(model,expr)
@@ -63,7 +73,11 @@ for model,expr in [[model,expr] for model in lmodel for expr in lexpr]:
   #
   sstdir_root     = "/media/disk2/data/CMIP5/sa.one.%s.%s/ts"%(model,expr)
   #
-  sodir_root      = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/tc/%02dh"%(model,expr,thdura)
+  #***** OUTPUT directory **********
+  if bnflag == True:
+    sodir_root      = "/media/disk2/out/CMIP5/bn.sa.one.%s.%s/6hr/tc/%02dh"%(model,expr,thdura)
+  elif bnflag == False:
+    sodir_root      = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/tc/%02dh"%(model,expr,thdura)
 
   #** land sea mask -------------------
   landseadir      = "/media/disk2/data/CMIP5/sa.one.%s.%s/sftlf"%(model,expr)

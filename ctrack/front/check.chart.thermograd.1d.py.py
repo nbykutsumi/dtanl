@@ -11,13 +11,13 @@ iyear    = 2007
 #iyear    = 2000
 eyear    = 2010
 lseason  = ["ALL"]
-#lftype   = [1,2,3,4]
-lftype   = [4]
+lftype   = [1,2,3,4]
+#lftype   = [4]
 ldistkm  = [200]
 sresol   = "anl_p"
 nbin     = 100.0
-#lvtype   = ["theta","theta_e"]
-lvtype   = ["theta_e"]
+lvtype   = ["theta","theta_e"]
+#lvtype   = ["theta_e"]
 dbackgroundave = {"theta":0.90, "theta_e":1.84}
 #----------------------------
 lyear = range(iyear,eyear+1)
@@ -51,6 +51,14 @@ for season in lseason:
           a1out.tofile(soname)
           #-----------------
           ytmp, xtmp, patches = plt.hist(a1out*1000.0*100.0, bins=nbin)  # K/m --> K/100km     
+
+          #******************
+          # check percentage
+          #------------------
+          thbackground = dbackgroundave[vtype]/(1000.0*100.0)
+          a1out_lw = ma.masked_greater_equal(a1out, thbackground).compressed()
+          percentage_lw = float(len(a1out_lw))/len(a1out)*100.0
+          print ftype, vtype, percentage_lw
 
           #******************
           # PDF

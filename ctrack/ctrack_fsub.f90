@@ -1862,6 +1862,14 @@ do iy0 = 1, ny
         do iix_loop = ix1 - xgrids, ix1 + xgrids
           do iiy_loop = iy1 - ygrids, iy1 + ygrids
             call ixy2iixy(iix_loop, iiy_loop, nx, ny, iix, iiy)
+            !------------------
+            ! skip if the potential cyclone is 
+            ! located in the same place as the previous step
+            !------------------
+            if ((iix.eq.ix0).and.(iiy.eq.iy0))then
+              cycle
+            end if
+            !------------------
             if (a2pgrad1(iix,iiy) .ne. miss_dbl) then
               !iipsl        = a2psl1(iix, iiy)
               iidp_temp    = a2pgrad1(iix,iiy)
@@ -2330,163 +2338,270 @@ else if (xgrids .lt. ygrids) then
 end if
 RETURN
 END SUBROUTINE mk_a1xa1y
+!*****************************************************************
+SUBROUTINE find_potcyclone_frombn(a2psl_bn, a1lat_bn, a1lon_bn, miss_in, miss_out, nx_bn, ny_bn, a2out)
+  implicit none
+  integer                                           nx_bn, ny_bn
+  !** for input ---------------------------------------------
+  real,dimension(nx_bn ,ny_bn)                   :: a2psl_bn
+!f2py intent(in)                                    a2psl_bn
+  real,dimension(ny_bn)                          :: a1lat_bn
+!f2py intent(in)                                    a1lat_bn
+  real,dimension(nx_bn)                          :: a1lon_bn
+!f2py intent(in)                                    a1lon_bn
+  real                                              miss_in, miss_out
+!f2py intent(in)                                    miss_in, miss_out
+
+  !** for output --------------------------------------------
+  real,dimension(360, 180)                       :: a2out
+!f2py intent(out)                                   a2out
+  !** for calc  ---------------------------------------------
+  integer                                           ix, iy, ik
+  integer                                           ix_one, iy_one
+  integer                                           iix, iiy, iiix, iiiy
+  real,dimension(8)                              :: a1ambi
+  real                                              psl
+  real                                              lat, lon
+  integer                                           flag
+  !----------------------------------------------------------
+!------------------
+a2out = miss_out
+do iy = 1, ny_bn
+  do ix = 1, nx_bn
+    psl = a2psl_bn(ix, iy)
+    if (psl .ne. miss_in) then
+      !---------------
+      ! ambient data
+      !---------------
+      ik = 0
+      do iiy = iy-1, iy+1, 2
+        do iix = ix -1, ix+1
+          ik = ik +1
+          call ixy2iixy(iix, iiy, nx_bn, ny_bn, iiix, iiiy)
+          a1ambi(ik) = a2psl_bn(iiix, iiiy)
+        end do
+      end do
+      iiy = iy
+      do iix = ix-1, ix+1, 2
+        ik = ik +1
+        call ixy2iixy(iix, iiy, nx_bn, ny_bn, iiix, iiiy)
+        a1ambi(ik) = a2psl_bn(iiix, iiiy)
+      end do
+      !----------------
+      ! compare to the ambient grids
+      !----------------
+      flag = 0
+      do ik = 1, 8
+        if (( psl .ge. a1ambi(ik) ).or.(a1ambi(ik).eq.miss_in))  then
+          flag = 1
+          exit
+        end if
+      end do
+      !----------------
+      if (flag .eq. 0) then
+        !**********************************
+        ! projection to 1.0 degree grid map
+        !----------------------------------
+        lat  = a1lat_bn(iy)
+        lon  = a1lon_bn(ix)
+        CALL lon2x_saone(lon, ix_one)
+        CALL lat2y_saone(lat, iy_one)
+        a2out(ix_one,iy_one) = 1.0
+        !**********************************
+      end if
+    end if
+    !---------------
+  end do
+end do
+
+RETURN
+END SUBROUTINE find_potcyclone_frombn
+
 !!*****************************************************************
-!SUBROUTINE find_potcyclone_frombn(a2psl_bn, a1lat_bn, a1lon_bn, miss_in, miss_out, nx_bn, ny_bn, a2out)
-!  implicit none
-!  integer                                           nx_bn, ny_bn
-!  !** for input ---------------------------------------------
-!  real,dimension(nx ,ny)                         :: a2psl
-!!f2py intent(in)                                    a2psl
-!  real                                           :: a1lat_bn
-!!f2py intent(in)                                    a1lat_bn
-!  real                                           :: a1lon_bn
-!!f2py intent(in)                                    a1lon_bn
-!  real                                              miss_in, miss_out
-!!f2py intent(in)                                    miss_in, miss_out
-!  integer                                           nx_one, ny_one
-!!f2py intent(in)                                    nx_one, ny_one
-!
-!  !** for output --------------------------------------------
-!  real,dimension(360, 180)                       :: a2out
-!!f2py intent(out)                                   a2out
-!  !** for calc  ---------------------------------------------
-!  integer                                           ix, iy, ik
-!  integer                                           iix, iiy, iiix, iiiy
-!  real,dimension(8)                              :: a1ambi
-!  real                                              psl
-!  integer                                           flag
-!  !----------------------------------------------------------
-!!------------------
-!a2out = miss_out
-!do iy = 1, ny_bn
-!  do ix = 1, nx_bn
-!    psl = a2psl(ix, iy)
-!    if (psl .ne. miss_in) then
-!      !---------------
-!      ! ambient data
-!      !---------------
-!      ik = 0
-!      do iiy = iy-1, iy+1, 2
-!        do iix = ix -1, ix+1
-!          ik = ik +1
-!          call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
-!          a1ambi(ik) = a2psl(iiix, iiiy)
-!        end do
-!      end do
-!      iiy = iy
-!      do iix = ix-1, ix+1, 2
-!        ik = ik +1
-!        call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
-!        a1ambi(ik) = a2psl(iiix, iiiy)
-!      end do
-!      !----------------
-!      ! compare to the ambient grids
-!      !----------------
-!      flag = 0
-!      do ik = 1, 8
-!        if (( psl .ge. a1ambi(ik) ).or.(a1ambi(ik).eq.miss_in))  then
-!          flag = 1
-!          exit
-!        end if
-!      end do
-!      !----------------
-!      if (flag .eq. 0) then
-!        !**********************************
-!        ! projection to 1.0 degree grid map
-!        !----------------------------------
-!        
-!
-!        !**********************************
-!      end if
-!    end if
-!    !---------------
-!  end do
-!end do
-!
-!RETURN
-!END SUBROUTINE find_potcyclone_frombn
-!
-!
-!
-!!!*****************************************************************
-!SUBROUTINE lonlat2xy_saone(lon, lat, x, y)
-!implicit none
-!  !---- input ------------
-!  real                      lon, lat
-!!f2py intent(in)            lon, lat
-!  !---- out --------------
-!  integer                   x, y
-!!f2py intent(out)           x, y
-!!-------------------------
-!x  = int( modulo(lon, 360.0) )
-!y  = int( lat + 90.0 ) +1
-!!-------------------------
-!return
-!END SUBROUTINE lonlat2xy_saone
+SUBROUTINE lon2x_saone(lon, x)
+implicit none
+  !---- input ------------
+  real                      lon
+!f2py intent(in)            lon
+  !---- out --------------
+  integer                   x
+!f2py intent(out)           x
+!-------------------------
+x  = int( modulo(lon, 360.0) ) + 1
+!-------------------------
+return
+END SUBROUTINE lon2x_saone
+
 !!*****************************************************************
-!SUBROUTINE find_localminima_varres(a2psl, miss_in, miss_out, nx, ny, a2out)
-!  implicit none
-!  !** for input ---------------------------------------------
-!  integer                                           nx, ny
-!  real,dimension(nx ,ny)                         :: a2psl
-!!f2py intent(in)                                    a2psl
-!  real                                              miss_in, miss_out
-!!f2py intent(in)                                    miss_in, miss_out
-!  !** for output --------------------------------------------
-!  real,dimension(nx, ny)                         :: a2out
-!!f2py intent(out)                                   a2out
-!  !** for calc  ---------------------------------------------
-!  integer                                           ix, iy, ik
-!  integer                                           iix, iiy, iiix, iiiy
-!  real,dimension(8)                              :: a1ambi
-!  real                                              psl
-!  integer                                           flag
-!  !----------------------------------------------------------
-!!------------------
-!a2out = miss_out
-!do iy = 1, ny
-!  do ix = 1, nx
-!    psl = a2psl(ix, iy)
-!    if (psl .ne. miss_in) then
-!      !---------------
-!      ! ambient data
-!      !---------------
-!      ik = 0
-!      do iiy = iy-1, iy+1, 2
-!        do iix = ix -1, ix+1
-!          ik = ik +1
-!          call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
-!          a1ambi(ik) = a2psl(iiix, iiiy)
-!        end do
-!      end do
-!      iiy = iy
-!      do iix = ix-1, ix+1, 2
-!        ik = ik +1
-!        call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
-!        a1ambi(ik) = a2psl(iiix, iiiy)
-!      end do
-!      !----------------
-!      ! compare to the ambient grids
-!      !----------------
-!      flag = 0
-!      do ik = 1, 8
-!        if (( psl .ge. a1ambi(ik) ).or.(a1ambi(ik).eq.miss_in))  then
-!          flag = 1
-!          exit
-!        end if
-!      end do
-!      !----------------
-!      if (flag .eq. 0) then
-!        a2out(ix,iy) = 1.0
-!      end if
-!    end if
-!    !---------------
-!  end do
-!end do
+SUBROUTINE lat2y_saone(lat, y)
+implicit none
+  !---- input ------------
+  real                      lat
+!f2py intent(in)            lat
+  !---- out --------------
+  integer                   y
+!f2py intent(out)           y
+!-------------------------
+if (lat.eq.90.0)then
+  y = 180
+else
+  y  = int( lat + 90.0 ) +1
+end if
+!-------------------------
+return
+END SUBROUTINE lat2y_saone
+
+!*****************************************************************
+SUBROUTINE find_localminima_varres(a2psl, miss_in, miss_out, nx, ny, a2out)
+  implicit none
+  !** for input ---------------------------------------------
+  integer                                           nx, ny
+  real,dimension(nx ,ny)                         :: a2psl
+!f2py intent(in)                                    a2psl
+  real                                              miss_in, miss_out
+!f2py intent(in)                                    miss_in, miss_out
+  !** for output --------------------------------------------
+  real,dimension(nx, ny)                         :: a2out
+!f2py intent(out)                                   a2out
+  !** for calc  ---------------------------------------------
+  integer                                           ix, iy, ik
+  integer                                           iix, iiy, iiix, iiiy
+  real,dimension(8)                              :: a1ambi
+  real                                              psl
+  integer                                           flag
+  !----------------------------------------------------------
+!------------------
+a2out = miss_out
+do iy = 1, ny
+  do ix = 1, nx
+    psl = a2psl(ix, iy)
+    if (psl .ne. miss_in) then
+      !---------------
+      ! ambient data
+      !---------------
+      ik = 0
+      do iiy = iy-1, iy+1, 2
+        do iix = ix -1, ix+1
+          ik = ik +1
+          call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
+          a1ambi(ik) = a2psl(iiix, iiiy)
+        end do
+      end do
+      iiy = iy
+      do iix = ix-1, ix+1, 2
+        ik = ik +1
+        call ixy2iixy(iix, iiy, nx, ny, iiix, iiiy)
+        a1ambi(ik) = a2psl(iiix, iiiy)
+      end do
+      !----------------
+      ! compare to the ambient grids
+      !----------------
+      flag = 0
+      do ik = 1, 8
+        if (( psl .ge. a1ambi(ik) ).or.(a1ambi(ik).eq.miss_in))  then
+          flag = 1
+          exit
+        end if
+      end do
+      !----------------
+      if (flag .eq. 0) then
+        a2out(ix,iy) = 1.0
+      end if
+    end if
+    !---------------
+  end do
+end do
+
+RETURN
+END SUBROUTINE find_localminima_varres
 !
-!RETURN
-!END SUBROUTINE find_localminima_varres
-!
+!*****************************************************************
+SUBROUTINE mk_grad_cyclone_saone(a2loc, a2psl, a1lat, a1lon, miss_in, miss_out, nx, ny, a2pgrad)
+  implicit none
+  integer                                           nx, ny
+  !** for input ---------------------------------------------
+  real,dimension(nx ,ny)                         :: a2loc
+!f2py intent(in)                                    a2loc
+  real,dimension(nx ,ny)                         :: a2psl
+!f2py intent(in)                                    a2psl
+  real,dimension(ny)                             :: a1lat
+!f2py intent(in)                                    a1lat
+  real,dimension(nx)                             :: a1lon
+!f2py intent(in)                                    a1lon
+  real                                              miss_in, miss_out
+!f2py intent(in)                                    miss_in, miss_out
+  !** for output --------------------------------------------
+  real,dimension(nx, ny)                         :: a2pgrad
+!f2py intent(out)                                   a2pgrad
+  !** for calc  ---------------------------------------------
+  integer                                           ix, iy, ik
+  integer                                           ix_surr, iy_surr
+  integer                                           iy_surr_rad, ix_surr_rad
+  integer                                           validnum
+  integer                                        :: miss_int = -9999
+  real                                              psl, pgrad, pgrad_temp
+  real                                              dist_surr
+  real                                              lat, lon, lat_surr, lon_surr
+  real                                              lat_first, dlat, dlon
+  real                                           :: thdist = 300.0*1000.0  ! (300km)
+  integer,dimension(nx*ny)                       :: a1surrx, a1surry
+
+  !----------------------------------------------------------
+lat_first = a1lat(1)
+dlat      = a1lat(2) - a1lat(1)
+dlon      = a1lon(2) - a1lon(1)
+
+!------------------
+a2pgrad = miss_out
+do iy = 1, ny
+  do ix = 1, nx
+    if ((a2loc(ix,iy).ne.miss_in).and.(a2psl(ix,iy).ne.miss_in))then
+      psl = a2psl(ix, iy)
+      lat = a1lat(iy)
+      lon = a1lon(ix) 
+      !call mk_8gridsxy(ix, iy, nx, ny, a1surrx, a1surry)
+      call circle_xy_real(lat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1surrx, a1surry)
+      pgrad  = 0.0
+      validnum= 0
+      do ik = 1, nx*ny
+        ix_surr_rad = a1surrx(ik)
+        iy_surr_rad = a1surry(ik)
+        if ((ix_surr_rad .eq. miss_int) .or. (iy_surr_rad .eq. miss_int)) cycle
+
+        ix_surr  = roundx(ix + ix_surr_rad, nx)
+        iy_surr  = iy + iy_surr_rad
+        if ((iy_surr .le. 0) .or. (iy_surr .gt. ny)) cycle
+        if (a2psl(ix_surr, iy_surr) .eq. miss_in) cycle
+        if ( (ix_surr .eq. ix) .and. (iy_surr .eq. iy) ) cycle
+
+        lon_surr = a1lon(ix_surr)
+        lat_surr = a1lat(iy_surr)
+
+        validnum = validnum + 1
+        !------------
+        ! make pgrad
+        !------------
+        dist_surr  = hubeny_real(lat, lon, lat_surr, lon_surr)
+        pgrad_temp = ( a2psl(ix_surr, iy_surr) - a2psl(ix, iy) )/dist_surr * 1000.0 * 1000.0    ![Pa/1000km]
+
+        pgrad      = pgrad + pgrad_temp
+
+      end do
+
+      if (validnum .eq. 0)then
+        pgrad = miss_out
+      else
+        pgrad = pgrad /real(validnum)
+      end if
+      a2pgrad(ix, iy) = pgrad
+    end if
+    !---------------
+  end do
+end do
+
+RETURN
+END SUBROUTINE mk_grad_cyclone_saone
+
 !*****************************************************************
 SUBROUTINE findcyclone_real(a2psl, a1lat, a1lon, miss_in, miss_out, nx, ny, a2pmean, a2pgrad)
   implicit none

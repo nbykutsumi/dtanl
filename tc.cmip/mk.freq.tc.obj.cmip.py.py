@@ -4,6 +4,12 @@ import ctrack_func, cmip_func, tc_func
 import ctrack_para, cmip_para, tc_para
 import ctrack_fig
 #-------------------------
+filterflag = True
+#filterflag = False
+
+#sum3x3flag = True
+sum3x3flag = False
+
 figflag = True
 #onlyMME = True
 onlyMME = False
@@ -26,10 +32,35 @@ thdura  = 48
 #countrad = 300.0 #[km]
 countrad = 1.0 #[km]
 
+#a2filter = array(\
+#           [[1,2,1]\
+#           ,[2,4,2]\
+#           ,[1,2,1]], float32)
+
 a2filter = array(\
-           [[1,2,1]\
-           ,[2,4,2]\
-           ,[1,2,1]], float32)
+           [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]], float32)
+
+
 
 #-------------------------
 lllat  = -89.5
@@ -90,8 +121,10 @@ for season, expr, model in llkey:
   #-----------
   #---------------------------
   if len(lmon) ==12:
-    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
-    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+    if sum3x3flag == True:
+      bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+    if sum3x3flag == False:
+      bnd        = [0.01, 0.025, 0.5, 0.1, 0.2, 0.4]
   elif len(lmon) ==3:
     #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
     bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
@@ -100,8 +133,20 @@ for season, expr, model in llkey:
     bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
   #---------------------------
   figdir     = sodir
-  figname    = soname[:-7] + ".png"
-  cbarname   = soname[:-7] + ".cbar.png"
+  #-----------
+  if (filterflag == True)&(sum3x3flag==True):
+    figname    = soname[:-7] + ".filt.3x3.png"
+  if (filterflag == True)&(sum3x3flag==False):
+    figname    = soname[:-7] + ".filt.png"
+  if (filterflag == False)&(sum3x3flag==True):
+    figname    = soname[:-7] + ".3x3.png"
+  if (filterflag == False)&(sum3x3flag==False):
+    figname    = soname[:-7] + ".png"
+  #-----------
+  if sum3x3flag == True:
+    cbarname   = soname[:-7] + ".3x3.cbar.png"
+  elif sum3x3flag == False:
+    cbarname   = soname[:-7] + ".cbar.png"
   #----------
   stitle   = "freq (days/season) %s.TC season:%s %04d-%04d %s"%(model,season,iyear, eyear,ens)
   mycm     = "Spectral"
@@ -113,10 +158,12 @@ for season, expr, model in llkey:
   #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
   a2figdat = ma.masked_equal(a2freq, miss).filled(0.0) * totaldays / len(lyear)  # [days per season]
   #--- filtering ----
-  #a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
-  #a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
-  a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
-
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    #a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+  
+  if sum3x3flag == True:
+    a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
   #------------------
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
   print figname
@@ -159,6 +206,7 @@ for season, expr in llkey:
 
   sodir   = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/tc/freq.%02dh/%04d-%04d.%s"%("MME",expr,thdura,iyear,eyear,season)
   ctrack_func.mk_dir(sodir)
+
   soname  = sodir + "/freq.tc.MME.rad%04d.%04d-%04d.%s.sa.one"%(countrad,iyear,eyear,season)
 
   a2freq.tofile(soname)
@@ -166,8 +214,11 @@ for season, expr in llkey:
   #*** Figure *********
   #-----------
   if len(lmon) ==12:
-    #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
-    bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+    if sum3x3flag == True:
+      #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
+      bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
+    if sum3x3flag == False:
+      bnd        = [0.01, 0.025, 0.5, 0.1, 0.2, 0.4]
   elif len(lmon) ==3:
     #bnd        = [0.01,0.25,0.5,1.0,2.0,4.0]
     bnd        = [0.1,0.25,0.5,1.0,2.0,4.0]
@@ -178,9 +229,21 @@ for season, expr in llkey:
 
   model   = "MME"
   figdir     = sodir
-  figname    = soname[:-7] + ".png"
 
-  cbarname   = soname[:-7] + ".cbar.png"
+  #-----------
+  if (filterflag == True)&(sum3x3flag==True):
+    figname    = soname[:-7] + ".filt.3x3.png"
+  if (filterflag == True)&(sum3x3flag==False):
+    figname    = soname[:-7] + ".filt.png"
+  if (filterflag == False)&(sum3x3flag==True):
+    figname    = soname[:-7] + ".3x3.png"
+  if (filterflag == False)&(sum3x3flag==False):
+    figname    = soname[:-7] + ".png"
+  #-----------
+  if sum3x3flag == True:
+    cbarname   = soname[:-7] + ".3x3.cbar.png"
+  elif sum3x3flag == False:
+    cbarname   = soname[:-7] + ".cbar.png"
   #----------
   stitle   = "freq(percent) %s.TC season:%s %04d-%04d %s"%(model,season,iyear, eyear,ens)
   mycm     = "Spectral"
@@ -189,10 +252,12 @@ for season, expr in llkey:
   #a2figdat = ma.masked_equal(a2freq, miss).filled(0.0) * 100.0
   a2figdat = ma.masked_equal(a2freq, miss).filled(0.0) * totaldays / len(lyear)  # [days per season]
   #--- filtering ----
-  #a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
-  #a2figdat = myfunc_fsub.mk_a2convolution_3x3(a2figdat.T, a2filter.T, miss).T
-  a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
-
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    #a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+  
+  if sum3x3flag == True:
+    a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T
   #------------------
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname)
   print figname

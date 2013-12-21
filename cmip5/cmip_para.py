@@ -1,5 +1,20 @@
 import sys, netCDF4
 #***************************************
+def ret_nynx_cmip(model):
+  if model == "HadGEM2-ES":    ny,nx = 145,192
+  if model == "IPSL-CM5A-MR":    ny,nx = 143,144
+  if model == "CNRM-CM5":    ny,nx = 128,256
+  if model == "MIROC5":    ny,nx = 128,256
+  if model == "inmcm4":    ny,nx = 120,180
+  if model == "MPI-ESM-MR":    ny,nx = 96,192
+  if model == "CSIRO-Mk3-6-0":    ny,nx = 96,192
+  if model == "NorESM1-M":    ny,nx = 96,144
+  if model == "IPSL-CM5B-LR":    ny,nx = 96,96
+  if model == "GFDL-CM3":    ny,nx = 90,144
+  if model == "MRI-CGCM3":    ny,nx = 160,320
+  #-----
+  return ny,nx
+#***************************************
 def ret_upflag(model):
   #---
   if model in ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]:

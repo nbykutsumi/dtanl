@@ -1,12 +1,17 @@
 from numpy import *
 from dtanl_fsub import *
+from ctrack_fsub import *
+from myfunc_fsub import *
 import calendar
 import ctrack_func
 import ctrack_para
 import ctrack_fig
 import chart_para
 import cf.util
+
 #------------------------------------------------------
+filterflag = True
+
 iyear  = 2007
 eyear  = 2010
 lseason = ["ALL","DJF","MAM","JJA","SON"]
@@ -16,7 +21,9 @@ miss   = -9999.0
 region = "ASAS"
 
 region_draw = "JPN"
-rad    = 200.0  # (km)
+#rad    = 200.0  # (km)
+rad    = 1.0  # (km)
+#rad    = ""  # (km)
 lonlatfontsize = 27.0
 lonrotation    = 0.0
 #---------------------
@@ -27,8 +34,21 @@ lonrotation    = 0.0
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region_draw)
 thorog = 1500.0 # (m)
 bnd_normal  = [1,3,5,7,9,11,13]
-bnd_stat    = [1,4,7,10,13,16,19,22]
-bnd_all     = [5,10,15,20,25,30,35,40,45]
+#bnd_stat    = [1,4,7,10,13,16,19,22,25,28]
+bnd_stat    = [5,10,15,20,25,30,35,40,45,50,55]
+bnd_all     = [5,10,15,20,25,30,35,40,45,50,55]
+
+#--------------
+#a2filter = array(\
+#           [[1,2,1]\
+#           ,[2,4,2]\
+#           ,[1,2,1]], float32)
+a2filter = array(\
+           [[1,1,1]\
+           ,[1,1,1]\
+           ,[1,1,1]], float32)
+
+
 #------------------------------------------------------
 idir_root  = "/media/disk2/out/chart/ASAS/front/agg"
 odir_root  = idir_root 
@@ -145,6 +165,18 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+
+  #-- filter --------------
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    a2figdat = a2figdat * a2filter.size
+  elif filterflag ==False:
+    pass
+  else:
+    print "check filterflag",filterflag
+    sys.exit()
+  #------------------------
+
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print "fontsize",lonlatfontsize
   print figname
@@ -168,6 +200,18 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+
+  #-- filter --------------
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    a2figdat = a2figdat * a2filter.size
+  elif filterflag ==False:
+    pass
+  else:
+    print "check filterflag",filterflag
+    sys.exit()
+  #------------------------
+
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
   #***************************
@@ -190,6 +234,18 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+
+  #-- filter --------------
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    a2figdat = a2figdat * a2filter.size
+  elif filterflag ==False:
+    pass
+  else:
+    print "check filterflag",filterflag
+    sys.exit()
+  #------------------------
+
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
   #***************************
@@ -217,6 +273,18 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+
+  #-- filter --------------
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    a2figdat = a2figdat * a2filter.size
+  elif filterflag ==False:
+    pass
+  else:
+    print "check filterflag",filterflag
+    sys.exit()
+  #------------------------
+
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
   #***************************
@@ -241,6 +309,18 @@ for season in lseason:
   
   #-------------------------------
   a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+
+  #-- filter --------------
+  if filterflag == True:
+    a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+    a2figdat = a2figdat * a2filter.size
+  elif filterflag ==False:
+    pass
+  else:
+    print "check filterflag",filterflag
+    sys.exit()
+  #------------------------
+
   ctrack_fig.mk_pict_saone_reg(a2figdat, lllat=lllat, lllon=lllon, urlat=urlat, urlon=urlon, bnd=bnd, mycm=mycm, soname=figname, stitle=stitle, miss=miss, a2shade=a2shade, cbarname=cbarname, lonlatfontsize=lonlatfontsize, lonrotation=lonrotation)
   print figname
 

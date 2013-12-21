@@ -10,9 +10,10 @@ import calendar, datetime, os, sys
 lexpr  = ["historical"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
 
-#lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-#lmodel = ["inmcm4","MPI-ESM-MR","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel = ["MRI-CGCM3"]
+#lmodel=["MRI-CGCM3","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel=["MRI-CGCM3","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4"]
+lmodel=["MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel = ["HadGEM2-ES"]
 lmon        = range(1,12+1)
 #lmon        = [1]
 nx          = 360
