@@ -7,16 +7,17 @@ import ctrack_para, ctrack_func, ctrack_fig
 import tc_para, tc_func
 import sys, os
 #--------------------------------------
-sum3x3flag = False
 #sum3x3flag = True
+sum3x3flag = False
 
-filterflag = False
 #filterflag = True
+filterflag = False
+
+#calcflag   = True
+calcflag   = False
 
 #sresol = ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
 lsresol = ["org"]
-#calcflag   = False
-calcflag   = True
 bstflag_tc = "bst"
 #iyear   = 1996
 #eyear   = 1999
@@ -30,8 +31,10 @@ iday    = 1
 ny      = 180
 nx      = 360
 
-#countrad  = 300.0 # [km]
-countrad  = 1.0 # [km]
+filtradkm  = 1000.0 # km
+
+countrad  = 1000.0 # [km]
+#countrad  = 1.0 # [km]
 miss_int= -9999
 miss    = -9999.0
 # local region ------
@@ -53,34 +56,36 @@ thdura_tc = thdura_c
 thorog  = ctrack_para.ret_thorog()
 
 #--------------
-a2filter = array(\
-           [[1,2,1]\
-           ,[2,4,2]\
-           ,[1,2,1]], float32)
+a2areanum =  ctrack_fsub.mk_a2radsum_saone(ones([ny,nx],float32).T, filtradkm, miss).T
 
-a2filter = array(\
-           [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
-           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]], float32)
-
+#a2filter = array(\
+#           [[1,2,1]\
+#           ,[2,4,2]\
+#           ,[1,2,1]], float32)
+#
+#a2filter = array(\
+#           [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]\
+#           ,[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]], float32)
+#
 
 #--------------
 a2one   = ones([ny,nx],float32)
@@ -107,10 +112,6 @@ for season in lseason:
 
   #----------------------------
   for sresol in lsresol:
-    if bstflag_tc == "bst":
-      odir     = "/media/disk2/out/JRA25/sa.one.%s/6hr/exc/c%02dh.bsttc/%04d-%04d.%s"%(sresol,thdura_c,iyear,eyear,season)
-
-    oname    = odir + "/freq.exc.rad%04dkm.%stc.%04d-%04d.%s.sa.one"%(countrad, bstflag_tc,iyear,eyear,season)
     #*******************
     # tc params
     #-------------------
@@ -181,13 +182,29 @@ for season in lseason:
           ctrack_func.mk_dir(odir_mon)
           oname_mon= odir_mon + "/num.exc.rad%04dkm.%stc.%04d.%02d.sa.one"%(countrad, bstflag_tc,year,mon)
           a2count_mon.tofile(oname_mon)
-      #-----------
-      numtot = ctrack_para.ret_totaldays(iyear,eyear,season)*4
-      a2freq = a2count / numtot
-      #--- write -----
-      ctrack_func.mk_dir(odir)
-      a2freq.tofile(oname)
-      print "write",oname
+
+    #****** climatology for the season ******
+    a2count     = zeros([ny,nx],float32)
+    for mon in lmon:
+      for year in lyear:
+        odir_mon  = "/media/disk2/out/JRA25/sa.one.%s/6hr/exc/c%02dh.bsttc/%04d"%(sresol, thdura_c, year)
+        oname_mon = odir_mon + "/num.exc.rad%04dkm.%stc.%04d.%02d.sa.one"%(countrad, bstflag_tc,year,mon)
+        a2num_tmp = fromfile(oname_mon, float32).reshape(ny,nx)
+        a2count   = a2count + a2num_tmp 
+    #---
+    numtot = ctrack_para.ret_totaldays(iyear,eyear,season)*4
+    a2freq = a2count / numtot
+
+    #-----------
+    if bstflag_tc == "bst":
+      odir     = "/media/disk2/out/JRA25/sa.one.%s/6hr/exc/c%02dh.bsttc/%04d-%04d.%s"%(sresol,thdura_c,iyear,eyear,season)
+
+    oname    = odir + "/freq.exc.rad%04dkm.%stc.%04d-%04d.%s.sa.one"%(countrad, bstflag_tc,iyear,eyear,season)
+
+    #--- write -----
+    ctrack_func.mk_dir(odir)
+    a2freq.tofile(oname)
+    print "write",oname
 
     #***************
     # figure
@@ -197,9 +214,11 @@ for season in lseason:
     if len(lmon) ==12:
       if sum3x3flag == True:
         bnd        = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
+      elif countrad == 1000.0:
+        bnd        = [10,20,30,40,50,60,70,80,90]
       else:
-        #bnd        = [0.1, 0.3, 0.5, 0.7, 0.9, 1.1]
         bnd        = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+      
     elif len(lmon) == 3:
       bnd        = [0.2, 0.25, 0.5, 1.0, 2.0, 4.0]
     elif len(lmon) == 1:
@@ -227,12 +246,14 @@ for season in lseason:
     a2figdat = fromfile(datname, float32).reshape(ny,nx)
     #---- unit ----
     totaldays = ctrack_para.ret_totaldays(iyear,eyear,season)
-    #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * totaldays / len(lyear)
+    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+    #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * totaldays / len(lyear)
     #-- filter --------------
     if filterflag == True:
-      a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
       #a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T
+      a2figdat = ctrack_fsub.mk_a2radsum_saone(a2figdat.T, filtradkm, miss).T
+      a2figdat = a2figdat / a2areanum
+
     #-- per 3.0 degree box --
     if sum3x3flag == True:
       a2figdat = myfunc_fsub.mk_3x3sum_one(a2figdat.T, miss).T

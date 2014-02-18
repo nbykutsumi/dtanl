@@ -7,14 +7,15 @@ import cmip_para, cmip_func
 #******************************************************
 #lmodel = ["HadGEM2-ES","IPSL-CM5A-MR"]
 #lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel = ["MRI-CGCM3"]
+lmodel = ["CCSM4"]
 #lexpr  = ["historical","rcp85"]
+#lexpr  = ["historical"]
 lexpr  = ["historical"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
 #------
 
-lvar   = ["ua","va"]
-#lvar   = ["va"]
+#lvar   = ["ua","va"]
+lvar   = ["va"]
 plev   = 500
 
 #****************************************************

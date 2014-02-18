@@ -11,8 +11,8 @@ import subprocess
 #---------------------------------
 iyear = 2007
 eyear = 2010
-lseason=["ALL"]
-#lseason=["ALL","DJF","MAM","JJA","SON"]
+#lseason=["ALL"]
+lseason=["DJF","MAM","JJA","SON"]
 #lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
 iday  = 1
 lhour = [0,6,12,18]
@@ -24,7 +24,7 @@ prtype = "GPCP1DD"
 miss   = -9999.0
 miss  = -9999.0
 miss_gpcp = -99999.
-lonlatfontsize = 30
+lonlatfontsize = 35
 lonrotation    = 0.0
 lthdist   = [500]
 locdir_root  = "/media/disk2/out/chart/%s/front"%(region)

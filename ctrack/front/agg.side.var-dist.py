@@ -10,15 +10,19 @@ import datetime
 #----------------------------------------------------
 #singleday =True
 singleday = False
-iyear = 2010
+iyear = 2007
 eyear = 2010
-#lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
-lseason = [1]
+lseason = [1,2,3,4,5,6,7,8,9,10,11,12]
+#lseason = [1]
 #laxistype = ["theta_e","theta"]
 laxistype = ["theta_e"]
 
-#lvar    = ["theta_e","theta"]
-lvar    = ["theta_e"]
+#lvar     = ["theta_e","theta"]
+#lvar     = ["theta_e"]
+#lvar     = ["grad2.theta_e"]
+#lvar     = ["SSI"]
+#lvar     = ["VVEL"]
+lvar     = ["RH"]
 
 #lprtype  = ["GSMaP","GPCP1DD","JRA25"]
 #lprtype  = ["GPCP1DD"]
@@ -26,12 +30,11 @@ lvar    = ["theta_e"]
 lprtype  = ["GSMaP"]
 #lprtype  = ["GPCP1DD"]
 #lseason = [1]
-#ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700] #(km)
-ldist_km = [-500,-400,-300,-200,-100,0,100,200,300,400,500] #(km)
-#lplev    = [925,850,700,600,500,300,250]
-lplev    = [850,700,500,300]
-#lplev    = [850]
+ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700] #(km)
 plev_sfc = 850
+#ldist_km = [-500,-400,-300,-200,-100,0,100,200,300,400,500] #(km)
+lplev    = [925,850,700,600,500,300,250]
+#lplev    = [plev_sfc]
 #lftype = [1,2,3,4]
 lftype = [2]
 sresol  = "anl_p"
@@ -78,27 +81,56 @@ dlon          = 1.0
 # Function
 #-----------
 def load_a2var(year,mon,day,hour, plev, var):
-  sreol  = "anl_p"
+  tdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p/6hr/TMP"
+  qdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p/6hr/SPFH"
+  wdir_root     = "//media/disk2/data/JRA25/sa.one.anl_chipsi/6hr/VVEL"
+
+  tdir      = tdir_root     + "/%04d%02d"%(year,mon)
+  qdir      = qdir_root     + "/%04d%02d"%(year,mon)
+  wdir      = wdir_root     + "/%04d%02d"%(year,mon)
+
+  tname     = tdir          + "/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%("anl_p",plev,year,mon,day,hour)
+  qname     = qdir          + "/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%("anl_p",plev,year,mon,day,hour)
+  wname     = wdir          + "/%s.VVEL.%04dhPa.%04d%02d%02d%02d.sa.one"%("anl_chipsi",plev,year,mon,day,hour)
+
+  tname_sfc = tdir          + "/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%("anl_p",plev_sfc,year,mon,day,hour)
+  qname_sfc = qdir          + "/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%("anl_p",plev_sfc,year,mon,day,hour)
+
+
   #-------------
   if var == "theta_e":
-    tdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p/6hr/TMP"
-    qdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p/6hr/SPFH"
-    tdir      = tdir_root     + "/%04d%02d"%(year,mon)
-    qdir      = qdir_root     + "/%04d%02d"%(year,mon)
-
-    tname     = tdir          + "/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
-    qname     = qdir          + "/%s.SPFH.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
-
     a2t       = fromfile( tname, float32).reshape(ny,nx)   
     a2q       = fromfile( qname, float32).reshape(ny,nx)   
     a2var     = dtanl_fsub.mk_a2theta_e(plev*100.0, a2t.T, a2q.T).T
 
   elif var == "theta":
-    tdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p/6hr/TMP"
-    tdir      = tdir_root     + "/%04d%02d"%(year,mon)
-    tname     = tdir          + "/%s.TMP.%04dhPa.%04d%02d%02d%02d.sa.one"%(sresol,plev,year,mon,day,hour)
     a2t       = fromfile( tname, float32).reshape(ny,nx)   
     a2var     = dtanl_fsub.mk_a2theta(plev*100.0, a2t.T).T
+
+  elif var == "grad2.theta_e":
+    a2t       = fromfile( tname, float32).reshape(ny,nx)   
+    a2q       = fromfile( qname, float32).reshape(ny,nx)   
+    a2value   = dtanl_fsub.mk_a2theta_e(plev*100.0, a2t.T, a2q.T).T
+    a2gradvalue = dtanl_fsub.mk_a2grad_abs_saone(a2value.T).T
+    a2var       = dtanl_fsub.mk_a2grad_abs_saone(a2gradvalue.T).T
+  elif var == "SSI":
+    a2t       = fromfile( tname, float32).reshape(ny,nx)   
+    a2q       = fromfile( qname, float32).reshape(ny,nx)   
+
+    a2t_sfc   = fromfile( tname_sfc, float32).reshape(ny,nx)
+    a2q_sfc   = fromfile( qname_sfc, float32).reshape(ny,nx)
+
+    a2tt      = dtanl_fsub.a2t1_to_a2t2(plev_sfc*100.0, plev*100.0, a2t_sfc.T, a2q_sfc.T, miss).T
+    a2var     = ma.masked_equal(a2t, miss) - ma.masked_equal(a2tt, miss)
+    a2var     = a2var.filled(miss)
+  elif var == "VVEL":
+    a2var     = fromfile(wname, float32).reshape(ny,nx)
+  elif var == "RH":
+    a2t       = fromfile( tname, float32).reshape(ny,nx)   
+    a2q       = fromfile( qname, float32).reshape(ny,nx)   
+
+    a2var     = dtanl_fsub.mk_a2rh(a2t.T, a2q.T, plev).T
+
   #--------------
   return a2var
 
@@ -154,19 +186,20 @@ for prtype in lprtype:
           da2pr   = {}
           da2num  = {}
           for ftype in lftype:
-            for prpattern in ["w","c"]:
+            for side in ["w","c"]:
               for dist_km in ldist_km:
-                da2pr[ftype, prpattern, dist_km]    = a2zero.copy()
-                da2num[ftype, prpattern, dist_km]   = a2zero.copy()
+                da2pr [ftype, side, dist_km]    = a2zero.copy()
+                da2num[ftype, side, dist_km]   = a2zero.copy()
           #-- init 3D-vars --------
           da2var  = {}
           da2nvar = {}
           for var in lvar:
             for ftype in lftype:
-              for prpattern in ["w","c"]:
-                for dist_km in ldist_km:
-                  da2var [var, ftype, prpattern, dist_km] = a2zero.copy()
-                  da2nvar[var, ftype, prpattern, dist_km] = a2zero.copy()
+              for side in ["w","c"]:
+                for plev in lplev:
+                  for dist_km in ldist_km:
+                    da2var [var, ftype, side, plev, dist_km] = a2zero.copy()
+                    da2nvar[var, ftype, side, plev, dist_km] = a2zero.copy()
 
           #------------------------
           if singleday ==True:
@@ -256,7 +289,6 @@ for prtype in lprtype:
               #***********************************
               for ftype in lftype:
                 a2chart_seg        = ma.masked_not_equal(a2chart_screen, ftype).filled(miss)
-
                 #** Precipitation ***********
                 # Caution!
                 # the warmer side is the lower side of the grad-theta
@@ -336,24 +368,24 @@ for prtype in lprtype:
                 #-----------------
                 for var in lvar:
                   for plev in lplev:
+                    a2var_tmp  = load_a2var(year,mon,day,hour,plev,var)
                     for dist_km in ldist_km:
-                      a2var_tmp  = load_a2var(year,mon,day,hour,plev,var)
                       #******************
                       # Caution!
                       # the warmer side is the lower side of the grad-theta
                       a2var_hs   = ctrack_fsub.find_highsidevalue_saone(a2thermo_tmp.T, a2chart_seg.T, a2var_tmp.T, dist_km*1000.0, miss).T
                       #------------------
     
-                      a2var_warmside = ma.masked_equal(a2mask_warmside==miss, a2var_hs).filled(0.0)
-                      a2var_coldside = ma.masked_equal(a2mask_coldside==miss, a2var_hs).filled(0.0)
-                      a2nvar_warmside= ma.masked_equal(a2mask_warmside==miss, a2one).filled(0.0)
-                      a2nvar_coldside= ma.masked_equal(a2mask_coldside==miss, a2one).filled(0.0)
+                      a2var_warmside = ma.masked_where(a2mask_warmside==miss, a2var_hs).filled(0.0)
+                      a2var_coldside = ma.masked_where(a2mask_coldside==miss, a2var_hs).filled(0.0)
+                      a2nvar_warmside= ma.masked_where(a2mask_warmside==miss, a2one).filled(0.0)
+                      a2nvar_coldside= ma.masked_where(a2mask_coldside==miss, a2one).filled(0.0)
 
                       #---
-                      da2var [var,ftype,"w",dist_km]  = da2var [var,ftype,"w",dist_km]  + a2var_warmside
-                      da2var [var,ftype,"c",dist_km]  = da2var [var,ftype,"c",dist_km]  + a2var_coldside
-                      da2nvar[var,ftype,"w",dist_km]  = da2nvar[var,ftype,"w",dist_km]  + a2nvar_warmside
-                      da2nvar[var,ftype,"c",dist_km]  = da2nvar[var,ftype,"c",dist_km]  + a2nvar_coldside
+                      da2var [var,ftype,"w",plev,dist_km]  = da2var [var,ftype,"w",plev,dist_km]  + a2var_warmside
+                      da2var [var,ftype,"c",plev,dist_km]  = da2var [var,ftype,"c",plev,dist_km]  + a2var_coldside
+                      da2nvar[var,ftype,"w",plev,dist_km]  = da2nvar[var,ftype,"w",plev,dist_km]  + a2nvar_warmside
+                      da2nvar[var,ftype,"c",plev,dist_km]  = da2nvar[var,ftype,"c",plev,dist_km]  + a2nvar_coldside
                 #-----------------
           ##** output ****************************************
           for side in ["w","c"]:
@@ -372,11 +404,11 @@ for prtype in lprtype:
                 #***************************************
                 # precipitation 
                 #---------------------------------------
-                odir   = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d/%s-dist.%s.%speak"%(year,mon,var,prtype,side)
+                odir   = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d/%s-dist.%s.%speak"%(year,mon,"pr",prtype,side)
                 ctrack_func.mk_dir(odir)
 
-                oname_pr   = odir + "/pr.%s.%s.maskrad.%04dkm.%s.sa.one"%(prtype,axistype,dist_km, sftype)
-                oname_num  = odir + "/num.%s.%s.maskrad.%04dkm.%s.sa.one"%(prtype,axistype,dist_km, sftype)
+                oname_pr   = odir + "/pr.ax-%s.%04dkm.%s.sa.one"%(axistype,dist_km, sftype)
+                oname_num  = odir + "/num.ax-%s.%04dkm.%s.sa.one"%(axistype,dist_km, sftype)
 
                 #** write *******
                 da2pr [ftype, side, dist_km].tofile(oname_pr)
@@ -389,8 +421,8 @@ for prtype in lprtype:
                   odir   = "/media/disk2/out/chart/ASAS/front/agg/%04d/%02d/%s-dist.%s.%speak"%(year,mon,var,prtype,side)
                   ctrack_func.mk_dir(odir)
                   for plev in lplev:
-                    oname_var  = odir + "/%s.%s.%s.maskrad.%04dkm.%s.sa.one"%(var, prtype, axistype, dist_km, sftype)
-                    oname_num  = odir + "/num.%s.%s.maskrad.%04dkm.%s.sa.one"%(prtype,axistype,dist_km, sftype)
+                    oname_var  = odir + "/var.ax-%s.%04dkm.%s.%04dhPa.sa.one"%(axistype, dist_km, sftype, plev)
+                    oname_num  = odir + "/num.ax-%s.%04dkm.%s.%04dhPa.sa.one"%(axistype, dist_km, sftype, plev)
 
-                    da2var [var,ftype,side,dist_km].tofile(oname_var)
-                    da2nvar[var,ftype,side,dist_km].tofile(oname_num)
+                    da2var [var,ftype,side,plev,dist_km].tofile(oname_var)
+                    da2nvar[var,ftype,side,plev,dist_km].tofile(oname_num)

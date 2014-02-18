@@ -19,14 +19,14 @@ def ret_upflag(model):
   #---
   if model in ["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]:
     upflag = False
-  elif model in ["MRI-CGCM3"]:
+  elif model in ["MRI-CGCM3","CCSM4"]:
     upflag = True
   #---
   return upflag
 
 #***************************************
 def ret_lhour_6hr_cmip(model):
-  if model in ["HadGEM2-ES","MIROC5","inmcm4","MPI-ESM-MR","NorESM1-M","MRI-CGCM3"]:
+  if model in ["HadGEM2-ES","MIROC5","inmcm4","MPI-ESM-MR","NorESM1-M","MRI-CGCM3","CCSM4"]:
     lhour = [0,6,12,18]
   elif model in ["CNRM-CM5","CSIRO-Mk3-6-0","GFDL-CM3"]:
     lhour = [6,12,18,0]
@@ -35,6 +35,7 @@ def ret_lhour_6hr_cmip(model):
 #lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
   else:
     print "no model",model
+    print "by cmip_para.ret_lhour_6hr_cmip"
     sys.exit()
   #
   return lhour
@@ -104,6 +105,7 @@ def ret_unit_calendar(model, expr):
     elif model == "IPSL-CM5B-LR":sunit,scalendar = "days since 1850-01-01 00:00:00", "noleap"
     elif model == "GFDL-CM3":sunit,scalendar = "days since 1860-01-01 00:00:00", "noleap"
     elif model == "MRI-CGCM3":sunit,scalendar = "days since 1850-01-01", "standard"
+    elif model == "CCSM4":sunit,scalendar = "days since 1850-01-01 00:00:00", "noleap"
   #*************************
   elif expr in ["rcp85","rcp45"]:    
     if model == "HadGEM2-ES":sunit,scalendar = "days since 1859-12-01", "360_day"
@@ -117,6 +119,7 @@ def ret_unit_calendar(model, expr):
     elif model == "IPSL-CM5B-LR":sunit,scalendar = "days since 2006-01-01 00:00:00", "noleap"
     elif model == "GFDL-CM3":sunit,scalendar = "days since 2006-01-01 00:00:00", "noleap"
     elif model == "MRI-CGCM3":sunit,scalendar = "days since 1850-01-01", "standard"
+    elif model == "CCSM4":sunit,scalendar = "days since 2005-01-01 00:00:00", "noleap"
   #*************************
   #
   return sunit, scalendar
@@ -135,6 +138,8 @@ def ret_ens(model, expr, var):
     else:
       if model in ["HadGEM2-ES"]:
         ens = "r2i1p1"
+      elif model in ["CCSM4"]:
+        ens = "r6i1p1"
 
   elif expr =="rcp85":
     #-- fx -----
@@ -144,6 +149,9 @@ def ret_ens(model, expr, var):
       else:
         ens = "r0i0p0"
     #--- other vars --
+    else:
+      if model in ["CCSM4"]:
+        ens = "r6i1p1"
 
   else:
     print "check expr",expr

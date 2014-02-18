@@ -8,6 +8,86 @@ def ret_thdist_search():
 def ret_thdura():
   return 48
 #----------------------------------------------------------
+def ret_decompregionlatlon(region):
+  if region == "E.ASIA":
+    lllat = 30.0
+    lllon = 110.0
+    urlat = 50.0
+    urlon = 150.0
+  elif region == "SE.ASIA":
+    lllat = -10.0
+    lllon = 95.0
+    urlat = 20.0
+    urlon = 150.0
+  elif region == "S.ASIA":
+    lllat = 0.0
+    lllon = 60.0
+    urlat = 25.0
+    urlon = 90.0
+  elif region == "AUS":
+    lllat = -40.0
+    lllon = 110.0
+    urlat = -10.0
+    urlon = 160.0
+  elif region == "MEDIT":
+    lllat = 30.0
+    lllon = -10.0
+    urlat = 45.0
+    urlon = 40.0
+  elif region == "NC.EUR":
+    lllat = 45.0
+    lllon = -10.0
+    urlat = 70.0
+    urlon = 40.0
+  elif region == "C.AFR":
+    lllat = -10.0
+    lllon = -20.0
+    urlat = 15.0
+    urlon = 50.0
+  elif region == "S.AFR":
+    lllat = -40.0
+    lllon = 10.0
+    urlat = -10.0
+    urlon = 40.0
+  elif region == "WN.AMR":
+    lllat = 30.0
+    lllon = 360.0-140.0
+    urlat = 70.0
+    urlon = 360.0-100.0
+  elif region == "EN.AMR":
+    lllat = 30.0
+    lllon = 360.0-100.0
+    urlat = 70.0
+    urlon = 360.0-50.0
+  elif region == "C.AMR":
+    lllat = 10.0
+    lllon = 360.0-115.0
+    urlat = 30.0
+    urlon = 360.0-60.0
+  elif region == "NS.AMR":
+    lllat = -20.0
+    lllon = 360.0-75.0
+    urlat = 10.0
+    urlon = 360.0-30.0
+  elif region == "SWS.AMR":
+    lllat = -60.0
+    lllon = 360.0-80.0
+    urlat = -20.0
+    urlon = 360.0-70.0
+  elif region == "SES.AMR":
+    lllat = -60.0
+    lllon = 360.0-70.0
+    urlat = -20.0
+    urlon = 360.0-30.0
+  else:
+    print "by ctrack_para.ret_decompregionlatlon"
+    print "check region"
+    print "region=",region
+    sys.exit()
+  #
+  return lllat, lllon, urlat, urlon
+
+#----------------------------------------------------------
 def ret_tagregionlatlon(region):
   if region=="MA":
     lllat = -15.0
@@ -73,11 +153,29 @@ def ret_excregionlatlon(region):
   return lllat, lllon, urlat, urlon
 #----------------------------------------------------------
 def ret_tcregionlatlon(region):
+  if region=="SH60":
+    lllat = -59.5
+    lllon = 0.5
+    urlat = -0.5
+    urlon = 359.5
+
+  if region=="NH60":
+    lllat = 0.5
+    lllon = 0.5
+    urlat = 59.5
+    urlon = 359.5
+
+  if region=="GLB60":
+    lllat = -59.5
+    lllon = 0.5
+    urlat = 59.5
+    urlon = 359.5
+
   if region=="GLB":
-    lllat = -90.0
-    lllon = 0.0
-    urlat = 90.0
-    urlon = 360.0
+    lllat = -89.5
+    lllon = 0.5
+    urlat = 89.5
+    urlon = 359.5
   if region=="PNW":
     lllat = 0.0
     lllon = 100.0
@@ -122,9 +220,14 @@ def ret_thorog():
   thorog = 1500 # m
   return thorog
 #-----------------------------------
+def ret_thorog_front():
+  thorog_front = 1000 # m
+  return thorog_front
+#-----------------------------------
 def ret_thgradorog():
   #thgradorog = 5.0 # m/km
-  thgradorog = 3.0*1.e-3 # m/m
+  #thgradorog = 3.0*1.e-3 # m/m
+  thgradorog = 1.0e+8 # m/m
   return thgradorog
 #-----------------------------------
 def ret_totaldays(iyear, eyear, season):
@@ -181,7 +284,7 @@ def ret_dpgradrange(model="org"):
   #------------------
   #pgradmin : hPa/100km
   #------------------
-  if model in ["org","anl_p","MRI-CGCM3"]:
+  if model in ["org","anl_p","MRI-CGCM3","CCSM4"]:
       pgradmin = 0.342
   if model=="HadGEM2-ES":
       pgradmin = 0.343

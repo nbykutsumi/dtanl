@@ -21,7 +21,7 @@ else:
   print "BBBBBBBBBBBB"
   print "*******************"
   var   = "psl"
-  model = "MRI-CGCM3"
+  model = "CCSM4"
   expr  = "historical"
   ens   = "r1i1p1"
   year  = 1995
@@ -108,7 +108,12 @@ odir_dump = odir_root
 #####################################################
 llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59)
 
+#----------
 print llfileinfo
+if len(llfileinfo)==0:
+  raise Error
+  sys.exit()
+#----------
 for lfileinfo in llfileinfo:
   fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname\
    = lfileinfo 

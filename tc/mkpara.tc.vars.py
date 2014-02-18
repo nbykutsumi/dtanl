@@ -3,12 +3,13 @@ from ctrack_fsub import *
 import ctrack_func
 import ctrack_para
 #*******************************************
-iyear     = 2004
-eyear     = 2004
+iyear     = 1980
+eyear     = 1999
 lmon      = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon      = [9]
 lhour     = [0,6,12,18]
-lmodel = ["org","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel = ["org","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+lmodel = ["org"]
 #lmodel    = ["org"]
 radkm     = 300.0   # (km)
 lregion = ["GLB","PNW", "PNE","INN","INS", "PSW","ATN"]

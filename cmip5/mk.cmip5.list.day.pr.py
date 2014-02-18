@@ -3,10 +3,11 @@ import cmip_func
 from netCDF4 import *
 #************************************
 #lmodel=["HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3","MRI-CGCM3"]]
-lmodel=["MRI-CGCM3"]
+lmodel=["CCSM4"]
 
 #lexpr     = ["historical","rcp85"]
-lexpr     = ["historical","rcp85"]
+#lexpr     = ["historical"]
+lexpr     = ["rcp85"]
 
 idir_root = "/home/utsumi/mnt/iis.data2/CMIP5/cmip5.day.pr"
 miss      = -9999

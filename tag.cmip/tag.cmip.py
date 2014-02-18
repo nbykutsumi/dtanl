@@ -8,8 +8,9 @@ import ctrack_para, front_para, cmip_para, tc_para
 singletime = False
 #
 #lmodel    = ["MRI-CGCM3","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-#lmodel = ["CNRM-CM5","inmcm4","MPI-ESM-MR","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-lmodel = ["GFDL-CM3"]
+#lmodel    = ["MRI-CGCM3","MIROC5","MPI-ESM-MR","CSIRO-Mk3-6-0","IPSL-CM5B-LR","GFDL-CM3"]
+#lmodel    = ["MRI-CGCM3","MIROC5","MPI-ESM-MR"]
+lmodel    = ["CSIRO-Mk3-6-0","IPSL-CM5B-LR","GFDL-CM3"]
 lexpr  = ["historical","rcp85"]
 #lexpr  = ["rcp85"]
 
@@ -57,17 +58,15 @@ for model, expr in llkey:
   thrvort  = tc_para.ret_thrvort(model)
 
   #--front ---
-  thorog     = ctrack_para.ret_thorog()
-  thgradorog = ctrack_para.ret_thgradorog()
-  thgrids    = front_para.ret_thgrids()
+  thorog_front = ctrack_para.ret_thorog_front()
+  thgradorog   = 9999.0
+  thgrids      = front_para.ret_thgrids()
   thfmask1t, thfmask2t, thfmask1q, thfmask2q   = front_para.ret_thfmasktq(model)
   
   #-----------
-  orogname   = "/media/disk2/data/CMIP5/sa.one.%s.%s/orog/orog.%s.sa.one"%(model,expr,model)
-  gradname   = "/media/disk2/data/CMIP5/sa.one.%s.%s/orog/maxgrad.0200km.sa.one"%(model,expr)
-  
-  a2orog     = fromfile(orogname, float32).reshape(ny,nx)
-  a2gradorog = fromfile(gradname, float32).reshape(ny,nx)
+  maxorogname =  "/media/disk2/data/CMIP5/sa.one.%s.historical/orog/maxtopo.0300km.sa.one"%(model)
+  a2maxorog   = fromfile(maxorogname, float32).reshape(ny,nx)
+  a2gradorog = zeros([ny,nx],float32)
   #-----------
   cmiproot        = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr"%(model,expr)
   pgraddir_root   = cmiproot + "/pgrad"
@@ -123,7 +122,8 @@ for model, expr in llkey:
     #--- load front.t -----------
     a2fbc1      = fromfile(fronttname1, float32).reshape(ny,nx)
     a2fbc2      = fromfile(fronttname2, float32).reshape(ny,nx)
-    a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss )
+
+    a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2maxorog, a2gradorog, thorog_front, thgradorog, thgrids, miss )
   
     ##########################
     #--- load  TC -----------------
@@ -156,12 +156,13 @@ for model, expr in llkey:
       a2tag       = a2tag + ma.masked_where(a2trr_nbc ==miss, a2oneint).filled(0)*1000
       #--
       tagdir_root     = "/media/disk2/out/CMIP5/sa.one.%s.%s/6hr/tag/c%02dh.tc%02dh.tc%04d.c%04d.f%04d"%(model, expr, thdura, thdura_tc, dist_tc/1000.0, dist_c/1000.0, dist_f/1000.0)
-  
+
       tagdir     = tagdir_root + "/%04d%02d"%(year,mon)
       ctrack_func.mk_dir(tagdir_root)
       ctrack_func.mk_dir(tagdir)
 
-      tagname     = tagdir + "/tag.tc%04d.c%04d.f%04d.%04d.%02d.%02d.%02d.sa.one"%(dist_tc/1000, dist_c/1000, dist_f/1000, year, mon, day, hour)
+      #tagname     = tagdir + "/tag.tc%04d.c%04d.f%04d.%04d.%02d.%02d.%02d.sa.one"%(dist_tc/1000, dist_c/1000, dist_f/1000, year, mon, day, hour)
+      tagname     = tagdir + "/tag.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
       a2tag.tofile(tagname)
       #
       print tagname

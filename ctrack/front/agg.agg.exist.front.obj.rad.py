@@ -7,8 +7,8 @@ from dtanl_fsub import *
 import ctrack_para, ctrack_func, ctrack_fig
 import front_para, front_func
 #---------------------------------
-filterflag = True
-#filterflag = False
+#filterflag = True
+filterflag = False
 
 #sum3x3flag = True
 sum3x3flag = False
@@ -23,9 +23,9 @@ calcflag = True
 iyear  = 1980
 eyear  = 1999
 lyear   = range(iyear,eyear+1)
-lseason = ["ALL"]
+#lseason = ["ALL"]
 #lseason = ["ALL","DJF","JJA"]
-#lseason = range(1,12+1)
+lseason = range(1,12+1)
 iday  = 1
 #lhour = [12]
 lhour = [0,6,12,18]
@@ -34,8 +34,8 @@ nx    = 360
 miss  = -9999.0
 thdist   = front_para.ret_thdistkm()  # (km)
 #
-#countrad = 100  # (km) for frequency count
-countrad = 1.0  # (km) for frequency count
+countrad = 500  # (km) for frequency count
+#countrad = 1.0  # (km) for frequency count
 #
 sresol   = "anl_p"
 #lftype = ["t","q"]
@@ -134,11 +134,14 @@ for season  in lseason:
     #  figure
     #---------------------------
     if sum3x3flag == True:
-      #bnd         = [5,10,15,20,25,30,35,40,45]  # (%)
-      bnd         = [10,40,70,100,130,160,190,220,250]  # (days/season)
+      bnd         = [5,10,15,20,25,30,35,40,45]  # (%)
+      #bnd         = [10,40,70,100,130,160,190,220,250]  # (days/season)
     elif sum3x3flag == False:
-      #bnd         = [1,3,5,7,9,11,13,15,19]   # (%)
-      bnd         = [1,4,7,10,13,16,19,22,25]   # (days/season)
+      if countrad >= 500.0:
+        bnd       = [10,20,30,40,50,60,70,80,90]  # (%)
+      else:
+        bnd         = [1,3,5,7,9,11,13,15,19]   # (%)
+        #bnd         = [1,4,7,10,13,16,19,22,25]   # (days/season)
     #----------
     figdir   = odir + "/pict"
     ctrack_func.mk_dir(figdir)
@@ -166,8 +169,8 @@ for season  in lseason:
 
     #---- unit ----
     totaldays = ctrack_para.ret_totaldays(iyear,eyear,season)
-    #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
-    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * totaldays / len(lyear)
+    a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * 100.0
+    #a2figdat = ma.masked_equal(a2figdat, miss).filled(0.0) * totaldays / len(lyear)
     #-- filter --------------
     if filterflag == True:
       a2figdat = myfunc_fsub.mk_a2convolution(a2figdat.T, a2filter.T, miss).T

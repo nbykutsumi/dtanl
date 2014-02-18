@@ -62,15 +62,15 @@ end do
 return
 END SUBROUTINE mk_a2radsum_saone
 !*****************************************************************
-SUBROUTINE mk_a2max_rad_saone(a2in, radkm, nx, ny, a2out)
+SUBROUTINE mk_a2max_rad_saone(a2in, radkm, miss, nx, ny, a2out)
 implicit none
 !----------------------------------------------
 integer                        nx, ny
 !--- in ------------
 real,dimension(nx,ny)       :: a2in
 !f2py intent(in)               a2in
-real                           radkm
-!f2py intent(in)               radkm
+real                           radkm, miss
+!f2py intent(in)               radkm, miss
 !--- out -----------
 real,dimension(nx,ny)       :: a2out
 !f2py intent(out)              a2out
@@ -86,8 +86,14 @@ real,parameter              :: dlon = 1.0
 real,parameter              :: lat_first = -89.5
 real,parameter              :: lon_first = 0.5
 !-------------------
+a2out = miss
 do iy = 1,ny
   do ix = 1,nx
+    !---------
+    if ( a2in(ix,iy).eq.miss ) then
+      cycle
+    end if
+    !---------
     lat  = lat_first + dlat*(iy -1)
     vmax = a2in(ix,iy)
     CALL circle_xy_real(lat, lat_first, dlon, dlat, radkm*1000.0, miss_int, nx, ny, a1x, a1y)
@@ -594,6 +600,225 @@ end do
 !----------------------
 return
 END SUBROUTINE vs_dist_c_saone
+!*****************************************************************
+SUBROUTINE calc_tcvar_saone(a2pgrad, a2life, a2tlow, a2tmid, a2tup&
+                        &, a2ulow, a2uup, a2vlow, a2vup&
+                        &, miss&
+                        &, nx, ny, a2rvort, a2dtlow, a2dtmid, a2dtup, a2wmeanlow, a2wmeanup, a2wmaxlow, a2dura)
+
+implicit none
+!---- in ------
+integer                              nx, ny
+real,dimension(nx,ny)             :: a2pgrad, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup
+!f2py intent(in)                      a2pgrad, a2tlow, a2tmid, a2tup, a2ulow, a2uup, a2vlow, a2vup
+integer,dimension(nx,ny)          :: a2life
+!f2py intent(in)                     a2life
+real                                 miss
+!f2py intent(in)                     miss
+!---- out -----
+real,dimension(nx,ny)             :: a2rvort, a2dtlow, a2dtmid, a2dtup, a2wmeanlow, a2wmeanup, a2wmaxlow, a2dura
+!f2py intent(out)                    a2rvort, a2dtlow, a2dtmid, a2dtup, a2wmeanlow, a2wmeanup, a2wmaxlow, a2dura
+!---- para ----
+integer,parameter                 :: miss_int  = -9999
+real,parameter                    :: lat_first = -89.5
+real,parameter                    :: dlat      = 1.0
+real,parameter                    :: dlon      = 1.0
+real,parameter                    :: radkm     = 300.0  ! km
+!---- calc ----
+integer                              itemp
+integer                              ix, iy
+integer                              xgrids, sgrids, ngrids
+integer                              ixw,ixe,ixs,ixn
+integer                              iyw,iye,iys,iyn
+integer                              life, dura, pgmax
+integer,dimension(7,7)            :: a1xt, a1yt
+integer,dimension(nx*ny)          :: a1x, a1y
+integer                              xt_temp, yt_temp
+integer                              dix, diy, ixt, iyt
+integer                              icount
+real                                 pgrad
+real                                 rvort
+real                                 lat 
+real                                 dn, ds, dns, dew
+real                                 us, un, vw, ve
+real                                 wmaxlow, wmeanlow, wmeanup
+real                                 ulow, vlow, uup, vup
+real                                 wlow, wup
+real                                 tmeanlow, tmeanmid, tmeanup
+real                                 dtlow, dtmid, dtup
+
+!--- init ------
+a2rvort   = miss
+a2dtlow   = miss
+a2dtmid   = miss
+a2dtup    = miss
+a2wmeanlow= miss
+a2wmeanup = miss
+a2wmaxlow = miss
+a2dura    = miss
+!---------------
+do iy = 1,ny
+  lat = lat_first + (iy -1)*1.0
+  dn  = hubeny_real(lat, 0.0, lat+1.0, 0.0)
+  ds  = hubeny_real(lat, 0.0, lat-1.0, 0.0)
+  dns = (dn + ds)/2.0
+  dew = hubeny_real(lat, 0.0, lat, 1.0)
+  !-----------------------------
+  do ix = 1,nx
+    !-- pgrad ----------
+    pgrad  = a2pgrad(ix,iy)
+    if (pgrad .eq. miss)then
+      cycle
+    end if
+    !-- dura -----------
+    life   = a2life(ix,iy)
+    call solvelife_point(life, miss_int, dura, pgmax)
+    a2dura(ix,iy)  = real(dura)
+    !!-------------------
+    lat  = lat_first + dlat*(iy -1)
+    CALL gridrange_real(lat, dlat, dlon, radkm*1000.0, ngrids, sgrids, xgrids)
+    
+    !-- relative vorticity @ low level ---
+    dn  = hubeny_real(lat, 0.0, lat+1.0*ngrids, 0.0)
+    ds  = hubeny_real(lat, 0.0, lat-1.0*sgrids, 0.0)
+    dns = (dn + ds)/2.0
+    dew = hubeny_real(lat, 0.0, lat, 1.0*xgrids)
+    
+    
+    call ixy2iixy_saone(ix, iy+ngrids, ixn, iyn)
+    call ixy2iixy_saone(ix, iy-sgrids, ixs, iys)
+    call ixy2iixy_saone(ix-xgrids, iy, ixw, iyw)
+    call ixy2iixy_saone(ix+xgrids, iy, ixe, iye)
+    !---
+    us  = a2ulow(ixs, iys)
+    un  = a2ulow(ixn, iyn)
+    vw  = a2vlow(ixw, iyw)
+    ve  = a2vlow(ixe, iye)
+    !-
+    if ( (us.eq.miss).or.(un.eq.miss).or.(vw.eq.miss).or.(ve.eq.miss) )then
+      rvort = miss
+    else
+      rvort  =  (ve - vw)/(dew*2.0) - (un - us)/(dns*2.0) 
+
+      if (isnan(rvort))then
+        rvort = miss
+      end if
+
+    end if
+    !-
+    a2rvort(ix,iy)  = rvort
+
+    !-- 7x7 grid box ---------
+    do diy = 1,7
+      do dix = 1,7
+        call ixy2iixy_saone(ix+dix-4, iy+diy-4, xt_temp, yt_temp)
+        a1xt(dix, diy) = xt_temp
+        a1yt(dix, diy) = yt_temp
+      end do
+    end do
+    !-- vmax & vmean ----------
+    wmaxlow  = 0.0
+    wmeanlow = 0.0
+    wmeanup  = 0.0
+    !--
+    icount = 7*7
+    do diy = 1,7
+      do dix = 1,7
+        ixt = a1xt(dix, diy)
+        iyt = a1yt(dix, diy)
+        !--
+        ulow = a2ulow(ixt,iyt)
+        vlow = a2vlow(ixt,iyt)
+        uup  = a2uup(ixt,iyt)
+        vup  = a2vup(ixt,iyt)
+        !--
+        if ((ulow.eq.miss).or.(isnan(ulow)).or.(isnan(vlow)).or.(isnan(uup)).or.(isnan(vup)))then
+          icount = icount -1
+          cycle
+        end if
+        !--
+        wlow = ((ulow)**2.0 + (vlow)**2.0)**0.5
+        wup  = ((uup)**2.0  + (vup)**2.0)**0.5
+        !--
+        wmaxlow   = max(wmaxlow, wlow)
+        wmeanlow  = wmeanlow + wlow
+        wmeanup   = wmeanup  + wup
+        !--
+      end do
+    end do
+    if (icount.eq.0)then
+      wmeanlow    = miss
+      wmeanup     = miss
+    else
+      wmeanlow    = wmeanlow / real(icount)
+      wmeanup     = wmeanup  / real(icount)
+    end if
+    a2wmeanlow(ix,iy)  = wmeanlow
+    a2wmeanup (ix,iy)  = wmeanup
+    a2wmaxlow (ix,iy)  = wmaxlow
+
+    !-- temperature anomaly -----
+    lat  = lat_first + dlat*(iy -1)
+    CALL circle_xy_real(lat, lat_first, dlon, dlat, radkm*1000.0, miss_int, nx, ny, a1x, a1y)
+    !
+    tmeanlow  = 0.0
+    tmeanmid  = 0.0
+    tmeanup   = 0.0
+    icount   = 0
+    itemp    = 1
+
+    do while (a1x(itemp) .ne. miss_int)
+      dix = a1x(itemp)
+      diy = a1y(itemp)
+      CALL ixy2iixy(ix+dix, iy+diy, nx, ny, ixt, iyt)
+      itemp = itemp + 1
+
+      !print *,lat,"loop",ixt,iyt,itemp
+      if (a2tlow(ixt, iyt).eq. miss)then
+        cycle
+      else if ( (isnan(a2tlow(ixt,iyt))).or.(isnan(a2tmid(ixt,iyt))).or.( isnan(a2tlow(ixt,iyt))))then
+        cycle 
+      else
+        tmeanlow   = tmeanlow + a2tlow(ixt, iyt)
+        tmeanmid   = tmeanmid + a2tmid(ixt, iyt)
+        tmeanup    = tmeanup  + a2tup(ixt, iyt)
+        icount = icount + 1
+      end if
+    end do
+    !-
+    if (icount .eq.0)then
+      dtlow     = miss
+      dtmid     = miss
+      dtup      = miss
+    else
+      tmeanlow  = tmeanlow / real(icount)
+      tmeanmid  = tmeanmid / real(icount)
+      tmeanup   = tmeanup  / real(icount)
+      !
+      dtlow     = a2tlow(ix,iy) - tmeanlow  
+      dtmid     = a2tmid(ix,iy) - tmeanmid
+      dtup      = a2tup(ix,iy)  - tmeanup  
+    end if
+    a2dtlow(ix,iy)     = dtlow
+    a2dtmid(ix,iy)     = dtmid
+    a2dtup (ix,iy)     = dtup
+    
+    !-- check missing value at center --
+    if (a2tlow(ix,iy) .eq. miss)then
+      a2rvort(ix,iy)    = miss
+      a2dtlow(ix,iy)    = miss
+      a2dtmid(ix,iy)    = miss
+      a2wmeanlow(ix,iy) = miss
+    end if
+    !-----------------------------------
+  end do
+end do
+
+!--------------
+END SUBROUTINE calc_tcvar_saone
+!*****************************************************************
+
+
 !*****************************************************************
 SUBROUTINE find_tc_saone(a2pgrad, a2life, a2lastpos, a2lastflag, a2tlow, a2tmid, a2tup&
                         &, a2ulow, a2uup, a2vlow, a2vup, a2sst, a2landsea&
@@ -1452,6 +1677,64 @@ RETURN
 END SUBROUTINE mk_territory_saone
 
 !*****************************************************************
+SUBROUTINE mk_territory_point_saone(nx, ny, ix, iy, thdist&
+                , miss, lat_first, dlat, dlon&
+                , a2territory )
+  implicit none
+  !-- input -------------------------------------
+  integer                                         nx, ny
+!f2py intent(in)                                  nx, ny
+  integer                                         ix, iy
+!f2py intent(in)                                  ix, iy
+  real                                            thdist  ! [m]
+!f2py intent(in)                                  thdist
+  real                                            miss
+!f2py intent(in)                                  miss
+  real                                            lat_first, dlat, dlon
+!f2py intent(in)                                  lat_first, dlat, dlon
+
+
+  !-- output ------------------------------------
+  real,dimension(nx,ny)                       ::  a2territory
+!f2py intent(out)                                 a2territory
+  !-- calc --------------------------------------
+  integer                                         iix, iiy, ix_loop, iy_loop
+  real                                            ilat
+  integer,dimension(nx*ny)                     :: a1x, a1y
+  integer                                         icount
+  integer                                         itemp   ! for test
+  !--- para -------------------------------------
+  integer,parameter                            :: miss_int = -9999
+
+  !----------------------------------------------
+a2territory = miss
+
+itemp = 0
+!------------------------
+! check
+!------------------------
+itemp = itemp + 1
+ilat  = lat_first + (iy -1)*dlat
+call circle_xy_real(ilat, lat_first, dlon, dlat, thdist, miss_int, nx, ny, a1x, a1y) 
+!-------------------------
+! search
+!-------------------------
+icount = 1
+do while ( a1x(icount) .ne. miss_int )
+  ix_loop = ix + a1x(icount)
+  iy_loop = iy + a1y(icount) 
+  call ixy2iixy(ix_loop, iy_loop, nx, ny, iix, iiy)
+  !************************************
+  a2territory(iix,iiy) = 1.0
+  icount = icount + 1
+end do
+RETURN
+END SUBROUTINE mk_territory_point_saone
+
+
+
+
+!*****************************************************************
 SUBROUTINE eqgrid_aggr(a2in, a1lat, a1lon, dkm, nrad_kmgrid, iy, ix, miss, ny_in, nx_in, a2sum, a2num)
   implicit none
   !-- input -------------------------------------
@@ -1862,14 +2145,17 @@ do iy0 = 1, ny
         do iix_loop = ix1 - xgrids, ix1 + xgrids
           do iiy_loop = iy1 - ygrids, iy1 + ygrids
             call ixy2iixy(iix_loop, iiy_loop, nx, ny, iix, iiy)
-            !------------------
-            ! skip if the potential cyclone is 
-            ! located in the same place as the previous step
-            !------------------
-            if ((iix.eq.ix0).and.(iiy.eq.iy0))then
-              cycle
-            end if
-            !------------------
+            !**********************
+            ! DO NOT USE
+            ! TC track will be drastically reduced
+            !!------------------
+            !! skip if the potential cyclone is 
+            !! located in the same place as the previous step
+            !!------------------
+            !if ((iix.eq.ix0).and.(iiy.eq.iy0))then
+            !  cycle
+            !end if
+            !!------------------
             if (a2pgrad1(iix,iiy) .ne. miss_dbl) then
               !iipsl        = a2psl1(iix, iiy)
               iidp_temp    = a2pgrad1(iix,iiy)
@@ -1943,9 +2229,6 @@ end do
 !-----
 RETURN
 END SUBROUTINE connectc
-
-!*****************************************************************
-
 
 
 !*****************************************************************

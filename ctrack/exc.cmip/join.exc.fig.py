@@ -9,14 +9,14 @@ filterflag = False
 #sum3x3flag = True
 sum3x3flag = False
 
-lmodel = ["MRI-CGCM3","CNRM-CM5","MIROC5","HadGEM2-ES","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","IPSL-CM5A-MR","NorESM1-M","GFDL-CM3","IPSL-CM5B-LR"]
+lmodel = ["CCSM4","MRI-CGCM3","CNRM-CM5","MIROC5","HadGEM2-ES","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","IPSL-CM5A-MR","NorESM1-M","GFDL-CM3","IPSL-CM5B-LR"]
 #lmodel = ["HadGEM2-ES"]
 #lexpr   = ["historical", "rcp85"]
 lexpr   = ["historical"]
 dyrange = {"historical":[1980,1999], "rcp85":[2080,2099]}
 thdura  = 48
-#countrad = 300.0 #[km]
-countrad = 1.0 #[km]
+countrad = 1000.0 #[km]
+#countrad = 1.0 #[km]
 lseason  = ["ALL"]
 #*** Figure para *********
 iyfig  = 140
@@ -92,6 +92,7 @@ for season, expr in llkey:
   # Dummy
   #-------------------
   da2dat[-9999] = ma.masked_equal(da2dat[-1] * 0.0, 0.0).filled(255)
+  da2dat[-8888] = da2dat[-9999][:200]
   #---- Join ---------
   if len(lmodel) == 9:
     a2line1  = hstack([da2dat[-1], da2dat[-9999], da2dat[-9999]])
@@ -100,13 +101,23 @@ for season, expr in llkey:
     a2line4  = hstack([da2dat[6], da2dat[7], da2dat[8]])
     a2oarray = vstack([a2line1, a2line2, a2line3, a2line4])
 
-  elif len(lmodel) == 11:
+  elif len(lmodel) == 12:
+    a2line0  = hstack([da2dat[-8888],da2dat[-8888],da2dat[-8888]])
     a2line1  = hstack([da2dat[-1], da2dat[-9999], da2dat[-9999]])
-    a2line2  = hstack([da2dat[0], da2dat[1], da2dat[-9999]])
-    a2line3  = hstack([da2dat[2], da2dat[3], da2dat[4]])
-    a2line4  = hstack([da2dat[5], da2dat[6], da2dat[7]])
-    a2line5  = hstack([da2dat[8], da2dat[9], da2dat[10]])
-    a2oarray = vstack([a2line1, a2line2, a2line3, a2line4, a2line5])
+    a2line2  = hstack([da2dat[0], da2dat[1], da2dat[2]])
+    a2line3  = hstack([da2dat[3], da2dat[4], da2dat[5]])
+    a2line4  = hstack([da2dat[6], da2dat[7], da2dat[8]])
+    a2line5  = hstack([da2dat[9], da2dat[10], da2dat[11]])
+    a2oarray = vstack([a2line0, a2line1, a2line2, a2line3, a2line4, a2line5, a2line0])
+  #elif len(lmodel) == 11:
+  #  a2line0  = hstack([da2dat[-8888],da2dat[-8888],da2dat[-8888]])
+  #  a2line2  = hstack([da2dat[-1], da2dat[0], da2dat[1]])
+  #  a2line3  = hstack([da2dat[2], da2dat[3], da2dat[4]])
+  #  a2line4  = hstack([da2dat[5], da2dat[6], da2dat[7]])
+  #  a2line5  = hstack([da2dat[8], da2dat[9], da2dat[10]])
+  #  a2oarray = vstack([a2line0, a2line2, a2line3, a2line4, a2line5, a2line0])
+
+
 
   #-------------------
   

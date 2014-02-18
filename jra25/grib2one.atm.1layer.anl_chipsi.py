@@ -7,22 +7,17 @@ import cf
 import jra_func
 import ctrack_func
 
-iyear    = 2004
-eyear    = 2004
+iyear    = 2007
+eyear    = 2010
 #lmon     = [1]
-#lmon     = arange(1,12+1)
-#lmon     = [7,6,1,2,3,4,5,8,9,10,11,12]
-lmon     = [6,7]
+lmon     = arange(1,12+1)
 tstp     = "6hr"
 singleday   = False  # True or False
 miss_out    = -9999.0
 #lplev       = [250]   # pressure level (hPa)
 #lplev       = [850]
 #lplev       = [850,700,500,300,250]
-#lplev       = [250,300,500,600,700,850,925]
-#lplev       = [300,500,700,850,925]
-#lplev       = [250,500,700,850,925]
-lplev       = [500,850]
+lplev       = [250,300,500,600,700,850,925]
 
 lvar   = ["VVEL"]
 dtype  = {}
@@ -41,7 +36,7 @@ a1lat_org     = arange(lat_first_org, lat_last_org + dlat_org*0.1, dlat_org)
 a1lon_org     = arange(lon_first_org, lon_last_org + dlon_org*0.1, dlon_org)
 
 #-----------
-idir_root   =  "/media/disk2/data/JRA25/grib.anl_chipsi/6hr"
+idir_root   =  "/home/utsumi/mnt/mizu.tank/utsumi/data/JRA25/ds.data.jma.go.jp/data01/Grib/anl_chipsi"
 
 
 #---------------------------------------------------------------
@@ -107,7 +102,7 @@ for year in range(iyear, eyear + 1):
         tempname = idir + "/%s.%04d%02d0100"%(stype, year, mon)
         dumpname = odir + "/dump.txt"
     
-        ptemp  = subprocess.call("wgrib -V %s | grep -A 6 %s | grep -A 6 '%dmb' > %s"%(tempname, var, plev, dumpname), shell=True)
+        ptemp  = subprocess.call("wgrib -V %s | grep -A 6 %s | grep -A 6 '%d mb' > %s"%(tempname, var, plev, dumpname), shell=True)
           
         #---------
         eday  = calendar.monthrange(year, mon)[1]

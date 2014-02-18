@@ -2006,7 +2006,7 @@ do iy_saone = 1, 180
       end do          
 
       !----------------------------
-      ! Conditions IV and V-VIII
+      ! Conditions I and V-VIII
       !----------------------------
       if ((ncount_same .lt.th_count_same )&
          .and.(scount_same.lt.th_count_same)&
@@ -2123,7 +2123,7 @@ do iy_saone = 1, 180
       end do          
 
       !----------------------------
-      ! Conditions IV, and V-VIII
+      ! Conditions I, and V-VIII
       !----------------------------
       if ((ncount_same .lt.th_count_same )&
          .and.(scount_same.lt.th_count_same)&

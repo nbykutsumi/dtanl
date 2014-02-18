@@ -24,12 +24,12 @@ lbstflag_tc = ["bst"]
 #lbstflag_f = ["","bst"]
 lbstflag_f = [""]
 #
-#iyear  = 2001
-#eyear  = 2001
+#iyear  = 2005
+#eyear  = 2005
 #iyear  = 1997
 #eyear  = 2012
-iyear  = 2004
-eyear  = 2004
+iyear  = 1980
+eyear  = 1996
 lmon   = [1,2,3,4,5,6,7,8,9,10,11,12]
 #lmon   = [1]
 iday   = 1
@@ -39,22 +39,11 @@ thdura = 48
 #thdura = 72
 thdura_tc = thdura
 #- dist ----
-lldist   = array([[1000,1000,500],[500,500,250],[750,750,375],[1250,1250,625],[1500,1500,750]])*1000.0
-
-#dist_tc    = 1000.0 *1000.0 # [m]
-#dist_c     = 1000.0*1000.0 # [m]
-#dist_f     = 500.0*1000.0  # [m]
-
-## 80% area
-#dist_tc    = 894.0 *1000.0 # [m]
-#dist_c     = 894.0*1000.0 # [m]
-#dist_f     = 400.0*1000.0  # [m]
-
-## 120% area
-#dist_tc    = 1095 *1000.0 # [m]
-#dist_c     = 1095 *1000.0 # [m]
-#dist_f     = 600.0*1000.0  # [m]
-
+#lldist1   = array([[500,1000,500],[750,1000,500],[1000,1000,500],[1250,1000,500],[1500,1000,500]])*1000.0
+#lldist2   = array([[1000,500,500],[1000,750,500],[1000,1250,500],[1000,1500,500]])*1000.0
+#lldist3   = array([[1000,1000,250],[1000,1000,375],[1000,1000,625],[1000,1000,750]])*1000.0
+#lldist    = vstack( [lldist1, lldist2, lldist3] )
+lldist   = array([[1000,1000,500]])*1000.0
 #-----------
 pgradmin = ctrack_para.ret_dpgradrange()[2][0]  # Pa/1000km
 #----------- 
@@ -77,15 +66,16 @@ dlat       = 1.0
 dlon       = 1.0
 
 #--front ---
-thorog     = ctrack_para.ret_thorog()
-thgradorog = ctrack_para.ret_thgradorog()
-thgrids    = front_para.ret_thgrids()
+thorog_front = ctrack_para.ret_thorog_front()
+thgradorog   = ctrack_para.ret_thgradorog()
+thgrids      = front_para.ret_thgrids()
 thfmask1t, thfmask2t, thfmask1q, thfmask2q   = front_para.ret_thfmasktq(sresol)
 orogname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
 gradname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxgrad.0200km.sa.one"
-a2orog     = fromfile(orogname, float32).reshape(ny,nx)
+maxorogname= "//media/disk2/data/JRA25/sa.one.125/const/topo/maxtopo.0300km.sa.one"
+#a2orog     = fromfile(orogname, float32).reshape(ny,nx)
 a2gradorog = fromfile(gradname, float32).reshape(ny,nx)
-
+a2maxorog  = fromfile(maxorogname, float32).reshape(ny,nx)
 
 #-----------
 pgraddir_root   = "/media/disk2/out/JRA25/sa.one.%s/6hr/pgrad"%(sresol)
@@ -185,12 +175,12 @@ for ldist in lldist:
                 #-- front.t ---
                 a2fbc1      = fromfile(fronttname1, float32).reshape(ny,nx)
                 a2fbc2      = fromfile(fronttname2, float32).reshape(ny,nx)
-                a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss )
+                a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2maxorog, a2gradorog, thorog_front, thgradorog, thgrids, miss )
   
                 #-- front.q ---
                 a2nbc1      = fromfile(frontqname1, float32).reshape(ny,nx)
                 a2nbc2      = fromfile(frontqname2, float32).reshape(ny,nx)
-                a2nbc       = front_func.complete_front_q_saone(a2fbc, a2nbc1, a2nbc2, thfmask1q, thfmask2q, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss)
+                a2nbc       = front_func.complete_front_q_saone(a2fbc, a2nbc1, a2nbc2, thfmask1q, thfmask2q, a2maxorog, a2gradorog, thorog_front, thgradorog, thgrids, miss)
               ##########################
               #--- load  TC -----------------
               ## BEST TC  ###
@@ -215,6 +205,7 @@ for ldist in lldist:
               a2trr_c     = ctrack_fsub.mk_territory_saone(a2c.T,  dist_c,  miss, lat_first, dlat, dlon).T
               a2trr_fbc   = ctrack_fsub.mk_territory_saone(a2fbc.T,  dist_f,  miss, lat_first, dlat, dlon).T
               a2trr_nbc   = ctrack_fsub.mk_territory_saone(a2nbc.T,  dist_f,  miss, lat_first, dlat, dlon).T
+
               # 
               #-- tag   ------------------
               a2tag       = zeros([ny,nx],int32)
@@ -223,8 +214,8 @@ for ldist in lldist:
               a2tag       = a2tag + ma.masked_where(a2trr_fbc ==miss, a2oneint).filled(0)*100
               a2tag       = a2tag + ma.masked_where(a2trr_nbc ==miss, a2oneint).filled(0)*1000
               #--
-              #tagname     = tagdir + "/tag.%stc%02d.c%02d.%sf%02d.%04d.%02d.%02d.%02d.sa.one"%(bstflag_tc, dist_tc/100/1000, dist_c/100/1000, bstflag_f, dist_f/100/1000, year, mon, day, hour)
-              tagname     = tagdir + "/tag.%stc%04d.c%04d.%sf%04d.%04d.%02d.%02d.%02d.sa.one"%(bstflag_tc, dist_tc/1000, dist_c/1000, bstflag_f, dist_f/1000, year, mon, day, hour)
+              #tagname     = tagdir + "/tag.%stc%04d.c%04d.%sf%04d.%04d.%02d.%02d.%02d.sa.one"%(bstflag_tc, dist_tc/1000, dist_c/1000, bstflag_f, dist_f/1000, year, mon, day, hour)
+              tagname     = tagdir + "/tag.%04d.%02d.%02d.%02d.sa.one"%(year, mon, day, hour)
               a2tag.tofile(tagname)
               #
               print tagname

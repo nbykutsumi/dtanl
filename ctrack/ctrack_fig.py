@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from cf.plot import *
 #####################################################
-def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0, lonlatfontsize=10.0, lonrotation=90):
+def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0, lonlatfontsize=10.0, lonrotation=90, ticks=None):
   #-- prep ----------------
   plt.clf()
   dlat    = 1.0
@@ -64,7 +64,7 @@ def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=F
 
   #-- colorbar for self -
   if cbarname == "self":
-    plt.colorbar(im)
+    plt.colorbar(im, ticks=ticks)
 
   #-- shade     -----------
   if type(a2shade) != bool:
@@ -102,16 +102,16 @@ def mk_pict_saone_reg(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=F
     #----------
     if type(bnd) == bool:
       im       = M.imshow(a2in, origin="lower", cmap=mycm)
-      plt.colorbar(im, extend="both", cax=axcbar, orientation="horizontal")
+      plt.colorbar(im, extend="both", cax=axcbar, orientation="horizontal", ticks=ticks)
     else:
       im       = M.imshow(a2in, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm)
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-      plt.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar, orientation="horizontal")
+      plt.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar, orientation="horizontal", ticks=ticks)
     #----------
     figcbar.savefig(cbarname)
 
 #********************************************************
-def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0, lonlatfontsize=10.0, lonrotation=90):
+def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", stitle=False, cbarname=False, miss=-9999.0, lllat=-89.5, lllon=0.5, urlat=89.5, urlon=359.5, a2shade=False, coef=1.0, lonlatfontsize=10.0, lonrotation=90, ticks=None):
   #-- prep ----------------
   plt.clf()
   dlat    = 1.0
@@ -171,7 +171,7 @@ def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", sti
 
   #-- colorbar for self -
   if cbarname == "self":
-    plt.colorbar(im)
+    plt.colorbar(im, ticks=ticks)
 
   #-- shade     -----------
   if type(a2shade) != bool:
@@ -209,11 +209,11 @@ def mk_pict_saone_reg_symm(a2in, bnd=False, mycm="jet", soname="./temp.png", sti
     #----------
     if type(bnd) == bool:
       im       = M.imshow(a2in, origin="lower", cmap=mycm)
-      plt.colorbar(im, extend="both", cax=axcbar, orientation="horizontal")
+      plt.colorbar(im, extend="both", cax=axcbar, orientation="horizontal", ticks=ticks)
     else:
       im       = M.imshow(a2in, origin="lower", norm=BoundaryNormSymm(bnd), cmap=mycm)
       bnd_cbar  = [-1.0e+40] + bnd + [1.0e+40]
-      plt.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar, orientation="horizontal")
+      plt.colorbar(im, boundaries= bnd_cbar, extend="both", cax=axcbar, orientation="horizontal", ticks=ticks)
     #----------
     figcbar.savefig(cbarname)
 

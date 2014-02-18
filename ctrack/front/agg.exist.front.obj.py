@@ -28,14 +28,17 @@ sresol   = "anl_p"
 lftype = ["t","q"]
 #-- para for objective locator -------------
 plev     = 850*100.0 # (Pa)
-thorog     = ctrack_para.ret_thorog()
-thgradorog = ctrack_para.ret_thgradorog()
-thgrids    = front_para.ret_thgrids()
-thfmask1t, thfmask2t, thfmask1q, thfmask2q   = front_para.ret_thfmasktq(sresol)
-orogname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
-gradname   = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxgrad.0200km.sa.one"
-a2orog     = fromfile(orogname, float32).reshape(ny,nx)
-a2gradorog = fromfile(gradname, float32).reshape(ny,nx)
+thorog       = ctrack_para.ret_thorog()
+thorog_front = ctrack_para.ret_thorog_front()
+#thgradorog   = ctrack_para.ret_thgradorog()
+thgradorog   = 9999e+5
+thgrids      = front_para.ret_thgrids()
+thfmask1t,   thfmask2t, thfmask1q, thfmask2q   = front_para.ret_thfmasktq(sresol)
+orogname     = "/media/disk2/data/JRA25/sa.one.125/const/topo/topo.sa.one"
+maxorogname  = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxtopo.0300km.sa.one"
+gradname     = "/media/disk2/data/JRA25/sa.one.125/const/topo/maxgrad.0200km.sa.one"
+a2maxorog    = fromfile(maxorogname, float32).reshape(ny,nx)
+a2gradorog   = fromfile(gradname,    float32).reshape(ny,nx)
 
 #-------------------------------------------
 a2one    = ones([ny,nx],float32)
@@ -93,13 +96,13 @@ for ftype in lftype:
           #-- front.t ---
           a2fbc1      = fromfile(fronttname1, float32).reshape(ny,nx)
           a2fbc2      = fromfile(fronttname2, float32).reshape(ny,nx)
-          a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss )
+          a2fbc       = front_func.complete_front_t_saone(a2fbc1, a2fbc2, thfmask1t, thfmask2t, a2maxorog, a2gradorog, thorog_front, thgradorog, thgrids, miss )
   
           #-- front.q ---
           if ftype == "q":
             a2nbc1      = fromfile(frontqname1, float32).reshape(ny,nx)
             a2nbc2      = fromfile(frontqname2, float32).reshape(ny,nx)
-            a2nbc       = front_func.complete_front_q_saone(a2fbc, a2nbc1, a2nbc2, thfmask1q, thfmask2q, a2orog, a2gradorog, thorog, thgradorog, thgrids, miss)
+            a2nbc       = front_func.complete_front_q_saone(a2fbc, a2nbc1, a2nbc2, thfmask1q, thfmask2q, a2maxorog, a2gradorog, thorog_front, thgradorog, thgrids, miss)
     
           #-- count baloclinic front loc --
           if ftype == "t":
@@ -125,7 +128,7 @@ for ftype in lftype:
       #----------
       name_temp = odir_mon + "/count.front.%s.3deg.M1_%s_M2_%s.sa.one"%(ftype, thfmask1, thfmask2)
       a2temp    = a2count_mon
-      a2temp    = ma.masked_where(a2orog>thorog, a2temp).filled(miss)
-      a2temp    = ma.masked_where(a2gradorog>thgradorog, a2temp).filled(miss)
+      a2temp    = ma.masked_where(a2maxorog>thorog_front, a2temp).filled(miss)
+      #a2temp    = ma.masked_where(a2gradorog>thgradorog, a2temp).filled(miss)
       a2temp.tofile(name_temp)
       print name_temp

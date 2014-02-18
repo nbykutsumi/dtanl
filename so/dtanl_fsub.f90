@@ -2884,6 +2884,68 @@ cal_wetbulbtheta = t1_to_t2_moistadia(Plcl, P1000, Tlcl)
 !
 return
 END FUNCTION cal_wetbulbtheta
+!*********************************************************
+SUBROUTINE a2t1_to_a2t2(P1,P2, a2t1, a2q1, miss, nx, ny, a2t2)
+implicit none
+integer                   nx, ny
+!--- in -------------
+real                      P1, P2
+!f2py intent(in)          P1, P2
+real,dimension(nx,ny)  :: a2t1, a2q1
+!f2py intent(in)          a2t1, a2q1
+real                      miss
+!f2py intent(in)          miss
+!--- out ------------
+real,dimension(nx,ny)  :: a2t2
+!f2py intent(out)         a2t2
+!--- para -----------
+
+!--- calc -----------
+integer                   ix,iy
+real                      t1,q1
+!--------------------
+a2t2  = miss
+do iy = 1,ny
+  do ix = 1,nx
+    t1 = a2t1(ix,iy)
+    q1 = a2q1(ix,iy)
+    if ((t1.eq.miss).or.(q1.eq.miss))then
+      cycle
+    else
+      a2t2(ix,iy) = t1_to_t2(P1,P2, t1, q1)
+    end if
+  end do
+end do
+!--------------------
+return
+END SUBROUTINE a2t1_to_a2t2
+!*********************************************************
+FUNCTION t1_to_t2(P1,P2, T1, q1)
+implicit none
+!--- in -------------
+real                 P1, P2, T1, q1  ! (Pa), (K), (kg/kg)
+!f2py intent(in)     P1, P2, T1, q1
+!--- out ------------
+real                 t1_to_t2
+!f2py intent(out)    t1_to_t2
+!--- para -----------
+real               :: Cpd   = 1004.0 !(J kg^-1 K^-1)
+real               :: Rd    = 287.04  !(J kg^-1 K^-1)
+!--- calc -----------
+real                 Plcl, Tlcl 
+!--------------------
+t1_to_t2 = 0.0
+
+Tlcl  = cal_tlcl(p1,T1,q1)
+Plcl  = P1*(Tlcl/T1)**(Cpd/Rd)
+if (Plcl.gt.P2)then
+  t1_to_t2  = t1_to_t2_moistadia(Plcl, P2, Tlcl)
+else if (Plcl.le.P2)then
+  t1_to_t2  = T1*(P2/P1)**(Rd/Cpd)
+end if
+!--------------------
+return
+END FUNCTION t1_to_t2
 !!!*********************************************************
 FUNCTION t1_to_t2_moistadia(P1,P2, T1)
 implicit none

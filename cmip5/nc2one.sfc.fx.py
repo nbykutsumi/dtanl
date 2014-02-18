@@ -14,8 +14,9 @@ if len(sys.argv) >1:
 else:
   #lmodel = ["NorESM1-M", "MIROC5", "CanESM2"]
   #lmodel = ["MIROC5","MRI-CGCM3","HadGEM2-ES"]
-  lmodel = ["MRI-CGCM3"]
-  lexpr = ["historical","rcp85"]
+  lmodel = ["CCSM4"]
+  #lexpr = ["historical","rcp85"]
+  lexpr = ["historical"]
   #expr = "rcp85" #historical, rcp85
 #--------------------
 #lvar = ["sftlf"]

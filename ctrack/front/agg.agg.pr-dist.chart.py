@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import subprocess
 from numpy import *
 #-----------------------------
-iyear   = 2007
+iyear   = 2001
 #eyear   = 2010
-eyear   = 2010
+eyear   = 2005
 #lseason = ["ALL","JJA","DJF"]
 lseason = ["ALL"]
 #lseason = [1]
@@ -16,18 +16,18 @@ lprtype = ["GSMaP"]
 #lprtype = ["GSMaP","JRA25.C","JRA25.L","JRA25"] 
 lvtype  = ["theta_e"]
 #lvtype  = ["theta"]
-lftype  = ["warm","cold","occ","stat"]
-#lftype  = ["warm","cold","stat"]
+#lftype  = ["warm","cold","occ","stat"]
+lftype  = ["warm","cold","stat"]
 ldist_km = [-700,-600,-500,-400,-300,-200,-100,0,100,200,300,400,500,600,700]
 region  = "ASAS"
-window  = "no"
-#window  = "out"
+#window  = "no"
+window  = "out"
 #window  = "in"
 #-------
 if window == "no":
   dist_mask= 0. # (km)
 else:
-  dist_mask= 500. # (km)
+  dist_mask= 1000. # (km)
 #-------
 nx,ny   = (360,180)
 plev_sfc  = 850.0

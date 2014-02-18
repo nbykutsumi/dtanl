@@ -6,7 +6,7 @@ import ctrack_para
 #iyear = 1997
 #eyear = 2012
 iyear = 1980
-eyear = 1996
+eyear = 2012
 
 lhour = [0,6,12,18]
 
@@ -16,8 +16,8 @@ dlat  = 1.0
 dlon  = 1.0
 idir ="/media/disk2/data/ibtracs/v03r04"
 odir_root ="/media/disk2/out/ibtracs/sa.one"
-#countrad  = 300.0 # [km]
-countrad  = 1.0 # [km]
+countrad  = 1000.0 # [km]
+#countrad  = 1.0 # [km]
 miss  = -9999.0
 #------------------
 a2totnum = zeros([ny,nx],float32)

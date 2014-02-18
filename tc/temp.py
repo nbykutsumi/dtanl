@@ -1,14 +1,8 @@
 from numpy import *
 import tc_func
-year = 2001
-idir ="/media/disk2/data/ibtracs/v03r04"
-iname = idir + "/Year.%04d.ibtracs_all.v03r04.csv"%(year)
 
-dlonlat = tc_func.ret_ibtracs_dlonlat(year)
-dxy = tc_func.ret_ibtracs_dpyxy_saone(year)
+ny,nx  = 180,360
+lyear  = range(1980,1999+1)
+lmon   = range(1,12+1)
 
-lxy = [(50,50),(80,80)]
-a2out = tc_func.lpyxy2map_saone(lxy, 1.0, -9999.0)
-
-
-
+iname1 = "/media/disk2/out/JRA25/sa.one.anl_p/6hr/tc/freq.48h.wc0.23.sst25.wind-9999.vor4.7e-05/1980-1999.ALL/

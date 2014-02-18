@@ -4,14 +4,14 @@ import ctrack_para
 import tc_para
 import matplotlib.pyplot as plt
 #-------------------------------------------
-iyear = 2004
-eyear = 2004
+iyear = 1980
+eyear = 1999
 #lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
 season="ALL"
 lmon  =ctrack_para.ret_lmon(season) 
-thdura= 36
-lmodel = ["org","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
-#lmodel = ["org","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5"]
+thdura= 48
+#lmodel = ["org","HadGEM2-ES","IPSL-CM5A-MR","CNRM-CM5","MIROC5","inmcm4","MPI-ESM-MR","CSIRO-Mk3-6-0","NorESM1-M","IPSL-CM5B-LR","GFDL-CM3"]
+lmodel = ["org"]
 
 ny    = 180
 nx    = 360

@@ -13,10 +13,10 @@ if len(sys.argv) >1:
   season= sys.argv[3] 
   lseason= [season]
 else:
-  iyear    = 2000
-  eyear    = 2010
-  lseason  = [1,2,3,4,5,6,7,8,9,10,11,12]
-
+  iyear    = 1997
+  eyear    = 2011
+  #lseason  = [1,2,3,4,5,6,7,8,9,10,11,12]
+  lseason  = ["ALL"]
 #-----------------
 prtype   = "GPCP1DD"
 ny       = 180

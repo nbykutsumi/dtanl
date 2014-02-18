@@ -21,11 +21,11 @@ else:
   print "*******************"
   print "BBBBBBBBBBBB"
   print "*******************"
-  var   = "va"
-  model = "MRI-CGCM3"
+  var   = "ta"
+  model = "CCSM4"
   expr  = "historical"
   #ens   = "r1i1p1"
-  ens   = "r1i1p1"
+  ens   = "r6i1p1"
   year  = 1980
   mon   = 1
   dattype = "6hrPlev"
@@ -124,6 +124,16 @@ odir_dump = odir_root
 llfileinfo = cmip_func.ret_filedate(var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59)
 
 print "nc2one.atm.1lev.py",llfileinfo
+if len(llfileinfo)==0:
+  print "no list in llfile info"
+  print "var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59 = "
+  print var,dattype,model,expr,ens,year,mon,iday,0,0,year,mon,eday,23,59
+  print "by nc2one.atm.1lev.py"
+  raise Error
+  sys.exit()
+
+
+
 for lfileinfo in llfileinfo:
   fyear0,fmon0,fday0,fhour0,fmin0,ftime0,fyear1,fmon1,fday1,fhour1,fmin1,ftime1,sunit,scalendar,ncname\
    = lfileinfo 

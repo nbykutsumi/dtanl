@@ -3,8 +3,8 @@ import ctrack_func
 import ctrack_para
 import matplotlib.pyplot as plt
 #-------------------------------------------
-iyear = 2004
-eyear = 2004
+iyear = 1980
+eyear = 1999
 #lmon  = [1,2,3,4,5,6,7,8,9,10,11,12]
 season="ALL"
 lmon  =ctrack_para.ret_lmon(season) 

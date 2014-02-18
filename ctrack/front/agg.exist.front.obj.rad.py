@@ -26,8 +26,8 @@ nx    = 360
 miss  = -9999.0
 thdist   = front_para.ret_thdistkm()  # (km)
 #
-#countrad = 300  # (km) for frequency count
-countrad = 1.0  # (km) for frequency count
+countrad = 500  # (km) for frequency count
+#countrad = 1.0  # (km) for frequency count
 #
 sresol   = "anl_p"
 #lftype = ["t","q"]

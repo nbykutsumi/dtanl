@@ -1,61 +1,66 @@
 from numpy import *
+import sys
 #------------------------------------------------
 def ret_thfmasktq(sresol="anl_p"):
-  if sresol in ["anl_p","MRI-CGCM3"]:
+  if sresol in ["anl_p","MRI-CGCM3","CCSM4"]:
     thfmask1t = 0.3
     thfmask2t = 1.0
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="HadGEM2-ES":
+  elif sresol =="HadGEM2-ES":
     thfmask1t = 0.3
     thfmask2t = 1.0
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="IPSL-CM5A-MR":
+  elif sresol =="IPSL-CM5A-MR":
     thfmask1t = 0.3
     thfmask2t = 1.0
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="CNRM-CM5":
+  elif sresol =="CNRM-CM5":
     thfmask1t = 0.26
     thfmask2t = 1.0
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="MIROC5":
+  elif sresol =="MIROC5":
     thfmask1t = 0.26
     thfmask2t = 1.0
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="inmcm4":
+  elif sresol =="inmcm4":
     thfmask1t = 0.26
     thfmask2t = 1.0
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="MPI-ESM-MR":
+  elif sresol =="MPI-ESM-MR":
     thfmask1t = 0.26
     thfmask2t = 0.6
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="CSIRO-Mk3-6-0":
+  elif sresol =="CSIRO-Mk3-6-0":
     thfmask1t = 0.26
     thfmask2t = 0.6
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="NorESM1-M":
+  elif sresol =="NorESM1-M":
     thfmask1t = 0.26
     thfmask2t = 0.6
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="IPSL-CM5B-LR":
+  elif sresol =="IPSL-CM5B-LR":
     thfmask1t = 0.26
     thfmask2t = 0.6
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
-  if sresol =="GFDL-CM3":
+  elif sresol =="GFDL-CM3":
     thfmask1t = 0.26
     thfmask2t = 0.6
     thfmask1q = 2.0*1.0e-4
     thfmask2q = 1.5*1.0e-3
+  else:
+    print "in front_para.ret_thfmasktq"
+    print "no model in model list",sresol
+    sys.exit()
   #---
   return (thfmask1t, thfmask2t, thfmask1q, thfmask2q)
 #------------------------------------------------

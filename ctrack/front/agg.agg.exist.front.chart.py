@@ -10,11 +10,13 @@ import chart_para
 import cf.util
 
 #------------------------------------------------------
-filterflag = True
+#filterflag = True
+filterflag = False
 
 iyear  = 2007
 eyear  = 2010
-lseason = ["ALL","DJF","MAM","JJA","SON"]
+#lseason = ["ALL","DJF","MAM","JJA","SON"]
+lseason = ["DJF","MAM","JJA","SON"]
 ny     = 180
 nx     = 360
 miss   = -9999.0
@@ -24,7 +26,7 @@ region_draw = "JPN"
 #rad    = 200.0  # (km)
 rad    = 1.0  # (km)
 #rad    = ""  # (km)
-lonlatfontsize = 27.0
+lonlatfontsize = 35.0
 lonrotation    = 0.0
 #---------------------
 #lllat  = 0.0
@@ -33,10 +35,14 @@ lonrotation    = 0.0
 #urlon  = 210.0
 lllon, lllat, urlon, urlat = chart_para.ret_domain_corner_rect_forfig(region_draw)
 thorog = 1500.0 # (m)
-bnd_normal  = [1,3,5,7,9,11,13]
+#bnd_normal  = [1,3,5,7,9,11,13]
+#bnd_normal    = [2,5,10,15,20,30,40,50,60]
+bnd_normal   = [0.2,0.5,1,2,3,4,5,6]
+bnd_stat     = bnd_normal
+bnd_all      = bnd_normal
 #bnd_stat    = [1,4,7,10,13,16,19,22,25,28]
-bnd_stat    = [5,10,15,20,25,30,35,40,45,50,55]
-bnd_all     = [5,10,15,20,25,30,35,40,45,50,55]
+#bnd_stat    = [1,5,10,15,20,25,30,35,40,45,50,55]
+#bnd_all     = [1,5,10,15,20,25,30,35,40,45,50,55]
 
 #--------------
 #a2filter = array(\
@@ -147,8 +153,7 @@ for season in lseason:
   #***************************
   #  figure warm 
   #---------------------------
-  bnd        = [1,3,5,7,9,11,13,15]
-  #bnd        = [4,8,12,16,20,24,28,32,36]
+  bnd        = bnd_normal
   #-------
   if rad == "":
     cbarname = figdir + "/freq.cbar.png"
@@ -252,11 +257,6 @@ for season in lseason:
   #  figure stat 
   #---------------------------
   bnd        = bnd_stat
-  #bnd        = [1,4,7,10,13,16,19,22,25]
-  #bnd        = [1, 2,3,4,5,6,7,8,9,10]
-  #bnd        = [4,8,12,16,20,24,28,32,36]
-  #bnd        = [4,10,16,22,28,34,40,46,52,58,64,70,76,82,88,94]
-  #bnd        = [4,10,16,22,28,34,40,46,52,58,64]
   #-----------
   if rad == "":
     cbarname = figdir + "/freq.cbar.stat.png"
@@ -291,8 +291,6 @@ for season in lseason:
   #  figure all 
   #---------------------------
   bnd        = bnd_all
-  #bnd        = [5,10,15,20,25,30,35,40,45]
-  #bnd        = [10,20,30,40,50,60,70,80]
   #----------
   if rad == "":
     cbarname = figdir + "/freq.cbar.all.png"

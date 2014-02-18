@@ -22,7 +22,8 @@ miss   = -9999.0
 ny     = 180
 nx     = 360
 dpgradrange   = ctrack_para.ret_dpgradrange()
-thpgrad        = dpgradrange[1][0] 
+#thpgrad        = dpgradrange[1][0] 
+thpgrad        = 0.0
 #thdura   = 72
 thdura   = 48
 
@@ -37,7 +38,7 @@ for model in lmodel:
   thsst    = tc_para.ret_thsst()
   thwind   = tc_para.ret_thwind()
   thrvort  = tc_para.ret_thrvort(model)
-  thwcore  = tc_para.ret_thwcore(model)
+  #thwcore  = tc_para.ret_thwcore(model)
   
   plev_low = 850*100.0 # (Pa)
   plev_mid = 500*100.0 # (Pa)
@@ -65,9 +66,10 @@ for model in lmodel:
   sstdir_root     = "/media/disk2/data/JRA25/sa.one.anl_p25/mon/WTMPsfc"
   #
   if bnflag == True:
-    sodir_root      = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/tc/%02dh"%(model,thdura)
+    #sodir_root      = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/tc/%02dh"%(model,thdura)
+    sodir_root      = "/media/disk2/out/JRA25/bn.sa.one.%s/6hr/tc/pot.tc.%02dh.sst%02d.wind%02d.vor%.1e"%(model,thdura,thsst-273.15,thwind,thrvort)
   elif bnflag == False: 
-    sodir_root      = "/media/disk2/out/JRA25/sa.one.%s/6hr/tc/%02dh"%(model,thdura)
+    sodir_root      = "/media/disk2/out/JRA25/sa.one.%s/6hr/tc/pot.tc.%02dh.sst%02d.wind%02d.vor%.1e"%(model,thdura,thsst-273.15,thwind,thrvort)
   
   #** land sea mask -------------------
   landseadir      = "/media/disk2/data/JRA25/sa.one.anl_land/const/landsea"
@@ -146,9 +148,9 @@ for model in lmodel:
                             a2pgrad.T, a2life.T, a2lastpos.T, a2lastflag.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T, a2sst.T, a2landsea.T\
                           , thpgrad, thdura, thsst, thwind, thrvort, initflag, miss)
   
-          tout_old        = ctrack_fsub.find_tc_saone_old(\
-                            a2pgrad.T, a2life.T, a2lastpos.T, a2lastflag.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T, a2sst.T, a2landsea.T\
-                          , thpgrad, thdura, thsst, thwind, thrvort, initflag, miss)
+          #tout_old        = ctrack_fsub.find_tc_saone_old(\
+          #                  a2pgrad.T, a2life.T, a2lastpos.T, a2lastflag.T, a2tlow.T, a2tmid.T, a2tup.T, a2ulow.T, a2uup.T, a2vlow.T, a2vup.T, a2sst.T, a2landsea.T\
+          #                , thpgrad, thdura, thsst, thwind, thrvort, initflag, miss)
   
   
   
@@ -157,6 +159,7 @@ for model in lmodel:
           a2lastflag      = tout[1].T
           
           #---- save -----------------------
-          soname   = sodir + "/tc.wc%4.2f.sst%02d.wind%02d.vor%.1e.%s.sa.one"%(thwcore, thsst-273.15, thwind, thrvort, stime)
+          #soname   = sodir + "/tc.wc%4.2f.sst%02d.wind%02d.vor%.1e.%s.sa.one"%(thwcore, thsst-273.15, thwind, thrvort, stime)
+          soname   = sodir + "/pot.tc.%s.sa.one"%(stime)
           a2tcloc.tofile(soname)
           print soname
